@@ -69,6 +69,11 @@ select:hover{border-color:var(--line-2)}
 .side-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--muted);line-height:1.5}
 .ghost{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1px solid var(--line);border-radius:11px;padding:9px 12px;cursor:pointer;font-size:13px;color:var(--ink-2)}
 .ghost:hover{border-color:var(--line-2);color:var(--ink)}
+.ghost.csv{background:var(--act);border-color:var(--act);color:#fff;font-weight:600}
+.ghost.csv:hover{filter:brightness(1.12);color:#fff}
+.ghost.csv:disabled{opacity:.5;cursor:default;filter:none}
+.upd{display:flex;align-items:center;gap:8px;padding:4px 2px 0;font-size:12.5px;color:var(--ink-2)}
+.upd i{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 22%,transparent);flex:none}
 input[type=file]{display:none}
 
 /* ---------- Nội dung chính ---------- */
@@ -359,10 +364,10 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
   <button class="ghost" id="reset">Xóa tất cả bộ lọc</button>
 
   <div class="side-foot">
+    <button class="ghost csv" id="csv" disabled>Xuất file CSV</button>
     <button class="ghost" id="logout" style="display:none">Đăng xuất</button>
     <button class="ghost" id="theme"></button>
-    <label class="ghost">Mở file data.json trên máy<input type="file" id="file" accept=".json"></label>
-    <div id="upd"></div>
+    <div id="upd" class="upd"><i></i>Tự cập nhật 16:00 hằng ngày</div>
   </div>
 </aside>
 
@@ -592,7 +597,7 @@ async function boot(){
   try { r = await fetch('keys.json', {cache:'no-cache'}); } catch(e) { r = null; }
   if (!r || !r.ok) {                       // bản cũ không đăng nhập
     try { const d = await fetch('data.json', {cache:'no-cache'}); if (!d.ok) throw 0; const j = await d.json(); unlocked(); init(j); }
-    catch(e) { unlocked(); $('lead').textContent = 'Chưa tìm thấy dữ liệu. Dùng nút "Mở file data.json trên máy" ở thanh bên để chọn file.'; }
+    catch(e) { unlocked(); $('lead').textContent = 'Chưa tìm thấy dữ liệu. Hãy chạy cap-nhat.bat để tạo dữ liệu.'; }
     return;
   }
   KEYS = await r.json();
@@ -625,7 +630,21 @@ $('lgForm').onsubmit = async e => {
 };
 $('logout').onclick = () => { store.clear(); location.reload(); };
 boot();
-$('file').onchange = e => { const f = e.target.files[0]; if (f) f.text().then(t => { unlocked(); init(JSON.parse(t)); }); };
+/* Xuất CSV: dữ liệu năm đang chọn, theo đúng các bộ lọc đang bật */
+$('csv').onclick = () => {
+  if (!D) return;
+  const Y = S.year, dm = D.dims, q = v => { v = String(v ?? ''); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; };
+  const rows = R.filter(r => r[1]===Y && pass(r)).sort((a,b) => a[2]-b[2] || a[0].localeCompare(b[0]) || b[8]-a[8]);
+  const head = ['Khu vực','Năm','Tháng','Khách hàng','Ngành hàng','Nhãn hàng','Phân khúc','Store','Doanh số trước thuế (đồng)','Doanh số (tỷ đồng)','Sản lượng (tấn)'];
+  const lines = [head.join(',')].concat(rows.map(r => [r[0], r[1], r[2], dm.customer[r[3]], dm.category[r[4]], dm.brand[r[5]], dm.segment[r[6]], dm.store[r[7]],
+    Math.round(r[8]), (r[8]/1e9).toFixed(4), (+r[9]).toFixed(3)].map(q).join(',')));
+  const tag = [S.bu || 'NTW', S.cust>=0 ? dm.customer[S.cust] : '', S.cat>=0 ? dm.category[S.cat] : '', S.brand>=0 ? dm.brand[S.brand] : '', S.seg>=0 ? dm.segment[S.seg] : '']
+    .filter(Boolean).join('_').replace(/[^\w\-]+/g,'-');
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `MTWilmar_${Y}_${tag}_${D.updated}.csv`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
 
 function init(data){
   D = data; R = D.rows; firstDraw = true;
@@ -647,7 +666,8 @@ function init(data){
   const segAll = [...SEG_ORDER, ...[...sT.keys()].filter(i=>!SEG_ORDER.includes(i))];
   $('fSeg').innerHTML = `<button data-v="-1">Tất cả</button>` + segAll.map(i=>`<button data-v="${i}">${esc(D.dims.segment[i])}</button>`).join('');
   const [y,m,d] = D.updated.split('-');
-  $('upd').textContent = `Số liệu đến ngày ${d}/${m}/${y}`;
+  $('upd').title = `Số liệu đến ngày ${d}/${m}/${y}`; $('csv').disabled = false;
+  $('csv').title = 'Tải dữ liệu chi tiết của năm đang chọn, theo các bộ lọc đang bật';
   $('foot').textContent = `Nguồn: file CS_Combine_Data theo từng năm, khu vực theo cột Region (NBU là Miền Bắc, SBU là Miền Nam). Doanh số là thành tiền trước thuế, tính bằng tỷ đồng; sản lượng tính bằng tấn; tháng xác định theo ngày hóa đơn. Khách hàng, ngành hàng và kho lấy theo các cột đã chuẩn hóa (MT Channel Trans, Business Trans, Delivery Name Trans) trong sheet CS Data.`;
   syncControls(); render();
 }
@@ -759,8 +779,8 @@ function drawTarget(Y, partial, ud){
   ['trkPanel','mapPanel','trkMxPanel','trkRank'].forEach(id => $(id).style.display = show ? '' : 'none');
   if (!show) return;
   const tCats = new Set(T.map(t=>t[4]));
-  const passT = (t, skip) => (!S.bu || t[0]===S.bu) && (skip==='cust' || S.cust<0 || t[3]===S.cust) && (skip==='cat' || S.cat<0 || t[4]===S.cat);
-  const A = R.filter(r => r[1]===Y && tCats.has(r[4]) && (!S.bu || r[0]===S.bu) && (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat));
+  const passT = (t, skip) => (!S.bu || t[0]===S.bu) && (skip==='cust' || S.cust<0 || t[3]===S.cust) && (skip==='cat' || S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg);
+  const A = R.filter(r => r[1]===Y && tCats.has(r[4]) && (!S.bu || r[0]===S.bu) && (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg));
   const Tf = T.filter(t => passT(t));
   const L = Math.max(0, ...R.filter(r=>r[1]===Y).map(r=>r[2]));
   const act = (rows, f=()=>true) => rows.reduce((s,r)=> f(r) ? s+r[9] : s, 0);
@@ -768,7 +788,7 @@ function drawTarget(Y, partial, ud){
   const pr = (a,t) => t>0 ? a/t : null;
 
   const note = [];
-  if (S.brand>=0 || S.seg>=0) note.push('Target chỉ được đặt theo hệ thống và ngành hàng, nên phần này bỏ qua bộ lọc nhãn hàng và phân khúc.');
+  if (S.brand>=0) note.push('Target được đặt theo hệ thống, ngành hàng và phân khúc (SP/OB/BP), nên phần này bỏ qua bộ lọc nhãn hàng.');
   if (S.metric==='rev') note.push('Target của Wilmar đặt theo sản lượng, nên phần này luôn tính bằng tấn.');
   if (partial) note.push(`Tháng ${L} mới có số liệu đến ngày ${ud}, % đạt của tháng này chưa phản ánh đủ tháng.`);
   $('trkNote').style.display = note.length ? '' : 'none'; $('trkNote').textContent = note.join(' ');
@@ -910,14 +930,14 @@ function priceAt(o, origin){ let r = 0, t = 0; for (let i = Math.max(1, origin-2
 function adjFactor(Y, m, bu, cat){ let p = 0; (D.adjust||[]).forEach(x => { if (x[0]===Y && x[1]===m && (x[2]==='*' || x[2]===bu) && (x[3]===-1 || x[3]===cat)) p += x[4]; }); return 1 + p/100; }
 
 function fcCompute(Y, partial, ud){
-  const fF = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat);
+  const fF = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg);
   const ser = new Map();
   const get = (bu, cat) => { const k = bu+'|'+cat; let o = ser.get(k);
     if (!o) { o = {bu, cat, a:Array(13).fill(0), ly:Array(13).fill(0), lyRev:Array(13).fill(0), t:Array(13).fill(0), rev:Array(13).fill(0), f:Array(13).fill(null), fRev:Array(13).fill(null), xp:Array(13).fill(null)}; ser.set(k, o); } return o; };
   R.forEach(r => { if (!fF(r)) return;
     if (r[1]===Y) { const o = get(r[0], r[4]); o.a[r[2]] += r[9]; o.rev[r[2]] += r[8]/1e9; }
     else if (r[1]===Y-1) { const o = get(r[0], r[4]); o.ly[r[2]] += r[9]; o.lyRev[r[2]] += r[8]/1e9; } });
-  (D.target||[]).forEach(t => { if (t[1]===Y && (S.cust<0 || t[3]===S.cust) && (S.cat<0 || t[4]===S.cat)) get(t[0], t[4]).t[t[2]] += t[5]; });
+  (D.target||[]).forEach(t => { if (t[1]===Y && (S.cust<0 || t[3]===S.cust) && (S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg)) get(t[0], t[4]).t[t[2]] += t[5]; });
   const L = Math.max(0, ...R.filter(r=>r[1]===Y).map(r=>r[2]));
   const Lc = partial ? L-1 : L;                        // tháng đầy đủ gần nhất
   // tiến độ cùng kỳ của tháng đang chạy (theo ngày), cấp khu vực × ngành
@@ -1055,7 +1075,7 @@ const TRUONG_SA = [[113.8,10.4],[114.3,10.0],[114.6,9.6],[113.5,9.2],[114.9,10.9
 const SPLIT_LAT = 15.35;   // ranh giới minh họa: NBU đến Quảng Nam, SBU từ Quảng Ngãi
 
 function drawMap(Y, L, T, tCats){
-  const fOther = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat);
+  const fOther = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg);   // cột 6 = phân khúc ở cả data và target
   const fAll = r => fOther(r) && (S.brand<0 || r[5]===S.brand) && (S.seg<0 || r[6]===S.seg);
   const calc = bus => {
     let a=0, aLY=0, rev=0, revLY=0;
@@ -1063,7 +1083,7 @@ function drawMap(Y, L, T, tCats){
       if (r[1]===Y) { if (fAll(r)) rev += r[8]/1e9; if (tCats.has(r[4]) && fOther(r)) a += r[9]; }
       else if (r[1]===Y-1) { if (fAll(r)) revLY += r[8]/1e9; if (tCats.has(r[4]) && fOther(r)) aLY += r[9]; } });
     let t=0, f=0;
-    T.forEach(x => { if (!bus.includes(x[0]) || !fOther(x)) return; f += x[5]; if (x[2]<=L) t += x[5]; });   // target: [bu,năm,tháng,KH,ngành,tấn]
+    T.forEach(x => { if (!bus.includes(x[0]) || !fOther(x)) return; f += x[5]; if (x[2]<=L) t += x[5]; });   // target: [bu,năm,tháng,KH,ngành,tấn,phân khúc]
     return {a, aLY, rev, revLY, t, f, p: t>0 ? a/t : null};
   };
   const M = {NBU: calc(['NBU']), SBU: calc(['SBU']), NTW: calc(['NBU','SBU'])};
@@ -1268,22 +1288,22 @@ function drawStores(Y, L){
   $('fStM').innerHTML = `<button data-m="0" class="${ST_M===0?'on':''}">Lũy kế</button>` +
     MONTHS.slice(0, L).map(m => `<button data-m="${m}" class="${ST_M===m?'on':''}">Th${m}</button>`).join('');
   $('fStM').querySelectorAll('button').forEach(b => b.onclick = () => { ST_M = +b.dataset.m; render(); });
-  const tgtOK = S.brand<0 && S.seg<0;
+  const tgtOK = S.brand<0;
   const Tall = (D.target||[]).filter(t => t[1]===Y);
   const tg = new Map();
-  Tall.forEach(t => { if (inM(t[2]) && (!S.bu||t[0]===S.bu) && (S.cust<0||t[3]===S.cust) && (S.cat<0||t[4]===S.cat)) {
+  Tall.forEach(t => { if (inM(t[2]) && (!S.bu||t[0]===S.bu) && (S.cust<0||t[3]===S.cust) && (S.cat<0||t[4]===S.cat) && (S.seg<0||t[6]===S.seg)) {
     const g = t[0]+'|'+t[3]+'|'+t[4]; tg.set(g,(tg.get(g)||0)+t[5]); } });
   const base = new Map(), sh = new Map(), st = new Map();
   const get = k => { let o = st.get(k); if (!o) { o = {k, c:new Map(), b:new Map(), ton:0, rev:0, tonLY:0, revLY:0, tgt:0}; st.set(k,o); } return o; };
   R.forEach(r => {
-    if (r[1]===Y-1) { const g = r[0]+'|'+r[3]+'|'+r[4]; base.set(g,(base.get(g)||0)+r[9]); const s = g+'|'+r[7]; sh.set(s,(sh.get(s)||0)+r[9]); }
+    if (r[1]===Y-1 && (S.seg<0 || r[6]===S.seg)) { const g = r[0]+'|'+r[3]+'|'+r[4]; base.set(g,(base.get(g)||0)+r[9]); const s = g+'|'+r[7]; sh.set(s,(sh.get(s)||0)+r[9]); }
     if (!pass(r) || !inM(r[2])) return;
     if (r[1]===Y) { const o = get(r[7]); o.ton += r[9]; o.rev += r[8]/1e9; o.c.set(r[3],(o.c.get(r[3])||0)+r[8]); o.b.set(r[0],(o.b.get(r[0])||0)+r[8]); }
     else if (r[1]===Y-1) { const o = get(r[7]); o.tonLY += r[9]; o.revLY += r[8]/1e9; }
   });
   // Ưu tiên target store từ file Target_Store (do team tự chia); không có file thì phân bổ ước tính
   const STg = (D.storeTarget||[]).filter(t => t[1]===Y), useFile = STg.length > 0;
-  const stOK = useFile ? (tgtOK && S.cat<0) : tgtOK;
+  const stOK = useFile ? (tgtOK && S.cat<0 && S.seg<0) : tgtOK;
   if (stOK && useFile) STg.forEach(t => { if (inM(t[2]) && (!S.bu||t[0]===S.bu) && (S.cust<0||t[3]===S.cust)) {
     const o = get(t[4]); o.tgt += t[5]; if (!o.c.size) o.c.set(t[3],0); if (!o.b.size) o.b.set(t[0],0); } });
   else if (stOK) for (const [s,v] of sh) { const i = s.lastIndexOf('|'), g = s.slice(0,i), t = tg.get(g), b = base.get(g);
@@ -1314,7 +1334,7 @@ function drawStores(Y, L){
   $('hStore').textContent = `DS là doanh số trước thuế; ± DS và ± SL là tăng trưởng doanh số và sản lượng so với cùng kỳ ${kyLY}. Chọn tháng ở bên phải, bấm tiêu đề cột để sắp xếp.`;
   $('fStore').textContent = !stOK
     ? (useFile ? 'Target store lấy theo tổng các ngành hàng, nên không áp dụng khi đang lọc ngành hàng, nhãn hàng hoặc phân khúc.'
-               : 'Target store không áp dụng khi đang lọc nhãn hàng hoặc phân khúc.')
+               : 'Target store không áp dụng khi đang lọc nhãn hàng.')
     : useFile
       ? `Target store lấy từ file Target_Store ${Y} do team chia theo tháng (tấn). Store để trống trong file sẽ không có target.`
       : `Target store là số ước tính: target của hệ thống theo ngành hàng và khu vực, chia cho các store theo tỷ trọng sản lượng năm ${Y-1}. Store mới mở chưa có số năm ${Y-1} sẽ chưa có target.`;
