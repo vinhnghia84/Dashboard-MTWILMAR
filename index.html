@@ -256,6 +256,29 @@ table.list.st tr.tot td{font-weight:700;border-top:2px solid var(--line-2);backg
 .tbl-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
 @media (max-width:1180px){.tk-head{grid-template-columns:1fr}.tk-stats{border-left:0}}
 @media (max-width:700px){.tk-stats{grid-template-columns:1fr}.tk-stats>div{border-right:0;border-bottom:1px solid var(--line);padding:10px 0}}
+/* ---------- Dự báo ---------- */
+.fc-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:14px;margin-bottom:18px}
+.fc-kpis>div{padding:14px 18px;border-right:1px solid var(--line)}
+.fc-kpis>div:last-child{border-right:0}
+.fc-kpis .k{font-size:12.5px;color:var(--muted)}
+.fc-kpis .v{font-size:24px;font-weight:750;letter-spacing:-.02em;margin-top:4px}
+.fc-kpis .v small{font-size:12.5px;font-weight:500;color:var(--muted);margin-left:5px;letter-spacing:0}
+.fc-kpis .d{font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.45}
+.fc-note{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-top:12px;padding:10px 14px;background:var(--panel-2);border-radius:12px}
+.fc-adj{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.fc-adj span{font-size:12.5px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:var(--panel)}
+.fc-adj b{font-weight:650}
+table.fct{width:100%;border-collapse:collapse;font-size:13px}
+.fct th{font-weight:500;color:var(--muted);text-align:right;padding:0 8px 8px;white-space:nowrap;font-size:12px}
+.fct th:first-child{text-align:left}
+.fct td{padding:9px 8px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+.fct td:first-child{text-align:left;font-weight:500}
+.fct td.f{color:var(--ink);background:color-mix(in srgb,var(--act) 7%,transparent);font-style:italic}
+.fct td.b{font-weight:700}
+.fct tr.tot td{font-weight:700;border-top:2px solid var(--line-2);background:var(--panel-2)}
+.fc-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.fc-h b{font-size:15px}
+@media (max-width:1100px){.fc-kpis{grid-template-columns:repeat(2,1fr)}.fc-kpis>div:nth-child(2){border-right:0}.fc-kpis>div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
 /* ---------- Đăng nhập ---------- */
 #login{display:none;position:fixed;inset:0;z-index:50;place-items:center;padding:24px;overflow:auto;
   background:radial-gradient(1200px 600px at 85% -10%, #1f6f62 0%, transparent 60%), radial-gradient(900px 500px at -10% 110%, #2a5bd7 0%, transparent 55%), #0f1b2e}
@@ -398,6 +421,22 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
       <div id="rkCat"></div>
     </section>
   </div>
+
+  <section class="panel" id="fcPanel">
+    <div class="ph">
+      <div><h2 id="tFc">Dự báo theo lịch sử</h2><p id="hFc"></p></div>
+      <div class="seg" id="fFcV"><button data-v="NTW">NTW (toàn quốc)</button><button data-v="NBU"><i style="background:var(--nbu)"></i>NBU</button><button data-v="SBU"><i style="background:var(--sbu)"></i>SBU</button></div>
+    </div>
+    <div class="fc-kpis" id="fcKpi"></div>
+    <div class="ph" style="margin:4px 0 8px"><div></div><div class="keys" id="fcKeys"></div></div>
+    <div id="cFc"></div>
+    <div class="fc-note" id="fcNote"></div>
+  </section>
+
+  <section class="panel" id="fcCatPanel">
+    <div class="ph"><div><h2>Dự báo theo ngành hàng</h2><p id="hFcCat"></p></div></div>
+    <div class="grid2" id="fcCat"></div>
+  </section>
 
   <section class="panel">
     <div class="ph">
@@ -691,6 +730,7 @@ function render(){
     <div>Số liệu cần rà soát: ${w.join(', ')}. Kiểm tra các cột MT Channel Trans, Business Trans và Delivery Name Trans trong file Excel.</div>` : '';
 
   drawTarget(Y, partial, ud);
+  drawForecast(Y, partial, ud);
   drawTrend(cur, ly, Y, hasLy);
   rankList($('cCat'),  'cat',  [...group(R.filter(r=>r[1]===Y && pass(r,'cat')),4)],  D.dims.category, 4);
   rankList($('cCust'), 'cust', [...group(R.filter(r=>r[1]===Y && pass(r,'cust')),3)], D.dims.customer, 3);
@@ -834,6 +874,171 @@ function drawTarget(Y, partial, ud){
   rank($('rkCat'), 4, D.dims.category, false);
 
   drawMap(Y, L, T, tCats);
+}
+
+/* =================== DỰ BÁO THEO LỊCH SỬ ===================
+   Mô hình (đã kiểm chứng trên dữ liệu T6–T10/2026, chọn cách sai số thấp nhất ở cấp ngành × miền):
+   Dự báo tháng m = 70% × [target tháng m × tỷ lệ đạt target gần đây (tháng gần trọng số lớn hơn, α = 0,5)]
+                  + 30% × [cùng kỳ năm trước tháng m × tăng trưởng 3 tháng gần nhất]
+   Tính riêng từng khu vực × ngành hàng rồi cộng lại. Không có target: dùng phần cùng kỳ.
+   Tháng đang chạy: cân đối giữa dự báo và số đã bán theo tiến độ cùng kỳ năm trước.
+   Sau đó nhân với (1 + % điều chỉnh) từ file dieu-chinh-du-bao.xlsx (mùa vụ, thời tiết, khuyến mãi...). */
+const FC_W = 0.7, FC_ALPHA = 0.5;
+let FC_VIEW = 'NTW';
+$('fFcV').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; FC_VIEW = b.dataset.v; render(); });
+const clamp = (x,lo,hi) => Math.max(lo, Math.min(hi, x));
+function fcModel(o, origin, m){
+  const a = o.a, t = o.t, ly = o.ly;
+  let pT = null, pL = null;
+  if (t[m] > 0) { let num = 0, den = 0, w = 1;
+    for (let i = origin; i >= 1; i--) { if (t[i] > 0) { num += w*a[i]/t[i]; den += w; } w *= 1 - FC_ALPHA; }
+    pT = t[m] * (den ? clamp(num/den, .5, 1.5) : 1); }
+  const n = Math.min(3, origin); let sa = 0, sl = 0;
+  for (let i = origin-n+1; i <= origin; i++) { sa += a[i]; sl += ly[i]; }
+  if (sl > 0 && ly[m] > 0) pL = ly[m] * clamp(sa/sl, .3, 3);
+  if (pT != null && pL != null) return FC_W*pT + (1-FC_W)*pL;
+  if (pT != null) return pT; if (pL != null) return pL;
+  return n ? sa/n : 0;
+}
+function priceAt(o, origin){ let r = 0, t = 0; for (let i = Math.max(1, origin-2); i <= origin; i++) { r += o.rev[i]; t += o.a[i]; } return t > 0 ? r/t : 0; }
+function adjFactor(Y, m, bu, cat){ let p = 0; (D.adjust||[]).forEach(x => { if (x[0]===Y && x[1]===m && (x[2]==='*' || x[2]===bu) && (x[3]===-1 || x[3]===cat)) p += x[4]; }); return 1 + p/100; }
+
+function fcCompute(Y, partial, ud){
+  const fF = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat);
+  const ser = new Map();
+  const get = (bu, cat) => { const k = bu+'|'+cat; let o = ser.get(k);
+    if (!o) { o = {bu, cat, a:Array(13).fill(0), ly:Array(13).fill(0), lyRev:Array(13).fill(0), t:Array(13).fill(0), rev:Array(13).fill(0), f:Array(13).fill(null), fRev:Array(13).fill(null), xp:Array(13).fill(null)}; ser.set(k, o); } return o; };
+  R.forEach(r => { if (!fF(r)) return;
+    if (r[1]===Y) { const o = get(r[0], r[4]); o.a[r[2]] += r[9]; o.rev[r[2]] += r[8]/1e9; }
+    else if (r[1]===Y-1) { const o = get(r[0], r[4]); o.ly[r[2]] += r[9]; o.lyRev[r[2]] += r[8]/1e9; } });
+  (D.target||[]).forEach(t => { if (t[1]===Y && (S.cust<0 || t[3]===S.cust) && (S.cat<0 || t[4]===S.cat)) get(t[0], t[4]).t[t[2]] += t[5]; });
+  const L = Math.max(0, ...R.filter(r=>r[1]===Y).map(r=>r[2]));
+  const Lc = partial ? L-1 : L;                        // tháng đầy đủ gần nhất
+  // tiến độ cùng kỳ của tháng đang chạy (theo ngày), cấp khu vực × ngành
+  const share = new Map();
+  if (partial) { const tot = new Map(), cum = new Map();
+    (D.daily||[]).forEach(x => { if (x[1]===Y-1 && x[2]===L) { const k = x[0]+'|'+x[4]; tot.set(k,(tot.get(k)||0)+x[6]); if (x[3]<=ud) cum.set(k,(cum.get(k)||0)+x[6]); } });
+    for (const [k,v] of tot) if (v > 0) share.set(k, clamp((cum.get(k)||0)/v, .05, 1)); }
+  const dayShare = ud / new Date(Y, L, 0).getDate();
+  for (const o of ser.values()) {
+    for (let m = 2; m <= Lc; m++) o.xp[m] = fcModel(o, m-1, m);                  // dự báo tại thời điểm (kiểm chứng)
+    const pr = priceAt(o, Lc) || priceAt(o, Lc-1);
+    for (let m = Lc+1; m <= 12; m++) {
+      let v = fcModel(o, Lc, m);
+      if (partial && m === L) { const sh = share.get(o.bu+'|'+o.cat) || dayShare; v = sh*(o.a[L]/sh) + (1-sh)*v; v = Math.max(v, o.a[L]); }
+      v *= adjFactor(Y, m, o.bu, o.cat);
+      o.f[m] = v; o.fRev[m] = v * pr;
+    }
+  }
+  return {ser, L, Lc};
+}
+
+function drawForecast(Y, partial, ud){
+  const latest = Math.max(...R.map(r=>r[1]));
+  const show = Y === latest;
+  ['fcPanel','fcCatPanel'].forEach(id => $(id).style.display = show ? '' : 'none');
+  if (!show) return;
+  const {ser, L, Lc} = fcCompute(Y, partial, ud);
+  const view = S.bu || FC_VIEW, vb = view==='NTW' ? ['NBU','SBU'] : [view];
+  $('fFcV').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.v===view); b.disabled = !!S.bu && b.dataset.v!==S.bu; b.style.opacity = b.disabled ? .4 : ''; });
+  const isRev = S.metric==='rev', U = isRev ? 'tỷ ₫' : 'tấn', fv = isRev ? fB : tn;
+  const S_ = [...ser.values()].filter(o => vb.includes(o.bu));
+  const sumM = (key, m) => S_.reduce((s,o) => s + (o[key][m]||0), 0);
+  const act = m => isRev ? sumM('rev', m) : sumM('a', m);
+  const fcv = m => isRev ? sumM('fRev', m) : sumM('f', m);
+  const lyv = m => isRev ? sumM('lyRev', m) : sumM('ly', m);
+  const tg = m => sumM('t', m);
+  // độ chính xác: 6 tháng gần nhất, theo sản lượng
+  const accM = []; for (let m = Math.max(2, Lc-5); m <= Lc; m++) accM.push(m);
+  const ae = accM.reduce((s,m) => s + Math.abs(sumM('xp',m) - sumM('a',m)), 0), as = accM.reduce((s,m) => s + sumM('a',m), 0);
+  const wape = as ? ae/as : .08, bias = as ? accM.reduce((s,m) => s + sumM('xp',m) - sumM('a',m), 0)/as : 0;
+  const band = h => clamp(wape, .03, .25) * Math.sqrt(h);
+  const fut = []; for (let m = Lc+1; m <= 12; m++) fut.push(m);
+  const ytdAct = Array.from({length:Lc}, (_,i)=>act(i+1)).reduce((a,b)=>a+b,0);
+  const estY = ytdAct + fut.reduce((s,m)=>s+fcv(m),0);
+  const rngY = Math.sqrt(fut.reduce((s,m,i)=>s + (fcv(m)*band(i+1))**2, 0));
+  const ytdTon = Array.from({length:Lc}, (_,i)=>sumM('a',i+1)).reduce((a,b)=>a+b,0);
+  const tCats = new Set((D.target||[]).filter(t=>t[1]===Y).map(t=>t[4]));
+  const S_t = S_.filter(o => tCats.has(o.cat));
+  const estTonT = S_t.reduce((s,o)=> s + o.a.slice(1, Lc+1).reduce((a,b)=>a+b,0) + fut.reduce((x,m)=>x+(o.f[m]||0),0), 0);
+  const tgtY = MONTHS.reduce((s,m)=>s+tg(m),0), pY = pr(estTonT, tgtY);
+  const lyY = MONTHS.reduce((s,m)=>s+lyv(m),0);
+  const nx = fut[0];
+  const vName = view==='NTW' ? 'NTW (toàn quốc)' : BU_LABEL[view];
+  $('tFc').textContent = `Dự báo theo lịch sử, ${vName}`;
+  $('hFc').textContent = `${isRev ? 'Doanh số' : 'Sản lượng'} (${U}): thực tế đến tháng ${Lc}${partial ? `, tháng ${L} đang chạy đến ngày ${ud}` : ''}, dự báo đến tháng 12/${Y}.`;
+  $('fcKpi').innerHTML = `
+    <div><div class="k">Ước tính cả năm ${Y}</div><div class="v">${fv(estY)}<small>${U}</small></div>
+      <div class="d">Khoảng ${fv(estY-rngY)} – ${fv(estY+rngY)}. ${arrow(pct(estY, lyY))} so với năm ${Y-1}</div></div>
+    <div><div class="k">Dự kiến đạt target năm (tấn)</div><div class="v st-${stCls(pY)}">${fP(pY)}</div>
+      <div class="d">${tn(estTonT)} trên ${tn(tgtY)} tấn${pY!=null ? `, ${estTonT>=tgtY ? 'vượt' : 'thiếu'} ${tn(Math.abs(estTonT-tgtY))} tấn` : ''}</div></div>
+    <div><div class="k">${nx ? `Dự báo tháng ${nx}/${Y}` : 'Dự báo'}</div><div class="v">${nx ? fv(fcv(nx)) : '–'}<small>${U}</small></div>
+      <div class="d">${nx ? `Target ${tn(tg(nx))} tấn (dự kiến đạt ${fP(pr(sumM('f',nx), tg(nx)))}). ${arrow(pct(fcv(nx), lyv(nx)))} so cùng kỳ` : 'Đã hết năm'}</div></div>
+    <div><div class="k">Độ chính xác mô hình (6 tháng gần nhất)</div><div class="v">${nf((1-wape)*100,1)}%</div>
+      <div class="d">Sai số trung bình ${nf(wape*100,1)}%. Trung bình dự báo ${bias>=0 ? 'cao' : 'thấp'} hơn thực tế ${nf(Math.abs(bias)*100,1)}%</div></div>`;
+
+  // --- biểu đồ ---
+  const el = $('cFc'), W = el.clientWidth || 900, H = 310, P = {l:78, r:8, t:24, b:30};
+  const md = MONTHS.map(m => ({m, a: m<=Lc ? act(m) : (partial && m===L ? act(m) : 0), f: m>Lc ? fcv(m) : null,
+    xp: m<=Lc && m>=2 ? (isRev ? S_.reduce((s,o)=>s+(o.xp[m]||0)*priceAt(o,m-1),0) : sumM('xp',m)) : null, t: tg(m), ly: lyv(m)}));
+  const mx = Math.max(1, ...md.map(d => Math.max(d.a, (d.f||0)*(1+band(Math.max(1,d.m-Lc))), d.xp||0, isRev ? 0 : d.t)));
+  const step = niceStep(mx/4), M = Math.ceil(mx/step)*step;
+  const pw = W-P.l-P.r, ph = H-P.t-P.b, bandW = pw/12, bw = Math.min(40, bandW*.5);
+  const yv = v => P.t + ph - v/M*ph;
+  let s = '';
+  for (let v = 0; v <= M+1e-9; v += step) s += `<line x1="${P.l}" x2="${W-P.r}" y1="${yv(v)}" y2="${yv(v)}" stroke="var(--line)" ${v===0?'':'stroke-dasharray="3 5"'}/><text x="${P.l-10}" y="${yv(v)+4}" text-anchor="end">${nf(v, v<10&&v%1?1:0)} ${isRev?'tỷ':'tấn'}</text>`;
+  s += `<rect id="fcHi" x="0" y="${P.t-18}" width="${bandW}" height="${ph+18}" rx="10" fill="var(--panel-2)" opacity="0"/>`;
+  s += `<line x1="${P.l + bandW*Lc}" x2="${P.l + bandW*Lc}" y1="${P.t-14}" y2="${P.t+ph}" stroke="var(--ink-2)" stroke-dasharray="4 4"/><text x="${P.l + bandW*Lc + 6}" y="${P.t-4}" style="fill:var(--ink-2)">Dự báo →</text>`;
+  md.forEach((d,i) => {
+    const cx = P.l + bandW*i + bandW/2, x = cx - bw/2;
+    if (d.m <= Lc && d.a > 0) s += `<g class="bar" style="--d:${i*40}ms"><path d="${rTop(x, yv(d.a), bw, Math.max(yv(0)-yv(d.a),1), 6)}" fill="var(--act)"/></g>`;
+    if (d.f != null) { const h = d.m - Lc, lo = d.f*(1-band(h)), hi = d.f*(1+band(h));
+      s += `<path d="${rTop(x, yv(d.f), bw, Math.max(yv(0)-yv(d.f),1), 6)}" fill="color-mix(in srgb, var(--act) 28%, transparent)" stroke="var(--act)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+      if (partial && d.m===L && d.a>0) s += `<rect x="${x}" y="${yv(d.a)}" width="${bw}" height="${Math.max(yv(0)-yv(d.a),1)}" fill="var(--act)"/>`;
+      s += `<line x1="${cx}" x2="${cx}" y1="${yv(hi)}" y2="${yv(lo)}" stroke="var(--ink)" stroke-width="1.5"/><line x1="${cx-6}" x2="${cx+6}" y1="${yv(hi)}" y2="${yv(hi)}" stroke="var(--ink)" stroke-width="1.5"/><line x1="${cx-6}" x2="${cx+6}" y1="${yv(lo)}" y2="${yv(lo)}" stroke="var(--ink)" stroke-width="1.5"/>`;
+      s += `<text x="${cx}" y="${yv(hi)-8}" text-anchor="middle" style="font-weight:700;fill:var(--ink)">${fv(d.f)}</text>`; }
+    if (!isRev && d.t > 0) s += `<line x1="${cx-bw/2-7}" x2="${cx+bw/2+7}" y1="${yv(d.t)}" y2="${yv(d.t)}" stroke="var(--tgt)" stroke-width="3" stroke-linecap="round"/>`;
+    if (d.xp != null) s += `<circle cx="${cx}" cy="${yv(d.xp)}" r="4.5" fill="var(--panel)" stroke="var(--sbu)" stroke-width="2.5"/>`;
+    s += `<text x="${cx}" y="${H-8}" text-anchor="middle">Th${d.m}</text>`;
+  });
+  md.forEach((d,i) => s += `<rect class="hl" data-i="${i}" x="${P.l+bandW*i}" y="${P.t-18}" width="${bandW}" height="${ph+18}" fill="transparent"/>`);
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Dự báo theo tháng">${s}</svg>`;
+  $('fcKeys').innerHTML = `<span><i style="background:var(--act)"></i>Thực tế</span><span><i style="background:color-mix(in srgb,var(--act) 28%,transparent);outline:1.5px dashed var(--act)"></i>Dự báo, vạch đứng là khoảng sai số</span><span><i style="background:transparent;border:2.5px solid var(--sbu);border-radius:50%"></i>Dự báo tại thời điểm (kiểm chứng)</span>` + (isRev ? '' : `<span><i class="tick" style="background:var(--tgt)"></i>Target</span>`);
+  const hi = el.querySelector('#fcHi');
+  el.querySelectorAll('.hl').forEach(r => { const d = md[+r.dataset.i];
+    r.onmousemove = e => { hi.setAttribute('x', r.getAttribute('x')); hi.setAttribute('opacity', 1);
+      const rows = d.f != null
+        ? trow('Dự báo', fv(d.f)+' '+U, 'var(--act)') + trow('Khoảng', `${fv(d.f*(1-band(d.m-Lc)))} – ${fv(d.f*(1+band(d.m-Lc)))}`) + (partial && d.m===L ? trow('Đã bán đến ngày '+ud, fv(d.a)) : '')
+        : trow('Thực tế', fv(d.a)+' '+U, 'var(--act)') + (d.xp!=null ? trow('Dự báo tại thời điểm', fv(d.xp), 'var(--sbu)') + trow('Sai lệch', fmtPct(pct(d.xp, d.a))) : '');
+      const adj = (D.adjust||[]).filter(x => x[0]===Y && x[1]===d.m && (x[2]==='*' || vb.includes(x[2])));
+      showTip(`<div class="t">Tháng ${d.m}/${Y}</div>${rows}${!isRev && d.t ? trow('Target', tn(d.t)+' tấn', 'var(--tgt)') + trow('Đạt', fP(pr(d.f!=null ? sumM('f',d.m) : sumM('a',d.m), d.t))) : ''}${trow(`Cùng kỳ ${Y-1}`, fv(d.ly))}${adj.length ? `<div class="r"><span>Có ${adj.length} điều chỉnh</span></div>` : ''}`, e); };
+    r.onmouseleave = () => { hi.setAttribute('opacity', 0); hideTip(); }; });
+
+  // --- ghi chú phương pháp + điều chỉnh ---
+  const adjAll = (D.adjust||[]).filter(x => x[0]===Y && x[1]>Lc && (x[2]==='*' || vb.includes(x[2])));
+  $('fcNote').innerHTML = `<b>Cách tính:</b> mỗi tháng = 70% × (target tháng × tỷ lệ đạt target gần đây, tháng càng gần càng có trọng số lớn) + 30% × (cùng kỳ ${Y-1} × tăng trưởng 3 tháng gần nhất). Tính riêng từng ngành hàng × miền rồi cộng lại, nên đã bao gồm yếu tố mùa vụ có trong target và cùng kỳ. ` +
+    (partial ? `Tháng ${L} đang chạy được cân đối với số đã bán đến ngày ${ud} theo tiến độ cùng kỳ. ` : '') +
+    `Doanh số dự báo = sản lượng dự báo × giá bình quân mỗi tấn 3 tháng gần nhất. Số tự cập nhật lại mỗi lần có số liệu mới.` +
+    `<div class="fc-adj">${adjAll.length ? adjAll.map(x => `<span>Th${x[1]} · ${x[2]==='*' ? 'NBU + SBU' : x[2]} · ${x[3]<0 ? 'Tất cả ngành' : esc(D.dims.category[x[3]])}: <b class="${x[4]>=0?'up':'down'}">${x[4]>0?'+':''}${nf(x[4],1)}%</b>${x[5] ? ` (${esc(x[5])}${x[6] ? ': '+esc(x[6]) : ''})` : ''}</span>`).join('') : '<span>Chưa có điều chỉnh mùa vụ, thời tiết hay khuyến mãi. Thêm trong file dieu-chinh-du-bao.xlsx.</span>'}</div>`;
+
+  // --- dòng 2: ngành hàng × miền ---
+  const bus = S.bu ? [S.bu] : ['NBU','SBU'];
+  $('hFcCat').textContent = `${isRev ? 'Doanh số' : 'Sản lượng'} (${U}). Cột in nghiêng là số dự báo. % đạt target tính theo sản lượng (tấn).`;
+  $('fcCat').style.gridTemplateColumns = '1fr'; $('fcCat').style.gap = '26px';
+  $('fcCat').innerHTML = bus.map(bu => {
+    const list = [...ser.values()].filter(o => o.bu===bu).map(o => {
+      const ytd = (isRev ? o.rev : o.a).slice(1, Lc+1).reduce((a,b)=>a+b,0);
+      const fm = fut.map(m => isRev ? o.fRev[m] : o.f[m]);
+      const est = ytd + fm.reduce((a,b)=>a+(b||0),0);
+      const estT = o.a.slice(1, Lc+1).reduce((a,b)=>a+b,0) + fut.reduce((s,m)=>s+(o.f[m]||0),0);
+      const tY = o.t.reduce((a,b)=>a+b,0), lyY = (isRev ? o.lyRev : o.ly).reduce((a,b)=>a+b,0);
+      return {cat:o.cat, ytd, fm, est, estT, tY, lyY};
+    }).filter(x => x.est >= 0.05 || x.tY > 0).sort((a,b) => b.est - a.est);
+    const T0 = list.reduce((s,x) => ({ytd:s.ytd+x.ytd, fm:s.fm.map((v,i)=>v+(x.fm[i]||0)), est:s.est+x.est, estT:s.estT+(x.tY>0?x.estT:0), tY:s.tY+x.tY, lyY:s.lyY+x.lyY}), {ytd:0, fm:fut.map(()=>0), est:0, estT:0, tY:0, lyY:0});
+    const rowH = (x, cls, name) => `<tr class="${cls}"><td>${name}</td><td>${fv(x.ytd)}</td>${x.fm.map(v => `<td class="f">${v==null?'–':fv(v)}</td>`).join('')}<td class="b">${fv(x.est)}</td><td>${x.tY>0 ? tn(x.tY) : '–'}</td><td class="st-${stCls(pr(x.estT,x.tY))}" style="font-weight:700">${fP(pr(x.estT, x.tY))}</td><td>${arrow(pct(x.est, x.lyY))}</td></tr>`;
+    return `<div><div class="fc-h"><i class="sw" style="background:${BU_COLOR[bu]}"></i><b>${BU_LABEL[bu]}</b></div><div class="tblwrap"><table class="fct"><thead><tr><th>Ngành hàng</th><th>Lũy kế T1–T${Lc}</th>${fut.map(m=>`<th>Dự báo T${m}</th>`).join('')}<th>Ước tính năm</th><th>Target năm (tấn)</th><th>% đạt dự kiến</th><th>So ${Y-1}</th></tr></thead><tbody>` +
+      list.map(x => rowH(x, '', esc(D.dims.category[x.cat]))).join('') + rowH(T0, 'tot', `Tổng ${BU_SHORT[bu]}`) + `</tbody></table></div></div>`;
+  }).join('');
 }
 
 /* =================== BẢN ĐỒ VIỆT NAM: NBU / SBU =================== */
