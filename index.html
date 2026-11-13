@@ -45,12 +45,38 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{font-size:15px}
 body{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--page);color:var(--ink);
-  font-feature-settings:"tnum" 1;-webkit-font-smoothing:antialiased;display:grid;grid-template-columns:268px 1fr;min-height:100vh}
+  font-feature-settings:"tnum" 1;-webkit-font-smoothing:antialiased;display:grid;grid-template-columns:256px 1fr;min-height:100vh}
 button,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:8px}
 
 /* ---------- Thanh bên: bộ lọc ---------- */
-.side{position:sticky;top:0;height:100vh;overflow-y:auto;padding:24px 20px;border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:20px}
+.side{position:sticky;top:0;height:100vh;overflow-y:auto;padding:22px 14px 18px;border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:22px}
+.brand{padding:0 6px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;color:var(--ink-2);text-decoration:none;font-size:14px;white-space:nowrap;font-weight:500;transition:background .15s,color .15s}
+.nav a svg{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav a:hover{background:var(--panel-2);color:var(--ink)}
+.nav a.on{background:color-mix(in srgb,var(--nbu) 12%,var(--panel));color:var(--brand-ink);font-weight:650}
+:root[data-theme="dark"] .nav a.on{color:#8fd3e6}
+.nav a:focus-visible,.ib:focus-visible,.clr:focus-visible{outline:2px solid var(--nbu);outline-offset:2px}
+.fbar{position:sticky;top:0;z-index:15;display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 12px;margin:-6px -32px 0;padding:12px 32px 14px;background:color-mix(in srgb,var(--page) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.fbar .fg{gap:5px}
+.fbar .fg>label,.fbar .fg>.lab{font-size:11.5px;color:var(--muted)}
+.fbar .seg button{padding:6px 9px;font-size:12.5px}
+.fbar .sel{width:136px}
+.fbar select{padding:7px 28px 7px 11px;font-size:13px;border-radius:10px;line-height:1.35}
+.fbar .act select,.fbar .seg.act{border-color:var(--nbu);background-color:color-mix(in srgb,var(--nbu) 9%,var(--panel))}
+.fbar .act select{color:var(--brand-ink);font-weight:600}
+:root[data-theme="dark"] .fbar .act select{color:#8fd3e6}
+.fbar .act>label{color:var(--nbu)}
+.clr{position:absolute;right:32px;top:8px;border:0;background:none;color:var(--nbu);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:2px 4px}
+.clr:hover{text-decoration:underline}
+section,.grid2,.grid3,#sec-store{scroll-margin-top:96px}
+.foot-row{display:flex;align-items:stretch;gap:6px}.foot-row .csv{flex:1;padding:8px 10px}
+.icons{display:flex;gap:4px}
+.ib{width:36px;min-height:36px;display:grid;place-items:center;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--ink-2);cursor:pointer}
+.ib:hover{color:var(--ink);border-color:var(--line-2)}
+.ib svg,.ghost svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .brand{display:flex;align-items:center;gap:10px}
 .mark{width:34px;height:34px;border-radius:10px;background:var(--hero);display:grid;place-items:center}
 .mark svg{width:20px;height:20px}
@@ -71,13 +97,14 @@ select:hover{border-color:var(--line-2)}
 .ghost:hover{border-color:var(--line-2);color:var(--ink)}
 .ghost.csv{background:var(--act);border-color:var(--act);color:#fff;font-weight:600}
 .ghost.csv:hover{filter:brightness(1.12);color:#fff}
+:root[data-theme="dark"] .ghost.csv,:root[data-theme="dark"] .ghost.csv:hover{color:var(--page)}
 .ghost.csv:disabled{opacity:.5;cursor:default;filter:none}
-.upd{display:flex;align-items:center;gap:8px;padding:4px 2px 0;font-size:12.5px;color:var(--ink-2)}
+.upd{display:flex;align-items:center;gap:8px;padding:0 2px;font-size:12px;color:var(--ink-2);line-height:1.3}
 .upd i{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 22%,transparent);flex:none}
 input[type=file]{display:none}
 
 /* ---------- Nội dung chính ---------- */
-main{padding:28px 32px 48px;min-width:0;display:flex;flex-direction:column;gap:20px;max-width:1500px}
+main{padding:22px 32px 48px;min-width:0;display:flex;flex-direction:column;gap:20px;max-width:1500px}
 .top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
 h1{font-size:28px;font-weight:700;letter-spacing:-.025em;line-height:1.15}
 .lead{color:var(--ink-2);font-size:14px;margin-top:6px}
@@ -323,8 +350,12 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
 @media (max-width:1180px){.hero{grid-template-columns:1fr}.grid3{grid-template-columns:1fr}}
 @media (max-width:900px){
   body{grid-template-columns:1fr}
-  .side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
-  .brand,.side-foot{grid-column:1/-1}
+  .side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);gap:14px}
+  .nav{flex-direction:row;overflow-x:auto;scrollbar-width:none}
+  .nav a{white-space:nowrap;padding:8px 10px}
+  .fbar{position:static;margin:0;padding:0 0 12px;background:none;backdrop-filter:none}
+  .clr{position:static;margin-left:auto;padding:8px 4px}
+  .fbar .sel{width:calc(50% - 7px)}
   main{padding:20px 16px 40px}
   .grid2{grid-template-columns:1fr}
   .hero{padding:22px;border-radius:20px}
@@ -354,19 +385,24 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     </div>
   </div>
 
-  <div class="fg"><span class="lab">Khu vực</span><div class="seg" id="fBu"></div></div>
-  <div class="fg"><span class="lab">Năm</span><div class="seg" id="fYear"></div></div>
-  <div class="fg"><span class="lab">Chỉ tiêu</span><div class="seg" id="fMetric"><button data-v="rev" class="on">Doanh số</button><button data-v="ton">Sản lượng</button></div></div>
-  <div class="fg"><label for="fCust">Khách hàng</label><select id="fCust"></select></div>
-  <div class="fg"><label for="fCat">Ngành hàng</label><select id="fCat"></select></div>
-  <div class="fg"><label for="fBrand">Nhãn hàng</label><select id="fBrand"></select></div>
-  <div class="fg"><span class="lab">Phân khúc</span><div class="seg" id="fSeg"></div></div>
-  <button class="ghost" id="reset">Xóa tất cả bộ lọc</button>
+  <nav class="nav" id="nav" aria-label="Các phần của báo cáo">
+    <a href="#sec-tong" data-sec="sec-tong"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg><span>Tổng quan</span></a>
+    <a href="#trkPanel" data-sec="trkPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2"/></svg><span>Tiến độ target</span></a>
+    <a href="#fcPanel" data-sec="fcPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18l5-5 3 3 4-5"/><path d="M16 11l4-4" stroke-dasharray="2 2.2"/><path d="M4 4v16h16"/></svg><span>Dự báo</span></a>
+    <a href="#sec-trend" data-sec="sec-trend"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V7M15 20v-6M20 20V9"/></svg><span>Xu hướng theo tháng</span></a>
+    <a href="#sec-rank" data-sec="sec-rank"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 12h16M4 18h8"/></svg><span>Xếp hạng</span></a>
+    <a href="#sec-mx" data-sec="sec-mx"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16M9.5 10v9M14.5 10v9"/></svg><span>Chi tiết theo tháng</span></a>
+    <a href="#sec-brand" data-sec="sec-brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5V5a1 1 0 0 1 1-1h7.5L20 11.5 12.5 19z"/><circle cx="8.5" cy="8.5" r="1.3"/></svg><span>Nhãn hàng &amp; phân khúc</span></a>
+    <a href="#sec-store" data-sec="sec-store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9l1.5-5h13L20 9M4 9h16M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0A2.7 2.7 0 0 0 20 9M5.5 11.5V20h13v-8.5"/><path d="M10 20v-4.5h4V20"/></svg><span>Doanh số theo store</span></a>
+  </nav>
 
   <div class="side-foot">
-    <button class="ghost csv" id="csv" disabled>Xuất file CSV</button>
-    <button class="ghost" id="logout" style="display:none">Đăng xuất</button>
-    <button class="ghost" id="theme"></button>
+    <div class="foot-row">
+      <button class="ghost csv" id="csv" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14"/></svg>Xuất file CSV</button>
+
+        <button class="ib" id="theme"></button>
+        <button class="ib" id="logout" style="display:none" title="Đăng xuất" aria-label="Đăng xuất"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h4a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-4M10 16l-4-4 4-4M6 12h9"/></svg></button>
+          </div>
     <div id="upd" class="upd"><i></i>Tự cập nhật 16:00 hằng ngày</div>
   </div>
 </aside>
@@ -377,12 +413,23 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
       <h1 id="title">Doanh số kênh siêu thị</h1>
       <div class="lead" id="lead">Đang tải dữ liệu…</div>
     </div>
-    <div class="chips" id="chips"></div>
+    
+  </div>
+
+  <div class="fbar" id="fbar" aria-label="Bộ lọc">
+    <div class="fg"><span class="lab">Khu vực</span><div class="seg" id="fBu"></div></div>
+    <div class="fg"><span class="lab">Năm</span><div class="seg" id="fYear"></div></div>
+    <div class="fg"><span class="lab">Chỉ tiêu</span><div class="seg" id="fMetric"><button data-v="rev" class="on">Doanh số</button><button data-v="ton">Sản lượng</button></div></div>
+    <div class="fg"><span class="lab">Phân khúc</span><div class="seg" id="fSeg"></div></div>
+    <div class="fg sel"><label for="fCust">Khách hàng</label><select id="fCust"></select></div>
+    <div class="fg sel"><label for="fCat">Ngành hàng</label><select id="fCat"></select></div>
+    <div class="fg sel"><label for="fBrand">Nhãn hàng</label><select id="fBrand"></select></div>
+    <button class="clr" id="reset" hidden></button>
   </div>
 
   <div class="warn" id="warn"></div>
 
-  <section class="hero" aria-label="Tổng quan">
+  <section class="hero" id="sec-tong" aria-label="Tổng quan">
     <div style="position:relative;z-index:1">
       <div class="h-label" id="hLabel">Lũy kế</div>
       <div class="h-num" id="hNum">–</div>
@@ -447,7 +494,7 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     <div class="grid2" id="fcCat"></div>
   </section>
 
-  <section class="panel">
+  <section class="panel" id="sec-trend">
     <div class="ph">
       <div><h2 id="tTrend">Theo tháng</h2><p id="hTrend"></p></div>
       <div class="legend" id="lgTrend"></div>
@@ -455,7 +502,7 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     <div id="cTrend"></div>
   </section>
 
-  <div class="grid2">
+  <div class="grid2" id="sec-rank">
     <section class="panel">
       <div class="ph"><div><h2>Ngành hàng</h2><p>Chọn một ngành để lọc toàn trang</p></div></div>
       <div class="rank" id="cCat"></div>
@@ -466,7 +513,7 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     </section>
   </div>
 
-  <section class="panel">
+  <section class="panel" id="sec-mx">
     <div class="ph">
       <div><h2 id="tMx">Chi tiết theo tháng</h2><p id="hMx"></p></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -477,7 +524,7 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     <div class="tblwrap" id="mx"></div>
   </section>
 
-  <div class="grid3">
+  <div class="grid3" id="sec-brand">
     <section class="panel">
       <div class="ph"><div><h2>Nhãn hàng</h2><p>Chọn một nhãn để lọc toàn trang</p></div></div>
       <div class="rank" id="cBrand"></div>
@@ -487,7 +534,7 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
       <div id="cSeg"></div>
     </section>
   </div>
-  <div>
+  <div id="sec-store">
     <section class="panel">
       <div class="ph"><div><h2 id="tStoreH">Doanh số thực hiện by Store</h2><p id="hStore"></p></div>
         <div class="seg" id="fStM" style="flex-wrap:wrap"></div></div>
@@ -516,7 +563,9 @@ const $ = id => document.getElementById(id);
 
 /* =================== GIAO DIỆN SÁNG / TỐI =================== */
 function setTheme(t){ document.documentElement.dataset.theme = t; try{ localStorage.setItem('theme', t); }catch(e){}
-  $('theme').textContent = t==='dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'; }
+  const b = $('theme'), lbl = t==='dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối';
+  b.innerHTML = t==='dark' ? '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/></svg>';
+  b.title = lbl; b.setAttribute('aria-label', lbl); }
 let saved = null; try{ saved = localStorage.getItem('theme'); }catch(e){}
 setTheme(saved || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 $('theme').onclick = () => setTheme(document.documentElement.dataset.theme==='dark' ? 'light' : 'dark');
@@ -656,14 +705,14 @@ function init(data){
   const tot = i => { const m = new Map(); R.forEach(r=>m.set(r[i],(m.get(r[i])||0)+r[8])); return m; };
   const custTot = tot(3);
   const custs = [...custTot.keys()].sort((a,b)=>custTot.get(b)-custTot.get(a));
-  $('fCust').innerHTML = `<option value="-1">Tất cả khách hàng</option>` + custs.map(i=>`<option value="${i}">${esc(D.dims.customer[i])}</option>`).join('');
+  $('fCust').innerHTML = `<option value="-1">Tất cả</option>` + custs.map(i=>`<option value="${i}">${esc(D.dims.customer[i])}</option>`).join('');
   const catIdx = D.categoryOrder.map(c=>D.dims.category.indexOf(c)).filter(i=>i>=0);
   D.dims.category.forEach((c,i)=>{ if(!catIdx.includes(i)) catIdx.push(i); });
-  $('fCat').innerHTML = `<option value="-1">Tất cả ngành hàng</option>` + catIdx.map(i=>`<option value="${i}">${esc(D.dims.category[i])}</option>`).join('');
+  $('fCat').innerHTML = `<option value="-1">Tất cả</option>` + catIdx.map(i=>`<option value="${i}">${esc(D.dims.category[i])}</option>`).join('');
   const bT = tot(5), brands = [...bT.keys()].sort((a,b)=>bT.get(b)-bT.get(a));
-  $('fBrand').innerHTML = `<option value="-1">Tất cả nhãn hàng</option>` + brands.map(i=>`<option value="${i}">${esc(D.dims.brand[i])}</option>`).join('');
+  $('fBrand').innerHTML = `<option value="-1">Tất cả</option>` + brands.map(i=>`<option value="${i}">${esc(D.dims.brand[i])}</option>`).join('');
   const sT = tot(6); SEG_ORDER = [...sT.keys()].filter(i=>D.dims.segment[i]!=='Khác').sort((a,b)=>sT.get(b)-sT.get(a));
-  const segAll = [...SEG_ORDER, ...[...sT.keys()].filter(i=>!SEG_ORDER.includes(i))];
+  const segAll = SEG_ORDER;   // bỏ nút "Khác" (gần như không có số liệu)
   $('fSeg').innerHTML = `<button data-v="-1">Tất cả</button>` + segAll.map(i=>`<button data-v="${i}">${esc(D.dims.segment[i])}</button>`).join('');
   const [y,m,d] = D.updated.split('-');
   $('upd').title = `Số liệu đến ngày ${d}/${m}/${y}`; $('csv').disabled = false;
@@ -683,6 +732,26 @@ $('fCust').onchange = e => { S.cust = +e.target.value; render(); };
 $('fCat').onchange = e => { S.cat = +e.target.value; render(); };
 $('fBrand').onchange = e => { S.brand = +e.target.value; render(); };
 $('reset').onclick = () => { Object.assign(S,{bu:'',cust:-1,cat:-1,brand:-1,seg:-1}); syncControls(); render(); };
+/* Đánh dấu bộ lọc đang bật + nút "Xóa lọc (n)" */
+function updFilters(){
+  [['fCust','cust'],['fCat','cat'],['fBrand','brand']].forEach(([id,k]) => { $(id).value = S[k]; $(id).closest('.fg').classList.toggle('act', S[k]>=0); });
+  $('fSeg').classList.toggle('act', S.seg>=0); $('fBu').classList.toggle('act', !!S.bu);
+  const n = [S.bu, S.cust>=0, S.cat>=0, S.brand>=0, S.seg>=0].filter(Boolean).length;
+  $('reset').hidden = !n; $('reset').textContent = `Xóa lọc (${n})`;
+  // ẩn mục menu nếu phần đó đang ẩn (vd năm chưa có target)
+  document.querySelectorAll('#nav a').forEach(a => { const el = $(a.dataset.sec); a.hidden = !el || el.style.display==='none'; });
+  setTimeout(spy, 0);
+}
+/* Menu: bấm để cuộn tới phần, tô sáng phần đang xem */
+document.querySelectorAll('#nav a').forEach(a => a.onclick = e => { e.preventDefault(); const el = $(a.dataset.sec); if (el) el.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'}); });
+function spy(){
+  const off = ($('fbar').getBoundingClientRect().bottom || 0) + 60; let cur = null;
+  document.querySelectorAll('#nav a:not([hidden])').forEach(a => { const el = $(a.dataset.sec); if (el && el.getBoundingClientRect().top <= off) cur = a; });
+  if (!cur) cur = document.querySelector('#nav a:not([hidden])');
+  if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) { const v = [...document.querySelectorAll('#nav a:not([hidden])')]; cur = v[v.length-1]; }
+  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a===cur));
+}
+addEventListener('scroll', () => requestAnimationFrame(spy), {passive:true});
 function toggle(k, i){ S[k] = S[k]===i ? -1 : i; syncControls(); render(); }
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 120); });
 
@@ -707,13 +776,7 @@ function render(){
   /* --- Tiêu đề + chip lọc --- */
   $('title').textContent = `${mName()} kênh siêu thị năm ${Y}`;
   $('lead').textContent = `${S.bu ? BU_LABEL[S.bu] : 'Cả hai khu vực SBU và NBU'}, đơn vị ${unit()}, số liệu đến ${String(ud).padStart(2,'0')}/${String(um).padStart(2,'0')}/${uy}.`;
-  const chips = [];
-  if (S.cust>=0) chips.push(['cust','Khách hàng',D.dims.customer[S.cust]]);
-  if (S.cat>=0)  chips.push(['cat','Ngành hàng',D.dims.category[S.cat]]);
-  if (S.brand>=0) chips.push(['brand','Nhãn hàng',D.dims.brand[S.brand]]);
-  if (S.seg>=0) chips.push(['seg','Phân khúc',D.dims.segment[S.seg]]);
-  $('chips').innerHTML = chips.map(([k,l,v])=>`<button class="chip" data-k="${k}" title="Bỏ lọc ${esc(l.toLowerCase())}"><span>${l}</span><b>${esc(v)}</b><em aria-hidden="true">✕</em></button>`).join('');
-  $('chips').querySelectorAll('.chip').forEach(c => c.onclick = () => { S[c.dataset.k] = -1; syncControls(); render(); });
+  updFilters();
 
   /* --- Hero --- */
   const ytd = sum(cur), lyYtd = sum(ly, r=>r[2]<=L), ytdCmp = sum(CMP.cur);
