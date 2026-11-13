@@ -206,7 +206,7 @@ table.trk td.nm{padding-left:16px !important;font-weight:500}
 .pbar{position:relative;height:8px;border-radius:4px;background:var(--panel-2);margin-top:2px}
 .pbar div{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
 .pbar s{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink-2);border-radius:1px}
-.rk2{display:grid;grid-template-columns:minmax(90px,1fr) 2fr 128px;gap:12px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--line);font-size:13.5px}
+.rk2{display:grid;grid-template-columns:minmax(150px,1.2fr) 2fr 128px;gap:12px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--line);font-size:13.5px}
 .rk2:last-child{border-bottom:0}
 .rk2 .nm{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rk2 .nm span{font-size:11.5px;color:var(--muted);margin-left:6px;font-weight:400}
@@ -417,11 +417,11 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
 
   <div class="grid2" id="trkRank">
     <section class="panel">
-      <div class="ph"><div><h2>Hệ thống xếp theo % đạt lũy kế</h2><p>Vạch đứng là mốc 100% target</p></div></div>
+      <div class="ph"><div><h2 id="tRkCust">Hệ thống xếp theo % đạt lũy kế</h2><p>Vạch đứng là mốc 100% target. Đổi phạm vi bằng nút NTW · NBU · SBU ở bảng phía trên hoặc bộ lọc Khu vực.</p></div></div>
       <div id="rkCust"></div>
     </section>
     <section class="panel">
-      <div class="ph"><div><h2>Ngành hàng xếp theo % đạt lũy kế</h2><p>Vạch đứng là mốc 100% target</p></div></div>
+      <div class="ph"><div><h2 id="tRkCat">Ngành hàng xếp theo % đạt lũy kế</h2><p>Vạch đứng là mốc 100% target. Cùng phạm vi với bảng hệ thống bên cạnh.</p></div></div>
       <div id="rkCat"></div>
     </section>
   </div>
@@ -857,25 +857,27 @@ function drawTarget(Y, partial, ud){
     el.onmousemove = e => showTip(`<div class="t">${esc(o.label)}</div>${trow('Thực tế', tn(o.a)+' tấn', 'var(--act)')}${trow('Target', o.t>0 ? tn(o.t)+' tấn' : 'Chưa có', 'var(--tgt)')}${trow('Tỷ lệ đạt', `<span style="color:${stCol(pr(o.a,o.t))};font-weight:700">${fP(pr(o.a,o.t))}</span>`)}${o.t>0 ? trow('Chênh lệch', (o.a-o.t>=0?'+':'')+tn(o.a-o.t)+' tấn') : ''}`, e);
     el.onmouseleave = hideTip; });
 
-  /* --- Xếp hạng % đạt lũy kế, có dòng tổng --- */
-  const rank = (el, keyIdx, names, withBu) => {
+  /* --- Xếp hạng % đạt lũy kế: cùng phạm vi với bảng phía trên (NTW gộp NBU + SBU, hoặc riêng NBU / SBU) --- */
+  const scopeName = view==='NTW' ? 'NTW (toàn quốc)' : BU_LABEL[view];
+  const rank = (el, keyIdx, names) => {
     const m = new Map();
-    const add = (bu, key, a, t) => { const kk = withBu && !S.bu ? bu+'|'+key : key; const o = m.get(kk) || {bu, key, a:0, t:0}; o.a += a; o.t += t; m.set(kk, o); };
-    A.forEach(r => { if (r[2]<=L) add(r[0], r[keyIdx], r[9], 0); });
-    Tf.forEach(t => { if (t[2]<=L) add(t[0], t[keyIdx===3?3:4], 0, t[5]); });
+    const add = (key, a, t) => { const o = m.get(key) || {key, a:0, t:0}; o.a += a; o.t += t; m.set(key, o); };
+    A.forEach(r => { if (r[2]<=L && vb.includes(r[0])) add(r[keyIdx], r[9], 0); });
+    Tf.forEach(t => { if (t[2]<=L && vb.includes(t[0])) add(t[keyIdx===3?3:4], 0, t[5]); });
     const items = [...m.values()].filter(o=>o.t>0).map(o=>({...o, p:o.a/o.t})).sort((x,y)=>y.p-x.p);
-    const ta = act(A, r=>r[2]<=L), tt = tg(Tf, t=>t[2]<=L), tp = pr(ta, tt);
+    const ta = act(A, r=>r[2]<=L && vb.includes(r[0])), tt = tg(Tf, t=>t[2]<=L && vb.includes(t[0])), tp = pr(ta, tt);
     const maxP = Math.max(1.2, ...items.map(o=>o.p));
     const line = (cls, name, p, a, t) => `<div class="rk2 ${cls}"><div class="nm">${name}</div>
       <div class="pbar"><div style="width:${Math.min((p||0)/maxP,1)*100}%;background:${stCol(p)}"></div><s style="left:${100/maxP}%"></s></div>
       <div class="pc st-${stCls(p)}">${fP(p)}<small>${tn(a)} / ${tn(t)} tấn</small></div></div>`;
     el.innerHTML = items.length
-      ? items.map(o => line('', esc(names[o.key]) + (withBu && !S.bu ? `<span>${BU_SHORT[o.bu]}</span>` : ''), o.p, o.a, o.t)).join('') +
-        line('tot', S.bu ? `Tổng ${BU_SHORT[S.bu]}` : 'Tổng NTW', tp, ta, tt)
+      ? items.map(o => line('', esc(names[o.key]), o.p, o.a, o.t)).join('') + line('tot', `Tổng ${view==='NTW' ? 'NTW' : BU_SHORT[view]}`, tp, ta, tt)
       : '<p style="color:var(--muted)">Không có target với bộ lọc hiện tại.</p>';
   };
-  rank($('rkCust'), 3, D.dims.customer, true);
-  rank($('rkCat'), 4, D.dims.category, false);
+  rank($('rkCust'), 3, D.dims.customer);
+  rank($('rkCat'), 4, D.dims.category);
+  $('tRkCust').textContent = `Hệ thống xếp theo % đạt lũy kế, ${scopeName}`;
+  $('tRkCat').textContent = `Ngành hàng xếp theo % đạt lũy kế, ${scopeName}`;
 
   drawMap(Y, L, T, tCats);
 }
