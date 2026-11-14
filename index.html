@@ -59,6 +59,11 @@ button,select{font:inherit;color:inherit}
 .nav a svg{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .nav a:hover{background:var(--panel-2);color:var(--ink)}
 .nav a.on{background:color-mix(in srgb,var(--nbu) 12%,var(--panel));color:var(--brand-ink);font-weight:650}
+.nav a.subnav{position:relative;margin-left:21px;padding:7px 12px 7px 20px;font-size:13px;font-weight:500;border-radius:10px}
+.nav a.subnav::before{content:"";position:absolute;left:4px;top:-2px;bottom:-2px;border-left:1.5px solid var(--line-2)}
+.nav a.subnav.on{background:color-mix(in srgb,var(--nbu) 9%,var(--panel))}
+.nav a.subnav.on::before{border-left-color:var(--nbu)}
+.nav a.par{color:var(--brand-ink);font-weight:650}
 :root[data-theme="dark"] .nav a.on{color:#8fd3e6}
 .nav a:focus-visible,.ib:focus-visible,.clr:focus-visible{outline:2px solid var(--nbu);outline-offset:2px}
 .fbar{position:sticky;top:0;z-index:15;display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 10px;margin:-6px -32px 0;padding:12px 32px 14px;background:color-mix(in srgb,var(--page) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
@@ -185,6 +190,40 @@ svg text{fill:var(--muted);font-size:12px;font-family:inherit}
 /* Bảng nhiệt */
 .tblwrap{overflow-x:auto;margin:0 -4px}
 table.heat{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5px}
+/* Bảng nhóm ngành & điểm thưởng */
+table.grp{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+.grp th,.grp td{padding:6px 9px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+.grp thead th{font-weight:600;color:var(--ink-2);font-size:11.5px;border-bottom:0}
+.grp thead tr:first-child th{font-size:12.5px;color:var(--ink);padding-top:2px}
+.grp thead tr:first-child th.bu-n{border-bottom:3px solid var(--nbu)}
+.grp thead tr:first-child th.bu-s{border-bottom:3px solid var(--sbu)}
+.grp thead tr:first-child th.bu-t{border-bottom:3px solid var(--ink-2)}
+.grp th:first-child,.grp td:first-child{text-align:left;position:sticky;left:0;background:var(--panel);z-index:1}
+.grp td.sub{padding-left:22px;color:var(--ink-2)}
+.grp tr.tot td{font-weight:700;background:color-mix(in srgb,var(--nbu) 6%,var(--panel))}
+.grp tr.tot td:first-child{background:color-mix(in srgb,var(--nbu) 6%,var(--panel))}
+.grp tr.all td{font-weight:800;border-top:2px solid var(--line-2);border-bottom:0}
+.grp td.gs{border-left:1px solid var(--line)}
+.grp .neg{color:var(--miss)}
+.grp .pt{display:inline-block;min-width:30px;padding:2px 7px;border-radius:7px;font-weight:700;text-align:center}
+.grp .pt.full{background:color-mix(in srgb,var(--ok) 16%,var(--panel));color:var(--ok)}
+.grp .pt.part{background:color-mix(in srgb,var(--near) 16%,var(--panel));color:var(--near)}
+.grp .pt.zero{background:var(--panel-2);color:var(--muted)}
+.grp .pt.na{color:var(--muted);font-weight:400}
+.grp-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px}
+.grp-card{border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:center}
+.grp-card h3{margin:0;font-size:13px;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:7px}
+.grp-card .big{font-size:26px;font-weight:800;color:var(--ink)}
+.grp-card .big small{font-size:13px;font-weight:500;color:var(--muted)}
+.grp-card .rank{grid-row:1/4;grid-column:2;width:58px;height:58px;border-radius:14px;display:grid;place-items:center;font-size:24px;font-weight:800}
+.grp-card .rank.A{background:color-mix(in srgb,var(--ok) 16%,var(--panel));color:var(--ok)}
+.grp-card .rank.Bp,.grp-card .rank.B{background:color-mix(in srgb,var(--nbu) 14%,var(--panel));color:var(--nbu)}
+.grp-card .rank.C{background:color-mix(in srgb,var(--near) 16%,var(--panel));color:var(--near)}
+.grp-card .rank.D{background:color-mix(in srgb,var(--miss) 14%,var(--panel));color:var(--miss)}
+.grp-card .ln{font-size:12px;color:var(--muted)}
+#grpPanel .crumb{margin:0 0 2px;font-size:12px;font-weight:600;color:var(--nbu)}
+#grpPanel .note{margin:14px 0 0;font-size:12px;line-height:1.55;color:var(--muted)}
+#grpPanel .note b{color:var(--ink-2)}
 .heat th{font-weight:500;color:var(--muted);text-align:right;padding:4px 8px;white-space:nowrap}
 .heat th:first-child,.heat td:first-child{text-align:left;position:sticky;left:0;background:var(--panel);z-index:1;padding-right:14px;white-space:nowrap;font-weight:500}
 .heat td{padding:0}
@@ -365,6 +404,7 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
   .side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);gap:14px}
   .nav{flex-direction:row;overflow-x:auto;scrollbar-width:none}
   .nav a{white-space:nowrap;padding:8px 10px}
+  .nav a.subnav{margin-left:0;padding:8px 10px;font-size:13px}.nav a.subnav::before{display:none}
   .fbar{position:static;margin:0;padding:0 0 12px;background:none;backdrop-filter:none}
   .clr{position:static;margin-left:auto;padding:8px 4px}
   .fbar .sel{width:calc(50% - 7px)}
@@ -472,6 +512,16 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
       <div class="keys"><span><i style="background:var(--ok)"></i>Đạt từ 100%</span><span><i style="background:var(--near)"></i>90% đến dưới 100%</span><span><i style="background:var(--miss)"></i>Dưới 90%</span></div>
     </div>
     <div class="mapgrid"><div id="vnMap"></div><div class="mcards" id="mapCards"></div></div>
+  </section>
+
+  <section class="panel" id="grpPanel">
+    <div class="ph">
+      <div><h2>Tracking nhóm ngành hàng &amp; điểm thưởng</h2><p id="hGrp"></p></div>
+      <div class="fg sel" style="width:150px"><label for="fGrpM">Tháng</label><select id="fGrpM"></select></div>
+    </div>
+    <div class="tblwrap" id="tGrp"></div>
+    <div class="grp-sum" id="grpSum"></div>
+    <p class="note" id="nGrp"></p>
   </section>
 
   <section class="panel" id="trkMxPanel">
@@ -799,7 +849,7 @@ function spy(){
   document.querySelectorAll('#nav a:not([hidden])').forEach(a => { const el = $(a.dataset.sec); if (el && el.getBoundingClientRect().top <= off) cur = a; });
   if (!cur) cur = document.querySelector('#nav a:not([hidden])');
   if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) { const v = [...document.querySelectorAll('#nav a:not([hidden])')]; cur = v[v.length-1]; }
-  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a===cur));
+  document.querySelectorAll('#nav a').forEach(a => { a.classList.toggle('on', a===cur); a.classList.toggle('par', !!cur && cur.dataset.parent===a.dataset.sec); });
 }
 addEventListener('scroll', () => requestAnimationFrame(spy), {passive:true});
 function toggle(k, i){ S[k] = S[k]===i ? -1 : i; syncControls(); render(); }
@@ -867,6 +917,7 @@ function render(){
     <div>Số liệu cần rà soát: ${w.join(', ')}. Kiểm tra các cột MT Channel Trans, Business Trans và Delivery Name Trans trong file Excel.</div>` : '';
 
   drawTarget(Y, partial, ud);
+  drawGroup(Y);
   drawForecast(Y, partial, ud);
   drawTrend(cur, ly, Y, hasLy);
   rankList($('cCat'),  'cat',  [...group(R.filter(r=>r[1]===Y && pass(r,'cat')),4)],  D.dims.category, 4);
@@ -887,6 +938,102 @@ const fP = p => { if (p==null) return '–'; const v = p*100, r = Math.round(v);
 const tn = n => n==null ? '–' : nf(n, Math.abs(n)>=100 ? 0 : 1);
 const fB = n => n==null ? '–' : nf(n, Math.abs(n)>=100 ? 1 : 2);   // tỷ đồng
 const pr = (a,t) => t>0 ? a/t : null;   // tỷ lệ đạt
+/* ===================== Tracking nhóm ngành & điểm thưởng =====================
+   Theo "Hệ thống tiêu chí đánh giá xét thưởng bán hàng GSTT kênh TMHĐ" (Proposal MTS 2026, hiệu lực 01/05/2026), mục 1.1 và 1.4.
+   - Tỷ lệ hoàn thành làm tròn đến hàng đơn vị rồi mới so với mốc.
+   - Mỗi miền chấm riêng. Thang điểm khác nhau theo kênh: mặc định (kinh doanh tất cả ngành hàng), BHX, WCM, Con Cưng. */
+const GRP_RULES = {
+  def: {oil:[[100,10],[90,5]], prem:[[100,10],[90,5]], niche:[[95,5]], mid:[[100,10],[90,5]], ndfc:[[100,10],[90,5]], focus:[[100,5],[90,3]],
+        dairy:[[95,5]], gvap:[[100,5]], flour:[[100,5]], hc:[[100,10],[90,5]], max:75, name:'kinh doanh tất cả ngành hàng'},
+  BHX: {oil:[[100,10],[90,5]], prem:[[100,10],[90,5]], niche:[[100,10],[90,5]], mid:[[100,10],[90,5]], ndfc:[[100,10],[90,5]], focus:[[100,5],[90,3]],
+        gvap:[[100,5]], flour:[[100,5]], hc:[[100,10],[90,5]], max:75, name:'BHX'},
+  WCM: {oil:[[100,10],[90,5]], prem:[[100,10],[90,5]], niche:[[100,10],[90,5]], mid:[[100,10],[90,5]], ndfc:[[100,10],[90,5]], focus:[[100,5],[90,3]],
+        dairy:[[95,5]], gvap:[[100,5]], flour:[[100,5]], hc:[[95,5]], max:75, name:'WCM'},
+  'CON CUNG': {oil:[[100,5]], prem:[[100,10],[90,5]], niche:[[100,20],[90,10]], dairy:[[100,50],[95,35],[90,25]], hcBonus:true, max:85, name:'Con Cưng'},
+};
+const GRP_RANK = [[95,'A','A',20e6],[80,'B+','Bp',16e6],[65,'B','B',13e6],[50,'C','C',10e6],[-1e9,'D','D',0]];
+const grpPts = (rule, p) => { if (!rule) return null; if (p==null) return 0; const r = Math.round(p*100); for (const [th,pt] of rule) if (r >= th) return pt; return 0; };
+let GRP_M = null;
+function drawGroup(Y){
+  const T = (D.target||[]).filter(t => t[1]===Y);
+  $('grpPanel').style.display = T.length && T[0].length > 8 ? '' : 'none';
+  if (!T.length || T[0].length <= 8) return;
+  const dm = D.dims, G = n => dm.group.indexOf(n), K = n => dm.category.indexOf(n), F = n => dm.focus.indexOf(n);
+  const L = R.reduce((x,r)=>r[1]===Y && r[2]>x?r[2]:x, 0) || 12;
+  if (!GRP_M || GRP_M.y!==Y) GRP_M = {y:Y, m:L};
+  $('fGrpM').innerHTML = MONTHS.map(m => `<option value="${m}">Tháng ${m}/${Y}${m===L && m<12 ? ' (mới nhất)' : ''}</option>`).join('');
+  $('fGrpM').value = GRP_M.m; $('fGrpM').onchange = e => { GRP_M.m = +e.target.value; drawGroup(Y); };
+  const M = GRP_M.m, q = Math.ceil(M/3), cName = S.cust>=0 ? dm.customer[S.cust] : '';
+  const rules = GRP_RULES[cName] || GRP_RULES.def;
+  const inC = c => S.cust<0 || c===S.cust;
+  const focusSet = c => new Set(((D.focus||{})[dm.customer[c]]||{})[`${Y}-${q}`] || []);
+  const fCache = new Map(), isFocus = (c, f) => { if (!f) return false; if (!fCache.has(c)) fCache.set(c, focusSet(c)); return fCache.get(c).has(dm.focus[f]); };
+  // tổng target / thực tế theo (miền, dòng)
+  const OIL = ['Premium','Mid-end','Niches','Low-end'], SAU = ['Dipping Sauce','Dry Seasoning','Cooked Sauce'];
+  const CATS = [['GVAP','GVAP','gvap'],['Flour','Flour','flour'],['Home Care','Homecare','hc'],['Dairy','Dairy','dairy'],['Rice','Rice',null],['Tea','Vinatea',null]];
+  const kOil = K('Oils & Fats'), kSau = K('Sauces & Condiments');
+  const keyOf = (cat, grp) => cat===kOil ? (OIL.includes(dm.group[grp]) ? 'g:'+dm.group[grp] : null) : cat===kSau ? (SAU.includes(dm.group[grp]) ? 'g:'+dm.group[grp] : null) : 'c:'+cat;
+  const V = {NBU:{}, SBU:{}};
+  const add = (bu, k, i, v) => { if (!V[bu]) return; const o = V[bu][k] || (V[bu][k] = [0,0]); o[i] += v; };
+  T.forEach(t => { if (t[2]!==M || !inC(t[3])) return; const k = keyOf(t[4], t[7]); if (!k) return; add(t[0], k, 0, t[5]);
+    if (t[4]===kSau && isFocus(t[3], t[8])) add(t[0], 'focus', 0, t[5]); });
+  R.forEach(r => { if (r[1]!==Y || r[2]!==M || !inC(r[3])) return; const k = keyOf(r[4], r[14]); if (!k) return; add(r[0], k, 1, r[9]);
+    if (r[4]===kSau && isFocus(r[3], r[15])) add(r[0], 'focus', 1, r[9]); });
+  const get = (bu, k) => bu==='NTW' ? [0,1].map(i => (V.NBU[k]?.[i]||0) + (V.SBU[k]?.[i]||0)) : (V[bu][k] || [0,0]);
+  const sumK = (bu, ks) => ks.reduce((a,k) => { const v = get(bu,k); return [a[0]+v[0], a[1]+v[1]]; }, [0,0]);
+  const oilK = OIL.map(g=>'g:'+g), sauK = SAU.map(g=>'g:'+g), catK = CATS.map(([c]) => 'c:'+K(c));
+  // các dòng của bảng: [nhãn, hàm lấy [target, thực tế], kiểu dòng, quy tắc điểm]
+  const rows = [
+    ...OIL.map((g,i) => [g, bu => get(bu,'g:'+g), 'sub', ['prem','mid','niche',null][i]]),
+    ['Tổng dầu', bu => sumK(bu, oilK), 'tot', 'oil'],
+    ...SAU.map(g => [g, bu => get(bu,'g:'+g), 'sub', null]),
+    ['NDFC', bu => sumK(bu, sauK), 'tot', 'ndfc'],
+    ['NDFC – nhóm SP trọng tâm', bu => get(bu,'focus'), 'sub', 'focus'],
+    ...CATS.map(([c,lbl,rk]) => [lbl, bu => get(bu,'c:'+K(c)), '', rk]),
+  ];
+  const allRow = bu => sumK(bu, [...oilK, ...sauK, ...catK]);
+  const f2 = x => nf(x, 2), pc = (a,t) => t>0 ? a/t : null;
+  const pTxt = p => p==null ? '–' : `<span style="color:${stCol(Math.round(p*100)/100)};font-weight:700">${Math.round(p*100)}%</span>`;
+  const gap = (a,t) => t>0 || a>0 ? (a-t<0 ? `<span class="neg">(${f2(t-a)})</span>` : f2(a-t)) : '–';
+  const ptCell = (rk, p, t) => { const rule = rk && rules[rk]; if (!rule) return `<span class="pt na">–</span>`;
+    if (!(t>0)) return `<span class="pt na" title="Không có target tháng này">–</span>`;
+    const v = grpPts(rule, p), mx = rule[0][1]; return `<span class="pt ${v>=mx?'full':v>0?'part':'zero'}" title="Tối đa ${mx} điểm">${v}</span>`; };
+  // chấm điểm từng miền
+  const score = bu => { let s = 0; const det = [];
+    rows.forEach(([lbl, fn, , rk]) => { const rule = rk && rules[rk]; if (!rule) return; const [t,a] = fn(bu); if (!(t>0)) return; const v = grpPts(rule, pc(a,t)); s += v; });
+    let bonus = 0;
+    const tea = get(bu, 'c:'+K('Tea')); if (tea[0]>0 && Math.round(tea[1]/tea[0]*100) >= 100) { bonus += 5; det.push('Trà túi lọc ≥100%: +5'); }
+    if (rules.hcBonus) { const h = get(bu, 'c:'+K('Home Care')); if (h[0]>0 && Math.round(h[1]/h[0]*100) >= 100) { bonus += 5; det.push('Hóa phẩm ≥100%: +5'); } }
+    const all = allRow(bu), cats = [sumK(bu,oilK), sumK(bu,sauK), ...catK.map(k=>get(bu,k))].filter(([t])=>t>0);
+    if (all[0]>0 && Math.round(all[1]/all[0]*100) >= 110 && cats.every(([t,a]) => Math.round(a/t*100) >= 85)) { bonus += 5; det.push('Tổng ≥110%, không ngành nào <85%: +5'); }
+    return {s, bonus, det}; };
+  const SC = {SBU: score('SBU'), NBU: score('NBU')};
+  // bảng
+  const BUS = [['SBU','bu-s','SBU (Miền Nam)'],['NBU','bu-n','NBU (Miền Bắc)']];
+  let h = `<table class="grp"><thead><tr><th rowspan="2" style="vertical-align:bottom">Tháng ${M}/${Y}</th>` +
+    BUS.map(([b,c,n]) => `<th colspan="5" class="${c}" style="text-align:center">${n}</th>`).join('') + `<th colspan="4" class="bu-t" style="text-align:center">Tổng ${cName || 'NTW'}</th></tr><tr>` +
+    BUS.map(() => `<th class="gs">Target</th><th>Actual</th><th>% Actual</th><th>GAP</th><th>Điểm</th>`).join('') + `<th class="gs">Target</th><th>Actual</th><th>% Actual</th><th>GAP</th></tr></thead><tbody>`;
+  rows.forEach(([lbl, fn, cls, rk]) => {
+    h += `<tr class="${cls==='tot'?'tot':''}"><td class="${cls==='sub'?'sub':''}">${esc(lbl)}</td>`;
+    BUS.forEach(([b]) => { const [t,a] = fn(b); h += `<td class="gs">${t ? f2(t) : '–'}</td><td>${a ? f2(a) : '–'}</td><td>${pTxt(pc(a,t))}</td><td>${gap(a,t)}</td><td>${ptCell(rk, pc(a,t), t)}</td>`; });
+    const [t,a] = fn('NTW'); h += `<td class="gs">${t ? f2(t) : '–'}</td><td>${a ? f2(a) : '–'}</td><td>${pTxt(pc(a,t))}</td><td>${gap(a,t)}</td></tr>`; });
+  h += `<tr class="all"><td>Tổng</td>` + BUS.map(([b]) => { const [t,a] = allRow(b); return `<td class="gs">${f2(t)}</td><td>${f2(a)}</td><td>${pTxt(pc(a,t))}</td><td>${gap(a,t)}</td><td><span class="pt full">${SC[b].s + SC[b].bonus}</span></td>`; }).join('');
+  { const [t,a] = allRow('NTW'); h += `<td class="gs">${f2(t)}</td><td>${f2(a)}</td><td>${pTxt(pc(a,t))}</td><td>${gap(a,t)}</td></tr>`; }
+  $('tGrp').innerHTML = h + '</tbody></table>';
+  // thẻ tổng điểm
+  const rank = x => GRP_RANK.find(([th]) => x >= th);
+  $('grpSum').innerHTML = BUS.map(([b,,n]) => { const o = SC[b], tot = o.s + o.bonus, r = rank(tot + 25);
+    if (!(allRow(b)[0] > 0)) return `<div class="grp-card"><h3><i class="sw" style="background:${BU_COLOR[b]}"></i>${n}</h3><div class="ln" style="grid-column:1/-1">Không có target tháng ${M}/${Y} ở miền này, không chấm điểm.</div></div>`;
+    return `<div class="grp-card"><h3><i class="sw" style="background:${BU_COLOR[b]}"></i>${n}</h3><div class="rank ${r[2]}" title="Hạng dự kiến">${r[1]}</div>
+      <div class="big">${o.s}<small> / ${rules.max} điểm sản lượng</small>${o.bonus ? `<small style="color:var(--ok);font-weight:700"> +${o.bonus} thưởng</small>` : ''}</div>
+      <div class="ln">${o.det.length ? o.det.join(' · ') + '. ' : ''}Hạng dự kiến khi cộng đủ 25 điểm nền tảng: <b>${tot + 25}</b> điểm → <b>${r[1]}</b>${r[3] ? ` (${nf(r[3]/1e6)} triệu/tháng)` : ''}.</div></div>`; }).join('');
+  const fl = [...focusSet(S.cust>=0 ? S.cust : dm.customer.indexOf('CRV'))];
+  $('hGrp').textContent = `Sản lượng (tấn) so với target tháng ${M}/${Y}${cName ? ', hệ thống ' + cName : ', tất cả hệ thống'}. Điểm chấm theo thang ${rules.name}, tỷ lệ làm tròn đến hàng đơn vị.`;
+  $('nGrp').innerHTML = (S.cust<0 ? '<b>Chọn một hệ thống ở bộ lọc Khách hàng để chấm điểm đúng theo kênh.</b> ' : '') +
+    `Tổng dầu = Premium + Mid-end + Niches + Low-end (không tính hàng nhãn riêng và Big Pack). Nhóm SP trọng tâm NDFC quý ${q}/${Y}${S.cust>=0 ? '' : ' (theo danh sách của CRV)'}: ${fl.length ? fl.join(', ') : 'chưa có trong file target'}. ` +
+    `Điểm nền tảng (25), điểm trừ và điểm thưởng ý tưởng/hiệu quả công việc chấm tay nên không có ở đây. Bộ lọc ngành hàng, nhãn hàng, Segment, phân khúc không áp dụng cho bảng này.`;
+}
+
 function drawTarget(Y, partial, ud){
   const T = (D.target||[]).filter(t => t[1]===Y);
   const show = T.length > 0;
