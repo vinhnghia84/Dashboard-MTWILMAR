@@ -1030,12 +1030,12 @@ function drawGroup(Y){
   const keyOf = (cat, grp) => cat===kOil ? (OIL.includes(dm.group[grp]) ? 'g:'+dm.group[grp] : null) : cat===kSau ? (SAU.includes(dm.group[grp]) ? 'g:'+dm.group[grp] : null) : 'c:'+cat;
   const V = {NBU:{}, SBU:{}};
   const add = (bu, k, i, v) => { if (!V[bu]) return; const o = V[bu][k] || (V[bu][k] = [0,0]); o[i] += v; };
-  const fG = x => (S.cat<0 || x[4]===S.cat) && (S.seg<0 || x[6]===S.seg);
-  T.forEach(t => { if (t[2]!==M || !inC(t[3]) || !fG(t) || !tBP(t)) return; const k = keyOf(t[4], t[7]); if (!k) return; add(t[0], k, 0, t[5]);
+  // Bảng này cố ý chỉ theo bộ lọc Khách hàng: luôn xem đủ mọi ngành hàng của cả 2 miền để theo dõi điểm thưởng
+  T.forEach(t => { if (t[2]!==M || !inC(t[3])) return; const k = keyOf(t[4], t[7]); if (!k) return; add(t[0], k, 0, t[5]);
     if (t[4]===kSau && isFocus(t[3], t[8])) add(t[0], 'focus', 0, t[5]); });
-  R.forEach(r => { if (r[1]!==Y || r[2]!==M || !inC(r[3]) || !fG(r) || !rBP(r)) return; const k = keyOf(r[4], r[14]); if (!k) return; add(r[0], k, 1, r[9]);
+  R.forEach(r => { if (r[1]!==Y || r[2]!==M || !inC(r[3])) return; const k = keyOf(r[4], r[14]); if (!k) return; add(r[0], k, 1, r[9]);
     if (r[4]===kSau && isFocus(r[3], r[15])) add(r[0], 'focus', 1, r[9]); });
-  const get = (bu, k) => bu==='NTW' ? [0,1].map(i => ['NBU','SBU'].filter(x => !S.bu || x===S.bu).reduce((z,x) => z + (V[x][k]?.[i]||0), 0)) : (V[bu][k] || [0,0]);
+  const get = (bu, k) => bu==='NTW' ? [0,1].map(i => ['NBU','SBU'].reduce((z,x) => z + (V[x][k]?.[i]||0), 0)) : (V[bu][k] || [0,0]);
   const sumK = (bu, ks) => ks.reduce((a,k) => { const v = get(bu,k); return [a[0]+v[0], a[1]+v[1]]; }, [0,0]);
   const oilK = OIL.map(g=>'g:'+g), sauK = SAU.map(g=>'g:'+g), catK = CATS.map(([c]) => 'c:'+K(c));
   // các dòng của bảng: [nhãn, hàm lấy [target, thực tế], kiểu dòng, quy tắc điểm]
@@ -1065,7 +1065,7 @@ function drawGroup(Y){
     return {s, bonus, det}; };
   const SC = {SBU: score('SBU'), NBU: score('NBU')};
   // bảng
-  const BUS = [['SBU','bu-s','SBU (Miền Nam)'],['NBU','bu-n','NBU (Miền Bắc)']].filter(([b]) => !S.bu || b===S.bu);
+  const BUS = [['SBU','bu-s','SBU (Miền Nam)'],['NBU','bu-n','NBU (Miền Bắc)']]
   let h = `<table class="grp"><thead><tr><th rowspan="2" style="vertical-align:bottom">Tháng ${M}/${Y}</th>` +
     BUS.map(([b,c,n]) => `<th colspan="5" class="${c}" style="text-align:center">${n}</th>`).join('') + `<th colspan="4" class="bu-t" style="text-align:center">Tổng ${cName || 'NTW'}</th></tr><tr>` +
     BUS.map(() => `<th class="gs">Target</th><th>Actual</th><th>% Actual</th><th>GAP</th><th>Điểm</th>`).join('') + `<th class="gs">Target</th><th>Actual</th><th>% Actual</th><th>GAP</th></tr></thead><tbody>`;
@@ -1087,7 +1087,7 @@ function drawGroup(Y){
   $('hGrp').textContent = `Sản lượng (tấn) so với target tháng ${M}/${Y}${cName ? ', hệ thống ' + cName : ', tất cả hệ thống'}. Điểm chấm theo thang ${rules.name}, tỷ lệ làm tròn đến hàng đơn vị.`;
   $('nGrp').innerHTML = (S.cust<0 ? '<b>Chọn một hệ thống ở bộ lọc Khách hàng để chấm điểm đúng theo kênh.</b> ' : '') +
     `Tổng dầu = Premium + Mid-end + Niches + Low-end (không tính hàng nhãn riêng và Big Pack). Nhóm SP trọng tâm NDFC quý ${q}/${Y}${S.cust>=0 ? '' : ' (theo danh sách của CRV)'}: ${fl.length ? fl.join(', ') : 'chưa có trong file target'}. ` +
-    `Điểm nền tảng (25), điểm trừ và điểm thưởng ý tưởng/hiệu quả công việc chấm tay nên không có ở đây.` + ((S.cat>=0 || S.brand>=0 || S.seg>=0 || S.psegs.size) ? ' <b>Bảng đang lọc theo ngành hàng / nhãn hàng / Segment / phân khúc, nên điểm chỉ mang tính tham khảo; điểm thưởng chính thức tính trên toàn bộ ngành hàng.</b>' : '');
+    `Điểm nền tảng (25), điểm trừ và điểm thưởng ý tưởng/hiệu quả công việc chấm tay nên không có ở đây.` + ' Bảng này chỉ theo bộ lọc Khách hàng và luôn hiện đủ mọi ngành hàng của cả 2 miền; các bộ lọc khu vực, ngành hàng, nhãn hàng, Segment, phân khúc không áp dụng.';
 }
 
 function drawTarget(Y, partial, ud){
