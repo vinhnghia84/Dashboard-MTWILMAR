@@ -269,6 +269,61 @@ table.list{width:100%;border-collapse:collapse;font-size:13.5px}
 .list td.v{text-align:right;font-weight:600}
 .list th.v{text-align:right}
 .list .cb{display:inline-block;padding:2px 9px;border-radius:99px;background:var(--panel-2);font-size:12px;color:var(--ink-2)}
+/* ---- Store: Target PG & điểm thưởng ---- */
+.st-ctl{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+#pgSum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.6fr);gap:12px;margin:4px 0 16px}
+#pgSum:empty{display:none}
+.pg-k{border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.pg-k span{display:block;font-size:12px;color:var(--muted)}
+.pg-k b{display:block;font-size:22px;font-weight:800;margin-top:2px}
+.pg-k em{font-style:normal;font-size:12px;color:var(--ink-2)}
+.pg-dist{border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.pg-dist .bar{display:flex;height:12px;border-radius:7px;overflow:hidden;margin:8px 0 8px;gap:2px}
+.pg-dist .bar i{display:block;min-width:3px}
+.pg-dist .lg{display:flex;flex-wrap:wrap;gap:6px}
+.pg-dist .lg button{border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink-2)}
+.pg-dist .lg button.on{border-color:var(--ink-2);color:var(--ink);font-weight:700}
+.pg-dist .lg button i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.rk-A{--rk:var(--ok)}.rk-Bp{--rk:#2f8f8a}.rk-B{--rk:var(--nbu)}.rk-C{--rk:var(--near)}.rk-D{--rk:var(--miss)}.rk-F{--rk:#7d4a8f}
+.pg-tools{display:flex;gap:10px;align-items:center;margin:0 0 10px}
+.pg-tools:empty{display:none}
+.pg-tools input{flex:0 1 260px;border:1px solid var(--line);border-radius:10px;padding:7px 11px;font:inherit;font-size:13px;background:var(--panel-2);color:var(--ink)}
+.pg-tools span{font-size:12px;color:var(--muted)}
+table.pg td{vertical-align:middle}
+table.pg tbody tr.r{cursor:pointer}
+table.pg tbody tr.r:hover td{background:var(--panel-2)}
+table.pg tbody tr.r.open td{background:color-mix(in srgb,var(--nbu) 6%,var(--panel))}
+.pg .sn{font-weight:600;max-width:230px;overflow:hidden;text-overflow:ellipsis;display:block}
+.pg .sub{font-size:11.5px;color:var(--muted);margin-top:2px;display:flex;gap:6px;align-items:center}
+.pg .tag{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:5px;background:var(--panel-2);color:var(--ink-2)}
+.pg .warn{color:var(--near);font-weight:700}
+.pg .prog{width:170px}
+.pg .prog .t{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.pg .prog .t b{font-weight:800}
+.pg .prog .tr{position:relative;height:8px;border-radius:5px;background:var(--panel-2)}
+.pg .prog .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.pg .prog .tr s{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink-2);left:calc(100%/1.3)}
+.pg .chips{display:flex;gap:3px}
+.pg .chips i{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-style:normal;font-size:9.5px;font-weight:700;color:#fff}
+.pg .chips i.na{background:var(--panel-2);color:var(--muted)}
+.pg .sc{font-weight:800;font-size:15px}
+.pg .sc small{font-weight:500;font-size:11.5px;color:var(--muted)}
+.pg .sc em{font-style:normal;font-size:11.5px;color:var(--ok);font-weight:700}
+.pg .rk{display:inline-grid;place-items:center;width:34px;height:28px;border-radius:8px;font-weight:800;color:var(--rk);background:color-mix(in srgb,var(--rk) 15%,var(--panel))}
+.pg tr.det td{background:var(--panel-2);padding:14px 16px;white-space:normal}
+.pg-det{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:18px}
+.pg-det table{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--panel);border-radius:10px;overflow:hidden}
+.pg-det th,.pg-det td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.pg-det th:first-child,.pg-det td:first-child{text-align:left}
+.pg-det th{font-size:11.5px;color:var(--muted);font-weight:600}
+.pg-det tr.tt td{font-weight:700}
+.pg-det .pt{display:inline-block;min-width:26px;padding:1px 6px;border-radius:6px;font-weight:700;text-align:center}
+.pg-det .pt.full{background:color-mix(in srgb,var(--ok) 16%,var(--panel));color:var(--ok)}
+.pg-det .pt.part{background:color-mix(in srgb,var(--near) 16%,var(--panel));color:var(--near)}
+.pg-det .pt.zero{background:var(--panel-2);color:var(--muted)}
+.pg-det .side h4{margin:0 0 6px;font-size:12.5px}
+.pg-det .side p{margin:0 0 10px;font-size:12px;color:var(--ink-2);line-height:1.5}
+@media (max-width:1100px){#pgSum{grid-template-columns:repeat(2,minmax(0,1fr))}.pg-dist{grid-column:1/-1}.pg-det{grid-template-columns:1fr}}
 .list .meter{display:inline-block;width:64px;height:6px;border-radius:3px;background:var(--panel-2);margin-left:12px;vertical-align:middle;overflow:hidden}
 .list .meter div{height:100%;background:var(--nbu);border-radius:3px}
 
@@ -639,7 +694,10 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
   <div id="sec-store">
     <section class="panel">
       <div class="ph"><div><h2 id="tStoreH">Doanh số thực hiện by Store</h2><p id="hStore"></p></div>
-        <div class="seg" id="fStM" style="flex-wrap:wrap"></div></div>
+        <div class="st-ctl"><div class="seg" id="fStV"><button data-v="pg" class="on">Target PG &amp; điểm thưởng</button><button data-v="all">Tất cả store</button></div>
+        <div class="seg" id="fStM" style="flex-wrap:wrap"></div></div></div>
+      <div id="pgSum"></div>
+      <div class="pg-tools" id="pgTools"></div>
       <div class="tblwrap" id="tStore"></div>
       <div class="tbl-foot"><span id="fStore"></span><button class="ghost" id="stMore" style="padding:7px 12px"></button></div>
     </section>
@@ -1687,8 +1745,123 @@ function drawSize(cur, ly, L, Y){
    của store đó trong cùng nhóm ở năm trước. File target không có số theo store. */
 let TRK_VIEW = 'NTW';
 $('fTrkV').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; TRK_VIEW = b.dataset.v; render(); });
-let ST_SORT = {k:'rev', d:-1}, ST_ALL = false, ST_M = 0;   // ST_M = 0: lũy kế, 1..12: một tháng
+/* ===================== Target PG theo store & điểm thưởng PG =====================
+   Theo "Cơ chế tính Phí dịch vụ bổ sung theo hiệu quả công việc" (Proposal incentive PG 2026), mục 1.1 (85 điểm sản lượng) và 1.3/1.5 (hạng, phí).
+   Target: file Target_PG_Txx.xx.xlsx (các sheet theo kênh). Thực tế: dữ liệu bán của các kho được ghép với store đó. */
+const PG_RULES = {
+  def:     {oil:[[100,10],[90,5]], prem:[[100,10],[90,5]], niche:[[95,5]],           mid:[[100,10],[90,5]], ndfc:[[100,10],[90,5]], focus:[[100,5],[90,3]], dairy:[[95,5]], gvap:[[100,5]], flour:[[100,5]], rice:[[100,10],[90,5]], hc:[[100,10],[90,5]], name:'kinh doanh tất cả ngành hàng'},
+  nodairy: {oil:[[100,10],[90,5]], prem:[[100,10],[90,5]], niche:[[100,10],[90,5]], mid:[[100,10],[90,5]], ndfc:[[100,10],[90,5]], focus:[[100,5],[90,3]],                 gvap:[[100,5]], flour:[[100,5]], rice:[[100,10],[90,5]], hc:[[100,10],[90,5]], name:'chưa kinh doanh sữa'},
+  WCM:     {oil:[[100,10],[90,5]], prem:[[100,10],[90,5]], niche:[[100,10],[90,5]], mid:[[100,10],[90,5]], ndfc:[[100,10],[90,5]], focus:[[100,5],[90,3]], dairy:[[95,5]], gvap:[[100,5]], flour:[[100,5]], rice:[[100,10],[90,5]], hc:[[95,5]],         name:'WCM'},
+};
+const PG_ROWS = [['prem','Premium',1],['mid','Mid-end',1],['niche','Niches',1],['low','Low-end',1],['oil','Tổng dầu',0],['ndfc','NDFC',0],['focus','NDFC – SP trọng tâm',1],
+  ['gvap','GVAP (MCC)',0],['flour','Flour (VFM)',0],['rice','Gạo (ngành hàng mới)',0],['hc','Homecare (DWL)',0],['dairy','Meadow Fresh',0],['tea','Vinatea (triệu ₫)',0],['olivoila','Olivoilà',1],['kiddy','Kiddy Olive',1]];
+const PG_CHIPS = [['oil','Dầu'],['ndfc','NDFC'],['focus','TT'],['gvap','MCC'],['flour','VFM'],['rice','Gạo'],['hc','HP'],['dairy','Sữa'],['tea','Trà']];
+const PG_TON = ['oil','ndfc','gvap','flour','rice','hc','dairy'];
+const PG_FEE = {NVTT:{A:8e6,Bp:7e6,B:6e6,C:5e6,D:0,F:0}, NVTK:{A:8e6,Bp:7e6,B:6e6,C:5e6,D:2e6,F:0}};
+let PG = {m:null, sort:{k:'p', d:-1}, rank:'', q:'', open:new Set(), all:false};
+function drawPG(Y, pgM){
+  if (!pgM.includes(PG.m)) PG.m = pgM[pgM.length-1];
+  const M = PG.m, q = Math.ceil(M/3), dm = D.dims;
+  $('fStM').innerHTML = pgM.map(m => `<button data-m="${m}" class="${m===M?'on':''}">Th${m}</button>`).join('');
+  $('fStM').querySelectorAll('button').forEach(b => b.onclick = () => { PG.m = +b.dataset.m; PG.open.clear(); render(); });
+  const G = n => dm.group.indexOf(n), K = n => dm.category.indexOf(n), P = n => dm.pseg.indexOf(n);
+  const gk = {[G('Premium')]:'prem', [G('Mid-end')]:'mid', [G('Niches')]:'niche', [G('Low-end')]:'low'};
+  const kOil = K('Oils & Fats'), kSau = K('Sauces & Condiments'), sauG = new Set(['Dipping Sauce','Dry Seasoning','Cooked Sauce'].map(G));
+  const catK = {[K('GVAP')]:'gvap', [K('Flour')]:'flour', [K('Rice')]:'rice', [K('Home Care')]:'hc', [K('Dairy')]:'dairy'};
+  const kTea = K('Tea'), pOli = P('Olivoila'), pKid = P('Kiddy Olive');
+  const fset = new Map(), isF = (c, f) => { if (!fset.has(c)) fset.set(c, new Set(((D.focus||{})[dm.customer[c]]||{})[`${Y}-${q}`]||[])); return f>0 && fset.get(c).has(dm.focus[f]); };
+  // gom thực tế theo (miền|KH|kho)
+  const A = new Map(), get = k => { let o = A.get(k); if (!o) { o = {rev:0, revLY:0}; A.set(k, o); } return o; };
+  const ad = (o, k, v) => o[k] = (o[k]||0) + v;
+  R.forEach(r => { if (r[2]!==M || (r[1]!==Y && r[1]!==Y-1)) return;
+    const o = get(r[0]+'|'+r[3]+'|'+r[7]);
+    if (r[1]===Y-1) { o.revLY += r[8]; return; }
+    o.rev += r[8];
+    if (r[4]===kOil && gk[r[14]]) { ad(o, gk[r[14]], r[9]); ad(o, 'oil', r[9]); }
+    else if (r[4]===kSau && sauG.has(r[14])) { ad(o, 'ndfc', r[9]); if (isF(r[3], r[15])) ad(o, 'focus', r[9]); }
+    else if (catK[r[4]]) ad(o, catK[r[4]], r[9]);
+    else if (r[4]===kTea) ad(o, 'tea', r[8]);
+    if (r[10]===pOli) ad(o, 'olivoila', r[9]); if (r[10]===pKid) ad(o, 'kiddy', r[9]); });
+  const rk = x => x>=95 ? ['A','A'] : x>=80 ? ['B+','Bp'] : x>=65 ? ['B','B'] : x>=50 ? ['C','C'] : ['D','D'];
+  let list = (D.pg[`${Y}-${M}`]||[]).filter(([bu,c]) => (!S.bu || bu===S.bu) && (S.cust<0 || c===S.cust)).map(([bu, c, name, sts, tv]) => {
+    const a = {rev:0, revLY:0}; sts.forEach(st => { const o = A.get(bu+'|'+c+'|'+st); if (o) for (const k in o) a[k] = (a[k]||0) + o[k]; });
+    const cn = dm.customer[c], rules = cn==='WCM' ? PG_RULES.WCM : !(tv.dairy>0) ? PG_RULES.nodairy : PG_RULES.def;
+    const pc = k => tv[k]>0 ? (a[k]||0)/tv[k] : null;
+    let sc = 0, mx = 0; const pts = {};
+    for (const k in rules) { if (k==='name' || !(tv[k]>0)) continue; const v = grpPts(rules[k], pc(k)); pts[k] = v; sc += v; mx += rules[k][0][1]; }
+    const tT = PG_TON.reduce((s,k)=>s+(tv[k]||0),0), aT = PG_TON.reduce((s,k)=>s+(tv[k]>0?(a[k]||0):0),0), pT = tT>0 ? aT/tT : null;
+    let bonus = 0; const bn = [];
+    if (pT!=null && Math.round(pT*100)>=120 && PG_TON.every(k => !(tv[k]>0) || Math.round(pc(k)*100)>=85)) { bonus += 5; bn.push('Tổng ≥120%, không ngành nào <85%: +5'); }
+    if (tv.tea>0 && Math.round(pc('tea')*100)>=90) { bonus += 5; bn.push('Trà túi lọc ≥90%: +5'); }
+    const role = /kho|\bdc\b|depot|ttpp|trung tâm|rdc|others/i.test(name) ? 'NVTK' : 'NVTT';
+    const total = sc + bonus + 15, [rl, rc] = role==='NVTK' && pT!=null && pT<.5 ? ['F','F'] : rk(total);
+    return {bu, c, cn, name, sts, tv, a, pts, sc, mx, bonus, bn, total, rl, rc, role, rules, fee: PG_FEE[role][rc], pT, tT, aT,
+            rev: a.rev/1e9, revLY: a.revLY/1e9, g: pct(a.rev, a.revLY), p: pT};
+  });
+  const cnt = {}; list.forEach(o => cnt[o.rc] = (cnt[o.rc]||0)+1);
+  const n = list.length, fee = list.reduce((s,o)=>s+o.fee,0), avg = n ? list.reduce((s,o)=>s+o.sc+o.bonus,0)/n : 0, okN = list.filter(o=>o.pT!=null && Math.round(o.pT*100)>=100).length;
+  const RK = [['A','A'],['B+','Bp'],['B','B'],['C','C'],['D','D'],['F','F']].filter(([,c]) => c!=='F' || cnt.F);
+  $('pgSum').innerHTML = `
+    <div class="pg-k"><span>Store có target PG</span><b>${n}</b><em>${list.filter(o=>!o.sts.length).length ? `${list.filter(o=>!o.sts.length).length} store chưa ghép được kho bán` : 'Đã ghép đủ kho bán'}</em></div>
+    <div class="pg-k"><span>Đạt ≥100% tổng sản lượng</span><b>${okN}<small style="font-size:13px;color:var(--muted);font-weight:500"> / ${n}</small></b><em>${n?Math.round(okN/n*100):0}% số store</em></div>
+    <div class="pg-k"><span>Điểm sản lượng TB</span><b>${nf(avg,1)}<small style="font-size:13px;color:var(--muted);font-weight:500"> / 85</small></b><em>chưa gồm 15 điểm nền tảng</em></div>
+    <div class="pg-k"><span>Phí dịch vụ dự kiến tháng</span><b>${nf(fee/1e6,0)}<small style="font-size:13px;color:var(--muted);font-weight:500"> triệu ₫</small></b><em>nếu mọi store đủ 15 điểm nền tảng</em></div>
+    <div class="pg-dist"><span style="font-size:12px;color:var(--muted)">Phân bố hạng dự kiến (bấm để lọc)</span>
+      <div class="bar">${RK.map(([l,c]) => cnt[c] ? `<i class="rk-${c}" style="flex:${cnt[c]};background:var(--rk)" title="${l}: ${cnt[c]} store"></i>` : '').join('')}</div>
+      <div class="lg">${RK.map(([l,c]) => `<button class="rk-${c} ${PG.rank===c?'on':''}" data-r="${c}"><i style="background:var(--rk)"></i>${l} · ${cnt[c]||0}</button>`).join('')}</div></div>`;
+  $('pgSum').querySelectorAll('[data-r]').forEach(b => b.onclick = () => { PG.rank = PG.rank===b.dataset.r ? '' : b.dataset.r; render(); });
+  if (!$('pgQ')) { $('pgTools').innerHTML = `<input id="pgQ" type="search" placeholder="Tìm store, ví dụ GO Thăng Long" aria-label="Tìm store"><span id="pgInfo"></span>`;
+    $('pgQ').oninput = e => { PG.q = e.target.value; render(); }; }
+  const qq = PG.q ? unacc(PG.q) : '';
+  let shown = list.filter(o => (!PG.rank || o.rc===PG.rank) && (!qq || unacc(o.name).includes(qq)));
+  const sk = PG.sort.k, sd = PG.sort.d;
+  shown.sort((a,b) => { const x = a[sk], y = b[sk]; if (sk==='name') return sd*a.name.localeCompare(b.name,'vi'); if (x==null) return 1; if (y==null) return -1; return sd*(x-y); });
+  $('pgInfo').textContent = `${shown.length} store${PG.rank||qq ? ' (đang lọc)' : ''}. Bấm một dòng để xem chi tiết từng ngành.`;
+  const total = shown.length; if (!PG.all) shown = shown.slice(0, 25);
+  const chipCol = p => p==null ? '' : `background:${stCol(Math.round(p*100)/100)}`;
+  const prog = o => { const p = o.pT; if (p==null) return '<span style="color:var(--muted)">–</span>';
+    return `<div class="prog"><div class="t"><span>${tn(o.aT)} / ${tn(o.tT)} tấn</span><b class="st-${stCls(Math.round(p*100)/100)}">${Math.round(p*100)}%</b></div><div class="tr"><i style="width:${Math.min(p/1.3,1)*100}%;background:${stCol(Math.round(p*100)/100)}"></i><s></s></div></div>`; };
+  const cols = [['',null],['Store','name'],['DS tháng (tỷ ₫)','rev','v'],['± DS CK','g','v'],['Tiến độ sản lượng','p'],['Từng ngành',null],['Điểm','sc','v'],['Hạng','total','v'],['Phí dự kiến','fee','v']];
+  const det = o => { const rows = PG_ROWS.filter(([k]) => o.tv[k]>0 || (o.a[k]||0)>0);
+    const fmt = (k,v) => k==='tea' ? nf((v||0)/1e6,1) : nf(v||0,2);
+    const ptc = k => { if (!(k in o.pts)) return '<span style="color:var(--muted)">–</span>'; const v = o.pts[k], m = o.rules[k][0][1]; return `<span class="pt ${v>=m?'full':v>0?'part':'zero'}">${v}/${m}</span>`; };
+    return `<div class="pg-det"><table><thead><tr><th>Ngành / nhóm</th><th>Target</th><th>Thực tế</th><th>% đạt</th><th>GAP</th><th>Điểm</th></tr></thead><tbody>` +
+      rows.map(([k,l,sub]) => { const t = o.tv[k]||0, a = o.a[k]||0, p = t>0 ? a/t : null;
+        return `<tr class="${sub?'':'tt'}"><td style="${sub?'padding-left:20px':''}">${l}</td><td>${t?fmt(k,t):'–'}</td><td>${fmt(k,a)}</td><td>${p==null?'–':`<b style="color:${stCol(Math.round(p*100)/100)}">${Math.round(p*100)}%</b>`}</td><td>${t? (a-t<0?`<span style="color:var(--miss)">(${fmt(k,t-a)})</span>`:fmt(k,a-t)) : '–'}</td><td>${ptc(k)}</td></tr>`; }).join('') +
+      `</tbody></table><div class="side"><h4>Cách chấm</h4><p>Thang <b>${o.rules.name}</b> (${o.cn}). Điểm sản lượng <b>${o.sc}/${o.mx}</b>${o.bonus?`, thưởng <b>+${o.bonus}</b> (${o.bn.join('; ')})`:''}. Cộng 15 điểm nền tảng giả định = <b>${o.total}</b> → hạng <b>${o.rl}</b>, phí ${nf(o.fee/1e6,0)} triệu ₫ (${o.role==='NVTK'?'nhân viên tổng kho':'nhân viên tiếp thị tại siêu thị'}).</p>
+      <h4>Kho bán được ghép</h4><p>${o.sts.length ? o.sts.map(i=>esc(dm.store[i])).join(', ') : '<span class="warn">Chưa ghép được kho bán – thêm vào file doi-chieu-store-pg.xlsx.</span>'}</p></div></div>`; };
+  const row = (o,i) => { const op = PG.open.has(o.name+o.bu+o.c);
+    return `<tr class="r ${op?'open':''}" data-k="${esc(o.name+o.bu+o.c)}"><td class="n">${i+1}</td>
+      <td><span class="sn" title="${esc(o.name)}">${esc(o.name)}</span><div class="sub"><span class="cb">${esc(o.cn)}</span><i class="sw" style="background:${BU_COLOR[o.bu]}"></i>${o.bu}<span class="tag">${o.role}</span>${o.sts.length?'':'<span class="warn" title="Chưa ghép được kho bán">⚠ chưa ghép kho</span>'}</div></td>
+      <td class="v">${fB(o.rev)}</td><td class="v">${arrow(o.g)}</td><td>${prog(o)}</td>
+      <td><div class="chips">${PG_CHIPS.map(([k,l]) => { const p = o.tv[k]>0 ? (o.a[k]||0)/o.tv[k] : null;
+        return `<i class="${p==null?'na':''}" style="${chipCol(p)}" title="${l}: ${p==null?'không có target':Math.round(p*100)+'%'}">${l}</i>`; }).join('')}</div></td>
+      <td class="v"><span class="sc">${o.sc}<small>/${o.mx}</small></span>${o.bonus?` <em class="sc"><em>+${o.bonus}</em></em>`:''}</td>
+      <td class="v"><span class="rk rk-${o.rc}" title="${o.total} điểm (gồm 15 điểm nền tảng giả định)">${o.rl}</span></td>
+      <td class="v">${o.fee ? nf(o.fee/1e6,0)+' tr' : '–'}</td></tr>` + (op ? `<tr class="det"><td colspan="9">${det(o)}</td></tr>` : ''); };
+  const T = list.reduce((s,o)=>({rev:s.rev+o.rev, revLY:s.revLY+o.revLY, aT:s.aT+o.aT, tT:s.tT+o.tT}), {rev:0,revLY:0,aT:0,tT:0});
+  $('tStore').innerHTML = `<table class="list st pg"><thead><tr>${cols.map(([t,k,c]) => `<th class="${c||''} ${k===sk?'on':''}" ${k?`data-s="${k}"`:''}>${t}${k===sk?(sd<0?' ▼':' ▲'):''}</th>`).join('')}</tr></thead><tbody>` +
+    `<tr class="tot"><td></td><td>Tổng ${n} store</td><td class="v">${fB(T.rev)}</td><td class="v">${arrow(pct(T.rev,T.revLY))}</td><td>${prog({pT:T.tT>0?T.aT/T.tT:null, aT:T.aT, tT:T.tT})}</td><td></td><td class="v">${nf(avg,1)}</td><td></td><td class="v">${nf(fee/1e6,0)} tr</td></tr>` +
+    shown.map(row).join('') + '</tbody></table>';
+  $('tStore').querySelectorAll('th[data-s]').forEach(th => th.onclick = () => { const k = th.dataset.s; PG.sort = {k, d: PG.sort.k===k ? -PG.sort.d : (k==='name'?1:-1)}; render(); });
+  $('tStore').querySelectorAll('tr.r').forEach(tr => tr.onclick = () => { const k = tr.dataset.k; PG.open.has(k) ? PG.open.delete(k) : PG.open.add(k); render(); });
+  $('tStoreH').textContent = `Doanh số thực hiện by Store – Target PG tháng ${M}/${Y}`;
+  $('hStore').textContent = `Target từ file Target_PG_T${M}.${String(Y).slice(2)}, thực tế từ dữ liệu bán tháng ${M}/${Y} của các kho được ghép. Điểm theo cơ chế phí dịch vụ PG 2026: 85 điểm sản lượng, tỷ lệ làm tròn hàng đơn vị.`;
+  $('fStore').textContent = `Hạng và phí dự kiến giả định store đủ 15 điểm nền tảng (OOS, trưng bày) và không bị điểm trừ. Bộ lọc Khu vực và Khách hàng áp dụng; các bộ lọc ngành hàng, nhãn hàng, Segment không áp dụng cho phần này. NVTK = nhân viên tổng kho (kho, DC, depot), hạng D vẫn có phí 2 triệu, hạng F khi tổng sản lượng < 50%.`;
+  $('stMore').style.display = total > 25 ? '' : 'none';
+  $('stMore').textContent = PG.all ? 'Thu gọn còn 25 store' : `Xem tất cả ${total} store`;
+  $('stMore').onclick = () => { PG.all = !PG.all; render(); };
+}
+const unacc = t => String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
+
+let ST_SORT = {k:'rev', d:-1}, ST_ALL = false, ST_M = 0, ST_V = 'pg';   // ST_M = 0: lũy kế, 1..12: một tháng
 function drawStores(Y, L){
+  const pgM = Object.keys(D.pg||{}).filter(k => +k.split('-')[0]===Y).map(k => +k.split('-')[1]).sort((a,b)=>a-b);
+  $('fStV').style.display = pgM.length ? '' : 'none';
+  if (!pgM.length) ST_V = 'all';
+  $('fStV').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.v===ST_V); b.onclick = () => { ST_V = b.dataset.v; render(); }; });
+  if (ST_V==='pg') return drawPG(Y, pgM);
+  $('pgSum').innerHTML = ''; $('pgTools').innerHTML = '';
   if (ST_M > L) ST_M = 0;
   const inM = m => ST_M ? m===ST_M : m<=L;                 // kỳ đang xem
   const kyTxt = ST_M ? `tháng ${ST_M}/${Y}` : `lũy kế T1–T${L}/${Y}`;
