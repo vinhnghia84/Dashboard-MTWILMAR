@@ -1085,13 +1085,14 @@ function drawGroup(Y){
   const OIL = ['Premium','Mid-end','Niches','Low-end'], SAU = ['Dipping Sauce','Dry Seasoning','Cooked Sauce'];
   const CATS = [['GVAP','GVAP','gvap'],['Flour','Flour','flour'],['Home Care','Homecare','hc'],['Dairy','Dairy','dairy'],['Rice','Rice',null],['Tea','Vinatea',null]];
   const kOil = K('Oils & Fats'), kSau = K('Sauces & Condiments');
+  const gInc = dm.group.indexOf('Incentive'), incOK = r => gInc<0 || r[14]===gInc;   // ngành khác: chỉ tính dòng có cột Incentive (MCC, VFM, DWL...), bỏ hàng OB
   const keyOf = (cat, grp) => cat===kOil ? (OIL.includes(dm.group[grp]) ? 'g:'+dm.group[grp] : null) : cat===kSau ? (SAU.includes(dm.group[grp]) ? 'g:'+dm.group[grp] : null) : 'c:'+cat;
   const V = {NBU:{}, SBU:{}};
   const add = (bu, k, i, v) => { if (!V[bu]) return; const o = V[bu][k] || (V[bu][k] = [0,0]); o[i] += v; };
   // Bảng này cố ý chỉ theo bộ lọc Khách hàng: luôn xem đủ mọi ngành hàng của cả 2 miền để theo dõi điểm thưởng
   T.forEach(t => { if (t[2]!==M || !inC(t[3])) return; const k = keyOf(t[4], t[7]); if (!k) return; add(t[0], k, 0, t[5]);
     if (t[4]===kSau && isFocus(t[3], t[8])) add(t[0], 'focus', 0, t[5]); });
-  R.forEach(r => { if (r[1]!==Y || r[2]!==M || !inC(r[3])) return; const k = keyOf(r[4], r[14]); if (!k) return; add(r[0], k, 1, r[9]);
+  R.forEach(r => { if (r[1]!==Y || r[2]!==M || !inC(r[3])) return; const k = keyOf(r[4], r[14]); if (!k || (k[0]==='c' && !incOK(r))) return; add(r[0], k, 1, r[9]);
     if (r[4]===kSau && isFocus(r[3], r[15])) add(r[0], 'focus', 1, r[9]); });
   const get = (bu, k) => bu==='NTW' ? [0,1].map(i => ['NBU','SBU'].reduce((z,x) => z + (V[x][k]?.[i]||0), 0)) : (V[bu][k] || [0,0]);
   const sumK = (bu, ks) => ks.reduce((a,k) => { const v = get(bu,k); return [a[0]+v[0], a[1]+v[1]]; }, [0,0]);
@@ -1769,6 +1770,7 @@ function drawPG(Y, pgM){
   const kOil = K('Oils & Fats'), kSau = K('Sauces & Condiments'), sauG = new Set(['Dipping Sauce','Dry Seasoning','Cooked Sauce'].map(G));
   const catK = {[K('GVAP')]:'gvap', [K('Flour')]:'flour', [K('Rice')]:'rice', [K('Home Care')]:'hc', [K('Dairy')]:'dairy'};
   const kTea = K('Tea'), pOli = P('Olivoila'), pKid = P('Kiddy Olive');
+  const gInc = dm.group.indexOf('Incentive'), incOK = r => gInc<0 || r[14]===gInc;
   const fset = new Map(), isF = (c, f) => { if (!fset.has(c)) fset.set(c, new Set(((D.focus||{})[dm.customer[c]]||{})[`${Y}-${q}`]||[])); return f>0 && fset.get(c).has(dm.focus[f]); };
   // gom thực tế theo (miền|KH|kho)
   const A = new Map(), get = k => { let o = A.get(k); if (!o) { o = {rev:0, revLY:0}; A.set(k, o); } return o; };
@@ -1779,8 +1781,8 @@ function drawPG(Y, pgM){
     o.rev += r[8];
     if (r[4]===kOil && gk[r[14]]) { ad(o, gk[r[14]], r[9]); ad(o, 'oil', r[9]); }
     else if (r[4]===kSau && sauG.has(r[14])) { ad(o, 'ndfc', r[9]); if (isF(r[3], r[15])) ad(o, 'focus', r[9]); }
-    else if (catK[r[4]]) ad(o, catK[r[4]], r[9]);
-    else if (r[4]===kTea) ad(o, 'tea', r[8]);
+    else if (catK[r[4]] && incOK(r)) ad(o, catK[r[4]], r[9]);
+    else if (r[4]===kTea && incOK(r)) ad(o, 'tea', r[8]);
     if (r[10]===pOli) ad(o, 'olivoila', r[9]); if (r[10]===pKid) ad(o, 'kiddy', r[9]); });
   const rk = x => x>=95 ? ['A','A'] : x>=80 ? ['B+','Bp'] : x>=65 ? ['B','B'] : x>=50 ? ['C','C'] : ['D','D'];
   let list = (D.pg[`${Y}-${M}`]||[]).filter(([bu,c]) => (!S.bu || bu===S.bu) && (S.cust<0 || c===S.cust)).map(([bu, c, name, sts, tv]) => {
