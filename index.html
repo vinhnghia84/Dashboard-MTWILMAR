@@ -100,6 +100,25 @@ section,.grid2,.grid3,#sec-store{scroll-margin-top:150px}
 select{appearance:none;width:100%;background:var(--panel-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%237d879c' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center;
   border:1px solid var(--line);border-radius:11px;padding:9px 32px 9px 12px;font-size:13.5px;cursor:pointer}
 select:hover{border-color:var(--line-2)}
+/* Ô chọn nhiều Segment (có ô tích) */
+.ms{position:relative}
+.ms-btn{appearance:none;width:100%;text-align:left;background:var(--panel-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%237d879c' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border:1px solid var(--line);border-radius:10px;padding:7px 28px 7px 11px;font-size:13px;line-height:1.35;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-btn:hover{border-color:var(--line-2)}
+.ms-btn:focus-visible{outline:2px solid var(--nbu);outline-offset:2px}
+.fbar .act .ms-btn{border-color:var(--nbu);background-color:color-mix(in srgb,var(--nbu) 9%,var(--panel));color:var(--brand-ink);font-weight:600}
+:root[data-theme="dark"] .fbar .act .ms-btn{color:#8fd3e6}
+.ms-pop{position:absolute;z-index:40;top:calc(100% + 6px);left:0;min-width:260px;max-width:340px;background:var(--panel);border:1px solid var(--line-2);border-radius:12px;box-shadow:0 12px 32px rgba(0,40,50,.16);padding:6px}
+.ms-head{display:flex;align-items:center;gap:6px;padding:4px 6px 8px;border-bottom:1px solid var(--line);margin-bottom:4px;font-size:12px;color:var(--muted)}
+.ms-head span{margin-right:auto}
+.ms-head button{border:0;background:none;color:var(--nbu);font:inherit;font-weight:600;cursor:pointer;padding:3px 4px;border-radius:6px}
+.ms-head button:hover{background:var(--panel-2)}
+.ms-list{max-height:300px;overflow-y:auto}
+.ms-list .grp{font-size:11px;font-weight:600;color:var(--muted);padding:8px 8px 3px}
+.ms-list label{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:8px;font-size:13px;cursor:pointer}
+.ms-list label:hover{background:var(--panel-2)}
+.ms-list input{width:16px;height:16px;accent-color:var(--nbu);margin:0;flex:none}
+.ms-list .empty{padding:10px 8px;font-size:12.5px;color:var(--muted)}
 .side-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--muted);line-height:1.5}
 .ghost{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1px solid var(--line);border-radius:11px;padding:9px 12px;cursor:pointer;font-size:13px;color:var(--ink-2)}
 .ghost:hover{border-color:var(--line-2);color:var(--ink)}
@@ -477,8 +496,16 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     <div class="brk"></div>
     <div class="fg sel"><label for="fCust">Khách hàng</label><select id="fCust"></select></div>
     <div class="fg sel"><label for="fCat">Ngành hàng</label><select id="fCat"></select></div>
-    <div class="fg sel" id="gPseg"><label for="fPseg">Segment</label><select id="fPseg"></select></div>
     <div class="fg sel"><label for="fBrand">Nhãn hàng</label><select id="fBrand"></select></div>
+    <div class="fg sel" id="gPseg"><span class="lab" id="lPseg">Segment</span>
+      <div class="ms" id="fPseg">
+        <button type="button" class="ms-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lPseg msTxt"><span id="msTxt">Tất cả</span></button>
+        <div class="ms-pop" hidden>
+          <div class="ms-head"><span id="msCount"></span><button type="button" data-a="all">Chọn tất cả</button><button type="button" data-a="none">Bỏ chọn</button></div>
+          <div class="ms-list" role="listbox" aria-multiselectable="true"></div>
+        </div>
+      </div>
+    </div>
     <button class="clr" id="reset" hidden></button>
   </div>
 
@@ -631,9 +658,12 @@ const HERO_COLOR = {NBU:'var(--hero-nbu)', SBU:'var(--hero-sbu)'};
 const SEG_COLOR = ['var(--s1)','var(--s2)','var(--s3)'];   // phân khúc thứ 4 trở đi gộp màu xám
 const segColor = i => D.dims.segment[i]==='Khác' ? 'var(--unk)' : (SEG_COLOR[SEG_ORDER.indexOf(i)] || 'var(--unk)');
 let SEG_ORDER = [];
+/* Lọc Nhãn hàng + Segment cho dòng bán (r) và dòng target (t: cột 9 = Segment, cột 10 = Nhãn hàng, -1 = không ghép được) */
+const rBP = r => (S.brand<0 || r[5]===S.brand) && (!S.psegs.size || S.psegs.has(r[10]));
+const tBP = t => (S.brand<0 || t[10]===S.brand) && (!S.psegs.size || S.psegs.has(t[9]));
 const MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12];
 let D, R, CMP = {cur:[], note:''}, firstDraw = true, showAll = {cat:false, cust:false, brand:false};
-let S = {bu:'', year:null, metric:'rev', cust:-1, cat:-1, brand:-1, seg:-1, pseg:-1, mxDim:'category', mxMode:'value', szM:'ton'};
+let S = {bu:'', year:null, metric:'rev', cust:-1, cat:-1, brand:-1, seg:-1, psegs:new Set(), mxDim:'category', mxMode:'value', szM:'ton'};
 let PSEG_ORDER = [], HAS_X = false, PSEG_CATS = new Map();   // data có cột Segment/Packsize; Segment -> các ngành có Segment đó
 const $ = id => document.getElementById(id);
 
@@ -675,7 +705,7 @@ function pass(r, skip){
     (skip==='cat'  || S.cat<0  || r[4]===S.cat) &&
     (skip==='brand'|| S.brand<0|| r[5]===S.brand) &&
     (skip==='seg'  || S.seg<0  || r[6]===S.seg) &&
-    (skip==='pseg' || S.pseg<0 || r[10]===S.pseg);
+    (skip==='pseg' || !S.psegs.size || S.psegs.has(r[10]));
 }
 const rTop = (x,y,w,h,r) => { r=Math.min(r,h,w/2); return `M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`; };
 
@@ -766,7 +796,7 @@ $('csv').onclick = () => {
   let r_;
   const lines = [head.join(',')].concat(rows.map(r => { r_ = r; return [r[0], r[1], r[2], dm.customer[r[3]], dm.category[r[4]], X(10,'pseg'), dm.brand[r[5]], dm.segment[r[6]], X(11,'size'), dm.store[r[7]],
     Math.round(r[8]), (r[8]/1e9).toFixed(4), (+r[9]).toFixed(3), HAS_X ? r[12] : '', HAS_X ? r[13] : ''].map(q).join(','); }));
-  const tag = [S.bu || 'NTW', S.cust>=0 ? dm.customer[S.cust] : '', S.cat>=0 ? dm.category[S.cat] : '', S.pseg>=0 ? dm.pseg[S.pseg] : '', S.brand>=0 ? dm.brand[S.brand] : '', S.seg>=0 ? dm.segment[S.seg] : '']
+  const tag = [S.bu || 'NTW', S.cust>=0 ? dm.customer[S.cust] : '', S.cat>=0 ? dm.category[S.cat] : '', S.brand>=0 ? dm.brand[S.brand] : '', S.psegs.size===1 ? dm.pseg[[...S.psegs][0]] : S.psegs.size ? S.psegs.size + '-segment' : '', S.seg>=0 ? dm.segment[S.seg] : '']
     .filter(Boolean).join('_').replace(/[^\w\-]+/g,'-');
   const blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -814,27 +844,51 @@ function syncControls(){
 }
 SEGS.forEach(([id,k,cast]) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; S[k] = cast(b.dataset.v); syncControls(); render(); }));
 $('fCust').onchange = e => { S.cust = +e.target.value; render(); };
-$('fCat').onchange = e => { S.cat = +e.target.value; if (S.pseg>=0 && S.cat>=0 && !PSEG_CATS.get(S.pseg)?.has(S.cat)) S.pseg = -1; render(); };
-$('fPseg').onchange = e => { S.pseg = +e.target.value; render(); };
-/* Ô Segment chỉ liệt kê các Segment có trong ngành hàng đang chọn (chưa chọn ngành: nhóm theo ngành) */
+$('fCat').onchange = e => { S.cat = +e.target.value; render(); };
+/* Ô Segment: chọn nhiều, chỉ liệt kê Segment có bán theo Khách hàng + Ngành hàng + Nhãn hàng đang chọn */
+const MS = {key:null, list:[]};
+function psegOptions(){
+  const k = [S.cust, S.cat, S.brand].join('|');
+  if (MS.key === k) return MS.list;
+  const t = new Map();
+  R.forEach(r => { if ((S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.brand<0 || r[5]===S.brand)) t.set(r[10], (t.get(r[10])||0) + r[9]); });
+  MS.key = k; MS.list = [...t.keys()].sort((a,b) => t.get(b)-t.get(a)); return MS.list;
+}
+function prunePseg(){ if (!HAS_X || !S.psegs.size) return; const ok = new Set(psegOptions()); [...S.psegs].forEach(i => { if (!ok.has(i)) S.psegs.delete(i); }); }
 function fillPseg(){
   if (!HAS_X) return;
-  const nm = D.dims.pseg, opt = i => `<option value="${i}">${esc(nm[i])}</option>`;
-  let h = `<option value="-1">Tất cả</option>`;
-  if (S.cat>=0) h += PSEG_ORDER.filter(i => PSEG_CATS.get(i).has(S.cat)).map(opt).join('');
-  else [...$('fCat').options].slice(1).forEach(o => { const c = +o.value, l = PSEG_ORDER.filter(i => PSEG_CATS.get(i).has(c));
-    if (l.length) h += `<optgroup label="${esc(D.dims.category[c])}">${l.map(opt).join('')}</optgroup>`; });
-  if ($('fPseg').dataset.k !== String(S.cat)) { $('fPseg').innerHTML = h; $('fPseg').dataset.k = S.cat; }
-  $('fPseg').value = S.pseg;
+  const nm = D.dims.pseg, list = psegOptions(), box = $('fPseg').querySelector('.ms-list');
+  const item = i => `<label><input type="checkbox" value="${i}" ${S.psegs.has(i)?'checked':''}><span>${esc(nm[i])}</span></label>`;
+  let h = '';
+  if (!list.length) h = '<div class="empty">Không có Segment nào với bộ lọc hiện tại.</div>';
+  else if (S.cat>=0) h = list.map(item).join('');
+  else { const byCat = new Map(); list.forEach(i => { const c = [...(PSEG_CATS.get(i)||[])][0]; if (!byCat.has(c)) byCat.set(c, []); byCat.get(c).push(i); });
+    [...$('fCat').options].slice(1).forEach(o => { const l = byCat.get(+o.value); if (l) h += `<div class="grp">${esc(D.dims.category[+o.value])}</div>` + l.map(item).join(''); }); }
+  box.innerHTML = h;
+  const n = S.psegs.size;
+  $('msTxt').textContent = !n ? 'Tất cả' : n===1 ? nm[[...S.psegs][0]] : `${nm[[...S.psegs][0]]} +${n-1}`;
+  $('fPseg').querySelector('.ms-btn').title = n ? [...S.psegs].map(i=>nm[i]).join(', ') : '';
+  $('msCount').textContent = n ? `Đã chọn ${n}/${list.length}` : `${list.length} Segment`;
 }
+(() => {
+  const ms = $('fPseg'), btn = ms.querySelector('.ms-btn'), pop = ms.querySelector('.ms-pop');
+  const open = v => { pop.hidden = !v; btn.setAttribute('aria-expanded', v); if (v) fillPseg(); };
+  btn.onclick = () => open(pop.hidden);
+  pop.addEventListener('change', e => { const i = +e.target.value; e.target.checked ? S.psegs.add(i) : S.psegs.delete(i); render(); });
+  pop.querySelector('.ms-head').onclick = e => { const a = e.target.dataset.a; if (!a) return;
+    S.psegs = a==='all' ? new Set(psegOptions()) : new Set(); render(); };
+  document.addEventListener('click', e => { if (!pop.hidden && !ms.contains(e.target)) open(false); });
+  ms.addEventListener('keydown', e => { if (e.key==='Escape' && !pop.hidden) { open(false); btn.focus(); } });
+})();
 $('fBrand').onchange = e => { S.brand = +e.target.value; render(); };
-$('reset').onclick = () => { Object.assign(S,{bu:'',cust:-1,cat:-1,brand:-1,seg:-1,pseg:-1}); syncControls(); render(); };
+$('reset').onclick = () => { Object.assign(S,{bu:'',cust:-1,cat:-1,brand:-1,seg:-1,psegs:new Set()}); syncControls(); render(); };
 /* Đánh dấu bộ lọc đang bật + nút "Xóa lọc (n)" */
 function updFilters(){
   fillPseg();
-  [['fCust','cust'],['fCat','cat'],['fBrand','brand'],['fPseg','pseg']].forEach(([id,k]) => { $(id).value = S[k]; $(id).closest('.fg').classList.toggle('act', S[k]>=0); });
+  [['fCust','cust'],['fCat','cat'],['fBrand','brand']].forEach(([id,k]) => { $(id).value = S[k]; $(id).closest('.fg').classList.toggle('act', S[k]>=0); });
+  $('gPseg').classList.toggle('act', S.psegs.size>0);
   $('fSeg').classList.toggle('act', S.seg>=0); $('fBu').classList.toggle('act', !!S.bu);
-  const n = [S.bu, S.cust>=0, S.cat>=0, S.brand>=0, S.seg>=0, S.pseg>=0].filter(Boolean).length;
+  const n = [S.bu, S.cust>=0, S.cat>=0, S.brand>=0, S.seg>=0, S.psegs.size>0].filter(Boolean).length;
   $('reset').hidden = !n; $('reset').textContent = `Xóa lọc (${n})`;
   // ẩn mục menu nếu phần đó đang ẩn (vd năm chưa có target)
   document.querySelectorAll('#nav a').forEach(a => { const el = $(a.dataset.sec); a.hidden = !el || el.style.display==='none'; });
@@ -858,6 +912,7 @@ let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(ren
 /* =================== VẼ TOÀN TRANG =================== */
 function render(){
   if (!D) return;
+  prunePseg();
   const Y = S.year;
   const cur = R.filter(r => r[1]===Y && pass(r));
   const ly  = R.filter(r => r[1]===Y-1 && pass(r));
@@ -975,11 +1030,12 @@ function drawGroup(Y){
   const keyOf = (cat, grp) => cat===kOil ? (OIL.includes(dm.group[grp]) ? 'g:'+dm.group[grp] : null) : cat===kSau ? (SAU.includes(dm.group[grp]) ? 'g:'+dm.group[grp] : null) : 'c:'+cat;
   const V = {NBU:{}, SBU:{}};
   const add = (bu, k, i, v) => { if (!V[bu]) return; const o = V[bu][k] || (V[bu][k] = [0,0]); o[i] += v; };
-  T.forEach(t => { if (t[2]!==M || !inC(t[3])) return; const k = keyOf(t[4], t[7]); if (!k) return; add(t[0], k, 0, t[5]);
+  const fG = x => (S.cat<0 || x[4]===S.cat) && (S.seg<0 || x[6]===S.seg);
+  T.forEach(t => { if (t[2]!==M || !inC(t[3]) || !fG(t) || !tBP(t)) return; const k = keyOf(t[4], t[7]); if (!k) return; add(t[0], k, 0, t[5]);
     if (t[4]===kSau && isFocus(t[3], t[8])) add(t[0], 'focus', 0, t[5]); });
-  R.forEach(r => { if (r[1]!==Y || r[2]!==M || !inC(r[3])) return; const k = keyOf(r[4], r[14]); if (!k) return; add(r[0], k, 1, r[9]);
+  R.forEach(r => { if (r[1]!==Y || r[2]!==M || !inC(r[3]) || !fG(r) || !rBP(r)) return; const k = keyOf(r[4], r[14]); if (!k) return; add(r[0], k, 1, r[9]);
     if (r[4]===kSau && isFocus(r[3], r[15])) add(r[0], 'focus', 1, r[9]); });
-  const get = (bu, k) => bu==='NTW' ? [0,1].map(i => (V.NBU[k]?.[i]||0) + (V.SBU[k]?.[i]||0)) : (V[bu][k] || [0,0]);
+  const get = (bu, k) => bu==='NTW' ? [0,1].map(i => ['NBU','SBU'].filter(x => !S.bu || x===S.bu).reduce((z,x) => z + (V[x][k]?.[i]||0), 0)) : (V[bu][k] || [0,0]);
   const sumK = (bu, ks) => ks.reduce((a,k) => { const v = get(bu,k); return [a[0]+v[0], a[1]+v[1]]; }, [0,0]);
   const oilK = OIL.map(g=>'g:'+g), sauK = SAU.map(g=>'g:'+g), catK = CATS.map(([c]) => 'c:'+K(c));
   // các dòng của bảng: [nhãn, hàm lấy [target, thực tế], kiểu dòng, quy tắc điểm]
@@ -1009,7 +1065,7 @@ function drawGroup(Y){
     return {s, bonus, det}; };
   const SC = {SBU: score('SBU'), NBU: score('NBU')};
   // bảng
-  const BUS = [['SBU','bu-s','SBU (Miền Nam)'],['NBU','bu-n','NBU (Miền Bắc)']];
+  const BUS = [['SBU','bu-s','SBU (Miền Nam)'],['NBU','bu-n','NBU (Miền Bắc)']].filter(([b]) => !S.bu || b===S.bu);
   let h = `<table class="grp"><thead><tr><th rowspan="2" style="vertical-align:bottom">Tháng ${M}/${Y}</th>` +
     BUS.map(([b,c,n]) => `<th colspan="5" class="${c}" style="text-align:center">${n}</th>`).join('') + `<th colspan="4" class="bu-t" style="text-align:center">Tổng ${cName || 'NTW'}</th></tr><tr>` +
     BUS.map(() => `<th class="gs">Target</th><th>Actual</th><th>% Actual</th><th>GAP</th><th>Điểm</th>`).join('') + `<th class="gs">Target</th><th>Actual</th><th>% Actual</th><th>GAP</th></tr></thead><tbody>`;
@@ -1031,7 +1087,7 @@ function drawGroup(Y){
   $('hGrp').textContent = `Sản lượng (tấn) so với target tháng ${M}/${Y}${cName ? ', hệ thống ' + cName : ', tất cả hệ thống'}. Điểm chấm theo thang ${rules.name}, tỷ lệ làm tròn đến hàng đơn vị.`;
   $('nGrp').innerHTML = (S.cust<0 ? '<b>Chọn một hệ thống ở bộ lọc Khách hàng để chấm điểm đúng theo kênh.</b> ' : '') +
     `Tổng dầu = Premium + Mid-end + Niches + Low-end (không tính hàng nhãn riêng và Big Pack). Nhóm SP trọng tâm NDFC quý ${q}/${Y}${S.cust>=0 ? '' : ' (theo danh sách của CRV)'}: ${fl.length ? fl.join(', ') : 'chưa có trong file target'}. ` +
-    `Điểm nền tảng (25), điểm trừ và điểm thưởng ý tưởng/hiệu quả công việc chấm tay nên không có ở đây. Bộ lọc ngành hàng, nhãn hàng, Segment, phân khúc không áp dụng cho bảng này.`;
+    `Điểm nền tảng (25), điểm trừ và điểm thưởng ý tưởng/hiệu quả công việc chấm tay nên không có ở đây.` + ((S.cat>=0 || S.brand>=0 || S.seg>=0 || S.psegs.size) ? ' <b>Bảng đang lọc theo ngành hàng / nhãn hàng / Segment / phân khúc, nên điểm chỉ mang tính tham khảo; điểm thưởng chính thức tính trên toàn bộ ngành hàng.</b>' : '');
 }
 
 function drawTarget(Y, partial, ud){
@@ -1040,8 +1096,8 @@ function drawTarget(Y, partial, ud){
   ['trkPanel','mapPanel','trkMxPanel','trkRank'].forEach(id => $(id).style.display = show ? '' : 'none');
   if (!show) return;
   const tCats = new Set(T.map(t=>t[4]));
-  const passT = (t, skip) => (!S.bu || t[0]===S.bu) && (skip==='cust' || S.cust<0 || t[3]===S.cust) && (skip==='cat' || S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg);
-  const A = R.filter(r => r[1]===Y && tCats.has(r[4]) && (!S.bu || r[0]===S.bu) && (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg));
+  const passT = (t, skip) => (!S.bu || t[0]===S.bu) && (skip==='cust' || S.cust<0 || t[3]===S.cust) && (skip==='cat' || S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg) && tBP(t);
+  const A = R.filter(r => r[1]===Y && tCats.has(r[4]) && (!S.bu || r[0]===S.bu) && (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg) && rBP(r));
   const Tf = T.filter(t => passT(t));
   const L = R.reduce((x,r)=>r[1]===Y && r[2]>x?r[2]:x, 0);
   const act = (rows, f=()=>true) => rows.reduce((s,r)=> f(r) ? s+r[9] : s, 0);
@@ -1049,7 +1105,7 @@ function drawTarget(Y, partial, ud){
   const pr = (a,t) => t>0 ? a/t : null;
 
   const note = [];
-  if (S.brand>=0 || S.pseg>=0) note.push('Target được đặt theo hệ thống, ngành hàng và phân khúc (SP/OB/BP), nên phần này bỏ qua bộ lọc nhãn hàng và Segment.');
+  if (S.brand>=0 || S.psegs.size) note.push('Target theo nhãn hàng / Segment được ghép từ từng dòng trong file target. Hàng Big Pack, hàng nhãn riêng và gạo OEM không gắn với một nhãn hàng nên không có target khi lọc theo nhãn hàng.');
   if (S.metric==='rev') note.push('Target của Wilmar đặt theo sản lượng, nên phần này luôn tính bằng tấn.');
   if (partial) note.push(`Tháng ${L} mới có số liệu đến ngày ${ud}, % đạt của tháng này chưa phản ánh đủ tháng.`);
   $('trkNote').style.display = note.length ? '' : 'none'; $('trkNote').textContent = note.join(' ');
@@ -1191,14 +1247,14 @@ function priceAt(o, origin){ let r = 0, t = 0; for (let i = Math.max(1, origin-2
 function adjFactor(Y, m, bu, cat){ let p = 0; (D.adjust||[]).forEach(x => { if (x[0]===Y && x[1]===m && (x[2]==='*' || x[2]===bu) && (x[3]===-1 || x[3]===cat)) p += x[4]; }); return 1 + p/100; }
 
 function fcCompute(Y, partial, ud){
-  const fF = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg);
+  const fF = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg) && rBP(r);
   const ser = new Map();
   const get = (bu, cat) => { const k = bu+'|'+cat; let o = ser.get(k);
     if (!o) { o = {bu, cat, a:Array(13).fill(0), ly:Array(13).fill(0), lyRev:Array(13).fill(0), t:Array(13).fill(0), rev:Array(13).fill(0), f:Array(13).fill(null), fRev:Array(13).fill(null), xp:Array(13).fill(null)}; ser.set(k, o); } return o; };
   R.forEach(r => { if (!fF(r)) return;
     if (r[1]===Y) { const o = get(r[0], r[4]); o.a[r[2]] += r[9]; o.rev[r[2]] += r[8]/1e9; }
     else if (r[1]===Y-1) { const o = get(r[0], r[4]); o.ly[r[2]] += r[9]; o.lyRev[r[2]] += r[8]/1e9; } });
-  (D.target||[]).forEach(t => { if (t[1]===Y && (S.cust<0 || t[3]===S.cust) && (S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg)) get(t[0], t[4]).t[t[2]] += t[5]; });
+  (D.target||[]).forEach(t => { if (t[1]===Y && (S.cust<0 || t[3]===S.cust) && (S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg) && tBP(t)) get(t[0], t[4]).t[t[2]] += t[5]; });
   const L = R.reduce((x,r)=>r[1]===Y && r[2]>x?r[2]:x, 0);
   const Lc = partial ? L-1 : L;                        // tháng đầy đủ gần nhất
   // tiến độ cùng kỳ của tháng đang chạy (theo ngày), cấp khu vực × ngành
@@ -1345,15 +1401,15 @@ function smoothPath(P, t=0.5){
   return d + 'Z';
 }
 function drawMap(Y, L, T, tCats){
-  const fOther = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg);   // cột 6 = phân khúc ở cả data và target
-  const fAll = r => fOther(r) && (S.brand<0 || r[5]===S.brand) && (S.seg<0 || r[6]===S.seg);
+  const fBase = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg);   // cột 6 = phân khúc ở cả data và target
+  const fOther = r => fBase(r) && rBP(r), fAll = fOther, fTg = t => fBase(t) && tBP(t);
   const calc = bus => {
     let a=0, aLY=0, rev=0, revLY=0;
     R.forEach(r => { if (!bus.includes(r[0]) || r[2]>L) return;
       if (r[1]===Y) { if (fAll(r)) rev += r[8]/1e9; if (tCats.has(r[4]) && fOther(r)) a += r[9]; }
       else if (r[1]===Y-1) { if (fAll(r)) revLY += r[8]/1e9; if (tCats.has(r[4]) && fOther(r)) aLY += r[9]; } });
     let t=0, f=0;
-    T.forEach(x => { if (!bus.includes(x[0]) || !fOther(x)) return; f += x[5]; if (x[2]<=L) t += x[5]; });   // target: [bu,năm,tháng,KH,ngành,tấn,phân khúc]
+    T.forEach(x => { if (!bus.includes(x[0]) || !fTg(x)) return; f += x[5]; if (x[2]<=L) t += x[5]; });   // target: [bu,năm,tháng,KH,ngành,tấn,phân khúc]
     return {a, aLY, rev, revLY, t, f, p: t>0 ? a/t : null};
   };
   const M = {NBU: calc(['NBU']), SBU: calc(['SBU']), NTW: calc(['NBU','SBU'])};
@@ -1580,8 +1636,8 @@ function drawSize(cur, ly, L, Y){
   const shareCY = k => shr ? A.tot.get(k)||0 : G ? (A.tot.get(k)||0)/G*100 : 0;
   const GLt = keys.reduce((s,k)=>s+(B.tot.get(k)||0),0), shareLY = k => shr ? (B.tot.get(k)||0) : GLt ? (B.tot.get(k)||0)/GLt*100 : 0;
   const pp = (a,b) => { const d = a-b; if (Math.abs(d) < .05) return '<span>0,0 điểm</span>'; return `<span class="${d>=0?'up':'down'}">${d>=0?'▲':'▼'} ${nf(Math.abs(d),1)} điểm</span>`; };
-  const ctx = [S.brand>=0 ? D.dims.brand[S.brand] : '', S.pseg>=0 ? D.dims.pseg[S.pseg] : '', S.cat>=0 ? D.dims.category[S.cat] : ''].filter(Boolean).join(' · ');
-  $('hSize').textContent = `${mLbl} theo packsize, năm ${Y}${ctx ? ', ' + ctx : ''}. ` + (shr ? 'Mỗi ô là phần trăm của size đó trong tổng sản lượng tháng; cột ± tỷ trọng so với cùng kỳ, tính bằng điểm %. ' : '') + (S.brand<0 && S.pseg<0 ? 'Chọn Nhãn hàng hoặc Segment ở thanh lọc để xem các size của một sản phẩm.' : '');
+  const ctx = [S.brand>=0 ? D.dims.brand[S.brand] : '', S.psegs.size ? [...S.psegs].map(i=>D.dims.pseg[i]).join(', ') : '', S.cat>=0 ? D.dims.category[S.cat] : ''].filter(Boolean).join(' · ');
+  $('hSize').textContent = `${mLbl} theo packsize, năm ${Y}${ctx ? ', ' + ctx : ''}. ` + (shr ? 'Mỗi ô là phần trăm của size đó trong tổng sản lượng tháng; cột ± tỷ trọng so với cùng kỳ, tính bằng điểm %. ' : '') + (S.brand<0 && !S.psegs.size ? 'Chọn Nhãn hàng hoặc Segment ở thanh lọc để xem các size của một sản phẩm.' : '');
   if (!keys.length) { $('cSize').innerHTML = ''; $('lgSize').innerHTML = ''; $('tSize').innerHTML = '<p style="color:var(--muted);padding:12px">Không có số liệu với bộ lọc hiện tại.</p>'; return; }
   /* đường */
   const top = keys.slice(0, 5), el = $('cSize'), W = el.clientWidth || 900, H = 280, P = {l:58, r:64, t:14, b:30};
@@ -1640,22 +1696,22 @@ function drawStores(Y, L){
   $('fStM').innerHTML = `<button data-m="0" class="${ST_M===0?'on':''}">Lũy kế</button>` +
     MONTHS.slice(0, L).map(m => `<button data-m="${m}" class="${ST_M===m?'on':''}">Th${m}</button>`).join('');
   $('fStM').querySelectorAll('button').forEach(b => b.onclick = () => { ST_M = +b.dataset.m; render(); });
-  const tgtOK = S.brand<0 && S.pseg<0;
+  const tgtOK = true;   // target phân bổ chạy theo mọi bộ lọc (kể cả nhãn hàng, Segment)
   const Tall = (D.target||[]).filter(t => t[1]===Y);
   const tg = new Map();
-  Tall.forEach(t => { if (inM(t[2]) && (!S.bu||t[0]===S.bu) && (S.cust<0||t[3]===S.cust) && (S.cat<0||t[4]===S.cat) && (S.seg<0||t[6]===S.seg)) {
+  Tall.forEach(t => { if (inM(t[2]) && (!S.bu||t[0]===S.bu) && (S.cust<0||t[3]===S.cust) && (S.cat<0||t[4]===S.cat) && (S.seg<0||t[6]===S.seg) && tBP(t)) {
     const g = t[0]+'|'+t[3]+'|'+t[4]; tg.set(g,(tg.get(g)||0)+t[5]); } });
   const base = new Map(), sh = new Map(), st = new Map();
   const get = k => { let o = st.get(k); if (!o) { o = {k, c:new Map(), b:new Map(), ton:0, rev:0, tonLY:0, revLY:0, tgt:0}; st.set(k,o); } return o; };
   R.forEach(r => {
-    if (r[1]===Y-1 && (S.seg<0 || r[6]===S.seg)) { const g = r[0]+'|'+r[3]+'|'+r[4]; base.set(g,(base.get(g)||0)+r[9]); const s = g+'|'+r[7]; sh.set(s,(sh.get(s)||0)+r[9]); }
+    if (r[1]===Y-1 && (S.seg<0 || r[6]===S.seg) && rBP(r)) { const g = r[0]+'|'+r[3]+'|'+r[4]; base.set(g,(base.get(g)||0)+r[9]); const s = g+'|'+r[7]; sh.set(s,(sh.get(s)||0)+r[9]); }
     if (!pass(r) || !inM(r[2])) return;
     if (r[1]===Y) { const o = get(r[7]); o.ton += r[9]; o.rev += r[8]/1e9; o.c.set(r[3],(o.c.get(r[3])||0)+r[8]); o.b.set(r[0],(o.b.get(r[0])||0)+r[8]); }
     else if (r[1]===Y-1) { const o = get(r[7]); o.tonLY += r[9]; o.revLY += r[8]/1e9; }
   });
   // Ưu tiên target store từ file Target_Store (do team tự chia); không có file thì phân bổ ước tính
   const STg = (D.storeTarget||[]).filter(t => t[1]===Y), useFile = STg.length > 0;
-  const stOK = useFile ? (tgtOK && S.cat<0 && S.seg<0) : tgtOK;
+  const stOK = useFile ? (S.brand<0 && !S.psegs.size && S.cat<0 && S.seg<0) : tgtOK;
   if (stOK && useFile) STg.forEach(t => { if (inM(t[2]) && (!S.bu||t[0]===S.bu) && (S.cust<0||t[3]===S.cust)) {
     const o = get(t[4]); o.tgt += t[5]; if (!o.c.size) o.c.set(t[3],0); if (!o.b.size) o.b.set(t[0],0); } });
   else if (stOK) for (const [s,v] of sh) { const i = s.lastIndexOf('|'), g = s.slice(0,i), t = tg.get(g), b = base.get(g);
