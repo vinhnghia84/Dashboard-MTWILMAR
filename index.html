@@ -252,6 +252,15 @@ table.trk td.nm{padding-left:16px !important;font-weight:500}
 #vnMap svg{width:100%;height:auto}
 #vnMap .rg{cursor:pointer;transition:opacity .15s}
 #vnMap .rg.dim{opacity:.35}
+/* Hiệu ứng nhấp nháy: miền "thở" nhẹ + vòng sóng lan ra từ điểm neo, màu theo mức đạt target */
+#vnMap .rg:not(.dim) .rf{animation:mapBreath 2.8s ease-in-out infinite}
+#vnMap .rg[data-bu="SBU"]:not(.dim) .rf{animation-delay:1.4s}
+@keyframes mapBreath{0%,100%{opacity:1}50%{opacity:.62}}
+#vnMap .ping{transform-box:fill-box;transform-origin:center;animation:mapPing 2.4s ease-out infinite;pointer-events:none}
+#vnMap .ping.d2{animation-delay:1.2s}
+@keyframes mapPing{0%{transform:scale(1);opacity:.75}100%{transform:scale(7);opacity:0}}
+#vnMap .hov .rf{animation:none;opacity:1}
+@media (prefers-reduced-motion: reduce){#vnMap .rf,#vnMap .ping{animation:none!important}#vnMap .ping{display:none}}
 #vnMap text{font-family:inherit}
 .mcards{display:flex;flex-direction:column;gap:14px}
 .mc{border:1px solid var(--line);border-radius:16px;padding:16px 18px;cursor:pointer;background:var(--panel);text-align:left;width:100%;font:inherit;color:inherit}
@@ -396,7 +405,7 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     <a href="#sec-rank" data-sec="sec-rank"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 12h16M4 18h8"/></svg><span>Xếp hạng</span></a>
     <a href="#sec-mx" data-sec="sec-mx"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16M9.5 10v9M14.5 10v9"/></svg><span>Chi tiết theo tháng</span></a>
     <a href="#sec-brand" data-sec="sec-brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5V5a1 1 0 0 1 1-1h7.5L20 11.5 12.5 19z"/><circle cx="8.5" cy="8.5" r="1.3"/></svg><span>Nhãn hàng &amp; phân khúc</span></a>
-    <a href="#sec-size" data-sec="sec-size"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3h4v3l2 3v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9l2-3z"/><path d="M8 13h8"/></svg><span>Packsize</span></a>
+    <a href="#sec-size" data-sec="sec-size"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3h4v3l2 3v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9l2-3z"/><path d="M8 13h8"/></svg><span>Cơ cấu packsize</span></a>
     <a href="#sec-store" data-sec="sec-store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9l1.5-5h13L20 9M4 9h16M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0A2.7 2.7 0 0 0 20 9M5.5 11.5V20h13v-8.5"/><path d="M10 20v-4.5h4V20"/></svg><span>Doanh số theo store</span></a>
   </nav>
 
@@ -542,8 +551,8 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
   </div>
   <section class="panel" id="sec-size">
     <div class="ph">
-      <div><h2>Packsize bán chạy</h2><p id="hSize"></p></div>
-      <div class="seg" id="fSzM"><button data-v="ton" class="on">Tấn</button><button data-v="car">Thùng</button><button data-v="ord">Số đơn</button><button data-v="sto">Số cửa hàng</button></div>
+      <div><h2>Cơ cấu packsize theo tháng</h2><p id="hSize"></p></div>
+      <div class="seg" id="fSzM"><button data-v="ton" class="on" title="Sản lượng, tấn">Volume</button><button data-v="rev" title="Doanh số, tỷ đồng">Value</button><button data-v="car" title="Số thùng">Box</button></div>
     </div>
     <div class="legend" id="lgSize"></div>
     <div id="cSize" class="chart"></div>
@@ -1174,11 +1183,20 @@ function drawForecast(Y, partial, ud){
 
 /* =================== BẢN ĐỒ VIỆT NAM: NBU / SBU =================== */
 // Đường viền lãnh thổ giản lược (kinh độ, vĩ độ), đủ để minh họa hai khu vực
-const VN_OUTLINE = [[102.14,22.40],[102.48,22.77],[102.95,22.45],[103.5,22.6],[103.96,22.5],[104.4,22.75],[104.85,22.95],[105.33,23.36],[105.85,22.95],[106.25,22.85],[106.7,22.85],[106.7,22.35],[106.95,21.95],[107.4,21.65],[108.05,21.55],[107.75,21.25],[107.1,20.95],[106.7,20.7],[106.55,20.25],[106.2,19.95],[105.95,19.6],[105.75,19.1],[105.65,18.7],[106.1,18.3],[106.5,17.6],[107.1,16.85],[107.6,16.45],[108.2,16.05],[108.65,15.45],[108.9,14.8],[109.2,13.8],[109.3,13.1],[109.45,12.75],[109.2,12.25],[109.15,11.6],[108.7,11.15],[108.0,10.7],[107.2,10.4],[106.75,10.2],[106.6,9.85],[106.2,9.4],[105.6,9.0],[105.1,8.75],[104.75,8.6],[104.85,9.2],[104.95,9.8],[104.5,10.4],[105.1,10.9],[105.75,10.95],[106.2,11.05],[106.4,11.7],[106.9,12.0],[107.55,12.35],[107.55,13.0],[107.45,14.0],[107.55,14.7],[107.5,15.3],[107.2,15.9],[106.9,16.3],[106.55,16.65],[106.3,17.25],[105.6,18.0],[105.15,18.7],[104.5,19.3],[103.9,19.3],[104.6,19.75],[104.95,20.2],[104.4,20.45],[103.75,20.75],[103.2,20.85],[102.9,21.25],[102.75,21.7],[102.6,21.95]];
+const VN_OUTLINE = [[102.14,22.40],[102.25,22.48],[102.40,22.62],[102.50,22.77],[102.65,22.70],[102.82,22.62],[102.98,22.45],[103.10,22.53],[103.30,22.80],[103.52,22.60],[103.65,22.79],[103.88,22.57],[103.98,22.50],[104.10,22.73],[104.27,22.73],[104.38,22.85],[104.58,22.84],[104.75,22.85],[104.85,23.05],[104.98,23.18],[105.15,23.25],[105.33,23.38],[105.55,23.17],[105.73,23.05],[105.88,22.92],[106.05,22.97],[106.25,22.87],[106.50,22.92],[106.70,22.86],[106.75,22.65],[106.60,22.43],[106.55,22.25],[106.70,22.05],[106.95,21.95],[107.05,21.80],[107.35,21.62],[107.65,21.60],[107.97,21.54],[107.80,21.40],[107.55,21.25],[107.35,21.05],[107.10,20.95],[106.90,20.85],[106.75,20.70],[106.65,20.50],[106.58,20.32],[106.40,20.15],[106.18,19.98],[105.98,19.80],[105.85,19.50],[105.75,19.20],[105.70,19.02],[105.80,18.75],[105.95,18.55],[106.20,18.30],[106.45,18.05],[106.55,17.85],[106.68,17.55],[106.90,17.30],[107.10,17.08],[107.35,16.85],[107.60,16.62],[107.85,16.45],[108.05,16.32],[108.20,16.15],[108.25,16.05],[108.33,15.92],[108.50,15.75],[108.68,15.50],[108.83,15.38],[108.90,15.18],[108.95,14.95],[109.05,14.70],[109.10,14.40],[109.15,14.10],[109.25,13.80],[109.30,13.50],[109.32,13.20],[109.42,12.90],[109.33,12.62],[109.25,12.40],[109.20,12.20],[109.22,11.95],[109.15,11.75],[109.02,11.55],[108.85,11.32],[108.60,11.18],[108.35,11.00],[108.10,10.88],[107.80,10.70],[107.50,10.55],[107.25,10.42],[107.05,10.38],[106.85,10.30],[106.75,10.05],[106.60,9.80],[106.35,9.58],[106.10,9.35],[105.80,9.10],[105.45,8.85],[105.15,8.70],[104.85,8.58],[104.75,8.70],[104.80,8.95],[104.85,9.30],[104.95,9.65],[105.05,9.90],[104.95,10.10],[104.75,10.25],[104.60,10.30],[104.45,10.42],[104.62,10.50],[104.85,10.60],[105.05,10.82],[105.25,10.93],[105.45,10.95],[105.65,10.98],[105.85,10.88],[106.05,11.00],[106.15,11.15],[106.00,11.35],[105.88,11.60],[106.15,11.75],[106.40,11.95],[106.75,12.05],[107.00,12.05],[107.30,12.20],[107.55,12.35],[107.55,12.75],[107.48,13.05],[107.48,13.40],[107.35,13.75],[107.45,14.15],[107.45,14.55],[107.55,14.70],[107.40,14.95],[107.55,15.25],[107.40,15.45],[107.20,15.75],[107.05,16.00],[107.20,16.20],[106.95,16.35],[106.70,16.45],[106.55,16.70],[106.45,16.95],[106.25,17.25],[106.05,17.45],[105.80,17.70],[105.62,18.00],[105.40,18.20],[105.15,18.45],[104.95,18.65],[104.65,18.85],[104.30,19.05],[104.05,19.25],[103.90,19.35],[104.05,19.55],[104.20,19.75],[104.55,19.85],[104.80,19.95],[104.90,20.15],[104.60,20.35],[104.45,20.60],[104.10,20.95],[103.75,20.75],[103.40,20.80],[103.20,20.88],[103.05,21.10],[102.95,21.38],[102.85,21.62],[102.65,21.68],[102.60,21.95],[102.45,22.10],[102.25,22.25]];   // đường biên + bờ biển (kinh độ, vĩ độ), vẽ mượt bằng đường cong
+const PHU_QUOC = [[103.86,10.43],[104.03,10.40],[104.08,10.20],[104.06,10.03],[103.97,10.02],[103.92,10.17],[103.84,10.30]];
+const VN_CITIES = [["Hà Nội",105.85,21.03,-1],["Đà Nẵng",108.21,16.06,1],["TP.HCM",106.70,10.78,1]];   // -1: chữ bên trái, 1: bên phải
 const HOANG_SA = [[111.2,16.5],[111.6,16.8],[112.3,16.6],[111.75,16.25],[112.0,16.95]];
 const TRUONG_SA = [[113.8,10.4],[114.3,10.0],[114.6,9.6],[113.5,9.2],[114.9,10.9],[114.2,8.8],[115.2,9.9]];
 const SPLIT_LAT = 15.35;   // ranh giới minh họa: NBU đến Quảng Nam, SBU từ Quảng Ngãi
 
+/* đường cong khép kín qua các điểm (Catmull-Rom -> Bézier) */
+function smoothPath(P, t=0.5){
+  const n = P.length, f = v => v.toFixed(1); let d = `M${f(P[0][0])},${f(P[0][1])}`;
+  for (let i=0; i<n; i++){ const p0=P[(i-1+n)%n], p1=P[i], p2=P[(i+1)%n], p3=P[(i+2)%n];
+    d += `C${f(p1[0]+(p2[0]-p0[0])*t/3)},${f(p1[1]+(p2[1]-p0[1])*t/3)} ${f(p2[0]-(p3[0]-p1[0])*t/3)},${f(p2[1]-(p3[1]-p1[1])*t/3)} ${f(p2[0])},${f(p2[1])}`; }
+  return d + 'Z';
+}
 function drawMap(Y, L, T, tCats){
   const fOther = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg);   // cột 6 = phân khúc ở cả data và target
   const fAll = r => fOther(r) && (S.brand<0 || r[5]===S.brand) && (S.seg<0 || r[6]===S.seg);
@@ -1198,12 +1216,13 @@ function drawMap(Y, L, T, tCats){
   const LON0 = 101.6, LAT0 = 23.8, KX = 27, KY = 28.2;
   const px = lon => (lon-LON0)*KX, py = lat => (LAT0-lat)*KY;
   const W = px(115.8), H = py(8.1), ys = py(SPLIT_LAT);
-  const path = 'M' + VN_OUTLINE.map(([lo,la]) => `${px(lo).toFixed(1)},${py(la).toFixed(1)}`).join('L') + 'Z';
-  const fill = p => p==null ? 'var(--panel-2)' : `color-mix(in srgb, ${stCol(p)} 55%, var(--panel))`;
+  const path = smoothPath(VN_OUTLINE.map(([lo,la]) => [px(lo), py(la)])), pq = smoothPath(PHU_QUOC.map(([lo,la]) => [px(lo), py(la)]));
+  const fill = p => p==null ? 'var(--panel-2)' : `color-mix(in srgb, ${stCol(p)} 42%, var(--panel))`;
   const dimN = S.bu==='SBU', dimS = S.bu==='NBU';
   const lab = (bu, lon, lat, ax, ay) => { const o = M[bu], x = px(lon), y = py(lat);
     return `<line x1="${px(ax)}" y1="${py(ay)}" x2="${x}" y2="${y+4}" stroke="var(--ink-2)" stroke-width="1" stroke-dasharray="2 3"/>
-      <circle cx="${px(ax)}" cy="${py(ay)}" r="3" fill="var(--ink)"/>
+      ${(bu==='NBU' ? !dimN : !dimS) ? `<circle class="ping" cx="${px(ax)}" cy="${py(ay)}" r="3" fill="none" stroke="${stCol(o.p)}" stroke-width="1.5"/><circle class="ping d2" cx="${px(ax)}" cy="${py(ay)}" r="3" fill="none" stroke="${stCol(o.p)}" stroke-width="1.5"/>` : ''}
+      <circle cx="${px(ax)}" cy="${py(ay)}" r="3.5" fill="${stCol(o.p)}" stroke="var(--panel)" stroke-width="1.5"/>
       <text x="${x}" y="${y}" style="font-size:12px;fill:var(--ink-2)">${BU_LABEL[bu]}</text>
       <text x="${x}" y="${y+26}" style="font-size:26px;font-weight:800;fill:${stCol(o.p)}">${fP(o.p)}</text>
       <text x="${x}" y="${y+44}" style="font-size:11.5px;fill:var(--muted)">${tn(o.a)} / ${tn(o.t)} tấn</text>`; };
@@ -1211,21 +1230,27 @@ function drawMap(Y, L, T, tCats){
     `<text x="${px(lon)}" y="${py(lat)}" text-anchor="middle" style="font-size:10px;fill:var(--muted)">${lbl}</text>`;
   $('vnMap').innerHTML = `<svg viewBox="-6 -6 ${W+12} ${H+12}" role="img" aria-label="Bản đồ Việt Nam chia NBU và SBU">
     <defs><clipPath id="cN"><rect x="-10" y="-10" width="${W+20}" height="${ys+10}"/></clipPath>
-      <clipPath id="cS"><rect x="-10" y="${ys}" width="${W+20}" height="${H}"/></clipPath></defs>
-    <g class="rg ${dimN?'dim':''}" data-bu="NBU"><path d="${path}" clip-path="url(#cN)" fill="${fill(M.NBU.p)}" stroke="var(--ink-2)" stroke-width="1" stroke-linejoin="round"/></g>
-    <g class="rg ${dimS?'dim':''}" data-bu="SBU"><path d="${path}" clip-path="url(#cS)" fill="${fill(M.SBU.p)}" stroke="var(--ink-2)" stroke-width="1" stroke-linejoin="round"/></g>
-    <ellipse cx="${px(103.97)}" cy="${py(10.22)}" rx="3" ry="7" fill="${fill(M.SBU.p)}" stroke="var(--ink-2)" stroke-width=".8" class="${dimS?'dim':''}"/>
+      <clipPath id="cS"><rect x="-10" y="${ys}" width="${W+20}" height="${H}"/></clipPath>
+      <clipPath id="cVN"><path d="${path}"/></clipPath>
+      <filter id="mapSh" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#00343f" flood-opacity=".18"/></filter></defs>
+    <path d="${path}" fill="var(--panel)" filter="url(#mapSh)"/>
+    <g class="rg ${dimN?'dim':''}" data-bu="NBU"><path class="rf" d="${path}" clip-path="url(#cN)" fill="${fill(M.NBU.p)}"/></g>
+    <g class="rg ${dimS?'dim':''}" data-bu="SBU"><path class="rf" d="${path}" clip-path="url(#cS)" fill="${fill(M.SBU.p)}"/><path class="rf" d="${pq}" fill="${fill(M.SBU.p)}" stroke="var(--ink-2)" stroke-width=".8"/></g>
+    <path d="${path}" fill="none" stroke="var(--ink-2)" stroke-width="1.1" stroke-linejoin="round" pointer-events="none"/>
+    <line x1="0" x2="${W}" y1="${ys}" y2="${ys}" clip-path="url(#cVN)" stroke="var(--panel)" stroke-width="3" pointer-events="none"/>
+    <line x1="0" x2="${W}" y1="${ys}" y2="${ys}" clip-path="url(#cVN)" stroke="var(--ink)" stroke-width="1.2" stroke-dasharray="4 3" pointer-events="none"/>
     <circle cx="${px(106.6)}" cy="${py(8.68)}" r="2" fill="var(--ink-2)"/>
-    <line x1="${px(107.35)}" x2="${px(108.85)}" y1="${ys}" y2="${ys}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    ${VN_CITIES.map(([n,lo,la,sd]) => `<g pointer-events="none"><circle cx="${px(lo)}" cy="${py(la)}" r="3.2" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.4"/><text x="${px(lo)+7*sd}" y="${py(la)+4}" text-anchor="${sd<0?'end':'start'}" style="font-size:10.5px;fill:var(--ink);font-weight:600;paint-order:stroke;stroke:var(--panel);stroke-width:3px;stroke-linejoin:round">${n}</text></g>`).join('')}
     ${dots(HOANG_SA, 'QĐ. Hoàng Sa', 111.75, 17.45)}
     ${dots(TRUONG_SA, 'QĐ. Trường Sa', 114.3, 11.55)}
-    ${lab('NBU', 108.9, 20.6, 105.4, 21.4)}
-    ${lab('SBU', 110.0, 14.2, 106.6, 11.6)}
+    ${lab('NBU', 109.2, 20.6, 105.0, 21.9)}
+    ${lab('SBU', 110.2, 13.9, 107.9, 12.6)}
   </svg>`;
   $('vnMap').querySelectorAll('.rg').forEach(g => { const bu = g.dataset.bu, o = M[bu];
     g.onclick = () => { hideTip(); S.bu = S.bu===bu ? '' : bu; syncControls(); render(); };
     g.onmousemove = e => showTip(`<div class="t">${BU_LABEL[bu]}</div>${trow('Thực tế', tn(o.a)+' tấn','var(--act)')}${trow('Target lũy kế', tn(o.t)+' tấn','var(--tgt)')}${trow('Tỷ lệ đạt', `<span style="color:${stCol(o.p)};font-weight:700">${fP(o.p)}</span>`)}${trow('Doanh số', fB(o.rev)+' tỷ')}${trow('So cùng kỳ', fmtPct(pct(o.rev,o.revLY)))}<div class="r"><span>${S.bu===bu?'Bấm để bỏ lọc':'Bấm để lọc miền này'}</span></div>`, e);
-    g.onmouseleave = hideTip; });
+    g.onmouseenter = () => g.classList.add('hov');
+    g.onmouseleave = () => { hideTip(); g.classList.remove('hov'); }; });
 
   // --- thẻ số liệu ---
   const card = (key, name, color) => { const o = M[key], gap = o.a - o.t, sel = key!=='NTW' && S.bu===key, dim = key!=='NTW' && S.bu && S.bu!==key;
@@ -1382,10 +1407,11 @@ function drawMatrix(cur, ly, L, Y){
 /* --- Packsize bán chạy: đường theo tháng (5 size lớn nhất) + bảng nhiệt size × tháng ---
    Tấn, thùng, số đơn: cộng dồn. Số cửa hàng: số store có đặt size đó trong tháng (lũy kế = số store khác nhau trong năm). */
 const SZ_COL = ['var(--z1)','var(--z2)','var(--z3)','var(--z4)','var(--z5)'];
-const SZ_M = {ton:['Sản lượng','tấn',1], car:['Số thùng','thùng',0], ord:['Số đơn','đơn',0], sto:['Số cửa hàng','cửa hàng',0]};
+const SZ_M = {ton:['Volume (tấn)','tấn',1], rev:['Value (tỷ đồng)','tỷ đồng',2], car:['Box (thùng)','thùng',0]};
 function drawSize(cur, ly, L, Y){
+  if (!SZ_M[S.szM]) S.szM = 'ton';
   const M = S.szM, [mLbl, mUnit, dec] = SZ_M[M], nm = D.dims.size, months = MONTHS.slice(0, L);
-  const v = r => M==='ton' ? r[9] : M==='car' ? r[12] : r[13];
+  const v = r => M==='rev' ? r[8]/1e9 : M==='car' ? r[12] : r[9];
   const agg = (rows, maxM) => { const cell = new Map(), tot = new Map(), st = new Map(), stY = new Map();
     rows.forEach(r => { if (r[2] > maxM || r[9] <= 0 && M==='sto') return; const k = r[11];
       if (M==='sto') { const a = k+'|'+r[2]; if (!st.has(a)) st.set(a, new Set()); st.get(a).add(r[7]); if (!stY.has(k)) stY.set(k, new Set()); stY.get(k).add(r[7]); }
@@ -1393,12 +1419,22 @@ function drawSize(cur, ly, L, Y){
     if (M==='sto') { st.forEach((s,a)=>cell.set(a, s.size)); stY.forEach((s,k)=>tot.set(k, s.size)); }
     return {cell, tot}; };
   const A = agg(cur, 12), B = agg(ly, L);
+  /* Tỷ trọng: mỗi ô = sản lượng size / tổng sản lượng tháng đó (%); lũy kế, cùng kỳ tính trên tổng kỳ */
+  const toShare = X => { const mt = new Map(); let gt = 0;
+    X.cell.forEach((x,a) => { const m = a.split('|')[1]; mt.set(m,(mt.get(m)||0)+x); }); X.tot.forEach(x => gt += x);
+    const c = new Map(), t = new Map(); X.cell.forEach((x,a) => c.set(a, mt.get(a.split('|')[1]) ? x/mt.get(a.split('|')[1])*100 : 0)); X.tot.forEach((x,k) => t.set(k, gt ? x/gt*100 : 0)); X.cell = c; X.tot = t; };
+  const shr = M==='shr';
+  const tonA = new Map(A.tot), tonB = new Map(B.tot);
+  if (shr) { toShare(A); toShare(B); }
   const tonT = new Map(); cur.forEach(r => tonT.set(r[11], (tonT.get(r[11])||0) + r[9]));
   const keys = [...A.tot.keys()].filter(k => (A.tot.get(k)||0) > 0 && (tonT.get(k)||0) > 0).sort((a,b) => (A.tot.get(b)-A.tot.get(a)) || (tonT.get(b)-tonT.get(a)));
-  const f = x => nf(x, dec), get = (k,m,c=A.cell) => c.get(k+'|'+m) || 0;
+  const f = x => nf(x, dec) + (shr ? '%' : ''), get = (k,m,c=A.cell) => c.get(k+'|'+m) || 0;
   const G = keys.reduce((s,k)=>s+A.tot.get(k),0);
+  const shareCY = k => shr ? A.tot.get(k)||0 : G ? (A.tot.get(k)||0)/G*100 : 0;
+  const GLt = keys.reduce((s,k)=>s+(B.tot.get(k)||0),0), shareLY = k => shr ? (B.tot.get(k)||0) : GLt ? (B.tot.get(k)||0)/GLt*100 : 0;
+  const pp = (a,b) => { const d = a-b; if (Math.abs(d) < .05) return '<span>0,0 điểm</span>'; return `<span class="${d>=0?'up':'down'}">${d>=0?'▲':'▼'} ${nf(Math.abs(d),1)} điểm</span>`; };
   const ctx = [S.brand>=0 ? D.dims.brand[S.brand] : '', S.pseg>=0 ? D.dims.pseg[S.pseg] : '', S.cat>=0 ? D.dims.category[S.cat] : ''].filter(Boolean).join(' · ');
-  $('hSize').textContent = `${mLbl} theo packsize, năm ${Y}${ctx ? ', ' + ctx : ''}. ` + (S.brand<0 && S.pseg<0 ? 'Chọn Nhãn hàng hoặc Segment ở thanh lọc để xem các size của một sản phẩm.' : '');
+  $('hSize').textContent = `${mLbl} theo packsize, năm ${Y}${ctx ? ', ' + ctx : ''}. ` + (shr ? 'Mỗi ô là phần trăm của size đó trong tổng sản lượng tháng; cột ± tỷ trọng so với cùng kỳ, tính bằng điểm %. ' : '') + (S.brand<0 && S.pseg<0 ? 'Chọn Nhãn hàng hoặc Segment ở thanh lọc để xem các size của một sản phẩm.' : '');
   if (!keys.length) { $('cSize').innerHTML = ''; $('lgSize').innerHTML = ''; $('tSize').innerHTML = '<p style="color:var(--muted);padding:12px">Không có số liệu với bộ lọc hiện tại.</p>'; return; }
   /* đường */
   const top = keys.slice(0, 5), el = $('cSize'), W = el.clientWidth || 900, H = 280, P = {l:58, r:64, t:14, b:30};
@@ -1430,14 +1466,16 @@ function drawSize(cur, ly, L, Y){
   const maxV = Math.max(1, ...keys.flatMap(k => months.map(m => get(k,m)))), hasLY = ly.length > 0, sto = M==='sto';
   const tile = x => { if (!x) return `<td><div class="t na">–</div></td>`; const a = .06 + .8*Math.pow(x/maxV,.6);
     return `<td><div class="t" style="background:rgba(var(--heat),${a.toFixed(3)});${a>.5?'color:#fff':''}">${f(x)}</div></td>`; };
-  let h = `<table class="heat"><thead><tr><th>Packsize</th>${months.map(m=>`<th>Th${m}</th>`).join('')}<th>${sto?'Cả năm':'Lũy kế'}</th>${hasLY?`<th title="Cùng kỳ năm ${Y-1} (tháng 1–${L})">Cùng kỳ</th><th>± CK</th>`:''}${sto?'':'<th>Tỷ trọng</th>'}</tr></thead><tbody>`;
+  const shrCols = !sto && !shr;   // chế độ Tấn/Thùng/Số đơn: thêm cột tỷ trọng năm nay, cùng kỳ và chênh lệch
+  const nCols = months.length + 2 + (hasLY?2:0) + (shrCols ? (hasLY?3:1) : 0);
+  let h = `<table class="heat"><thead><tr><th>Packsize</th>${months.map(m=>`<th>Th${m}</th>`).join('')}<th>${sto?'Cả năm':'Lũy kế'}</th>${hasLY?`<th title="Cùng kỳ năm ${Y-1} (tháng 1–${L})">Cùng kỳ</th><th>${shr?'± tỷ trọng':'± CK'}</th>`:''}${shrCols?`<th>Tỷ trọng</th>${hasLY?`<th title="Tỷ trọng cùng kỳ năm ${Y-1}">TT cùng kỳ</th><th title="Tỷ trọng năm nay trừ tỷ trọng cùng kỳ, tính bằng điểm phần trăm">± tỷ trọng</th>`:''}`:''}</tr></thead><tbody>`;
   keys.forEach(k => { const t = A.tot.get(k)||0, tl = B.tot.get(k)||0;
     h += `<tr><td>${esc(nm[k])}</td>${months.map(m=>tile(get(k,m))).join('')}<td class="sum">${f(t)}</td>` +
-      (hasLY ? `<td class="sum" style="font-weight:500">${tl ? f(tl) : '–'}</td><td class="sum" style="font-weight:500">${arrow(pct(t,tl))}</td>` : '') +
-      (sto ? '' : `<td class="sum" style="font-weight:500">${share(t,G)}</td>`) + `</tr>`; });
-  if (!sto) { const GL = keys.reduce((s,k)=>s+(B.tot.get(k)||0),0);
-    h += `<tr class="sep"><td colspan="${months.length+5}"></td></tr><tr class="total"><td>Tổng cộng</td>${months.map(m=>`<td><div class="t">${f(keys.reduce((s,k)=>s+get(k,m),0))}</div></td>`).join('')}<td class="sum">${f(G)}</td>` +
-      (hasLY ? `<td class="sum">${f(GL)}</td><td class="sum">${arrow(pct(G,GL))}</td>` : '') + `<td class="sum">100%</td></tr>`; }
+      (hasLY ? `<td class="sum" style="font-weight:500">${tl ? f(tl) : '–'}</td><td class="sum" style="font-weight:500">${shr ? pp(t,tl) : arrow(pct(t,tl))}</td>` : '') +
+      (shrCols ? `<td class="sum" style="font-weight:500">${nf(shareCY(k),1)}%</td>` + (hasLY ? `<td class="sum" style="font-weight:500">${nf(shareLY(k),1)}%</td><td class="sum" style="font-weight:500">${pp(shareCY(k), shareLY(k))}</td>` : '') : '') + `</tr>`; });
+  if (shrCols) { const GL = GLt;
+    h += `<tr class="sep"><td colspan="${nCols}"></td></tr><tr class="total"><td>Tổng cộng</td>${months.map(m=>`<td><div class="t">${f(keys.reduce((s,k)=>s+get(k,m),0))}</div></td>`).join('')}<td class="sum">${f(G)}</td>` +
+      (hasLY ? `<td class="sum">${f(GL)}</td><td class="sum">${arrow(pct(G,GL))}</td>` : '') + `<td class="sum">100%</td>${hasLY?'<td class="sum">100%</td><td class="sum"></td>':''}</tr>`; }
   $('tSize').innerHTML = h + '</tbody></table>';
 }
 
