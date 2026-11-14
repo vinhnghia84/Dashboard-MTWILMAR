@@ -687,7 +687,7 @@ async function boot(){
 $('lgShow').onclick = () => { const i = $('lgPw'); i.type = i.type==='password' ? 'text' : 'password'; $('lgShow').textContent = i.type==='password' ? 'Hiện' : 'Ẩn'; };
 $('lgForm').onsubmit = async e => {
   e.preventDefault();
-  const email = $('lgEmail').value.trim().toLowerCase(), pw = $('lgPw').value;
+  const email = $('lgEmail').value.replace(/[\s\u200b\u200c\u200d\ufeff]+/g,'').toLowerCase().replace(/^mailto:/,''), pw = $('lgPw').value.trim();
   const btn = $('lgBtn'); btn.disabled = true; btn.textContent = 'Đang mở dữ liệu…'; $('lgErr').style.display = 'none';
   try {
     if (!window.crypto || !crypto.subtle || !window.DecompressionStream) throw new Error('browser');
@@ -699,7 +699,7 @@ $('lgForm').onsubmit = async e => {
     store.set({id, k: b64u(kekRaw)}, $('lgRem').checked);
     $('lgPw').value = '';
   } catch(err) {
-    const m = {noaccount:'Email này chưa được cấp quyền xem. Liên hệ người quản trị.', badpw:'Mật khẩu không đúng.',
+    const m = {noaccount:'Email này chưa có trong danh sách được xem. Kiểm tra lại chính tả email, hoặc liên hệ người quản trị để được thêm vào.', badpw:'Mật khẩu không đúng.',
       browser:'Trình duyệt quá cũ, hãy dùng Chrome, Edge hoặc Safari bản mới.', load:'Không tải được dữ liệu, vui lòng thử lại.'}[err.message] || 'Không đăng nhập được, vui lòng thử lại.';
     showLogin(m);
   } finally { btn.disabled = false; btn.textContent = 'Đăng nhập'; }
