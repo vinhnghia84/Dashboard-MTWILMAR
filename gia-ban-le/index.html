@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calofic · Kiểm soát giá bán lẻ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF2EA; --card:#FFFFFF; --ink:#14261C; --ink2:#4A5B50; --muted:#7D8B82; --line:#E3E9E0; --line2:#EEF2EC;
+  --deep:#1F4D3A; --deep2:#2C6A50; --lime:#CDEB6B; --lime2:#E9F6C4; --mint:#DDEBDD;
+  --crit:#D03B3B; --critbg:#FBE7E5; --warn:#B57A00; --warnbg:#FDF1D3; --okc:#1F7A4D; --okbg:#E2F2E7; --info:#4F6B8A; --infobg:#E8EEF5;
+  --below:#C2543A; --above:#3E7C9C;
+  --r:22px; --r2:14px;
+  --shadow:0 1px 2px rgba(20,38,28,.04),0 6px 24px rgba(20,38,28,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 'Be Vietnam Pro',system-ui,-apple-system,Segoe UI,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.shell{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+/* sidebar */
+.side{background:var(--card);border-right:1px solid var(--line);padding:22px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px}
+.logo{display:flex;align-items:center;gap:10px;padding:4px 10px 22px}
+.logo .mk{width:34px;height:34px;border-radius:11px;background:var(--deep);display:grid;place-items:center}
+.logo b{font-size:16px;letter-spacing:.2px}
+.logo small{display:block;color:var(--muted);font-size:11.5px;font-weight:500;margin-top:-2px}
+.navlbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:12px 12px 6px}
+.nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;color:var(--ink2);text-decoration:none;font-weight:500}
+.nav a svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav a:hover{background:var(--line2)}
+.nav a.on{background:var(--deep);color:#fff}
+.nav a .cnt{margin-left:auto;font-size:11.5px;font-weight:600;background:var(--critbg);color:var(--crit);border-radius:20px;padding:1px 8px}
+.nav a.on .cnt{background:var(--lime);color:var(--deep)}
+.side .foot{margin-top:auto;background:var(--lime2);border-radius:16px;padding:14px;font-size:12.5px;color:var(--ink2)}
+.side .foot b{color:var(--deep);display:block;margin-bottom:4px;font-size:13px}
+/* main */
+.main{padding:22px 28px 40px;min-width:0}
+.top{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.top h1{font-size:22px;margin:0;font-weight:700;letter-spacing:-.2px}
+.top .sub{color:var(--muted);font-size:13px}
+.top .sp{flex:1}
+.search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px;width:280px}
+.search input{border:0;outline:0;background:transparent;width:100%}
+.search svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12.5px;color:var(--ink2);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:#3BAA6A}.dot.load{background:#E0A400}.dot.err{background:var(--crit)}
+.iconbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center}
+.iconbtn svg{width:17px;height:17px;stroke:var(--ink2);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.iconbtn:hover{background:var(--line2)}
+/* cards */
+.grid{display:grid;gap:18px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g32{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:20px 22px;min-width:0}
+.card h3{margin:0;font-size:15px;font-weight:600}
+.card .hd{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.card .hd .sp{flex:1}
+.card .hint{color:var(--muted);font-size:12.5px}
+.kpi .lbl{display:flex;align-items:center;gap:8px;color:var(--ink2);font-weight:500;font-size:13px}
+.kpi .ic{width:32px;height:32px;border-radius:10px;background:var(--line2);display:grid;place-items:center}
+.kpi .ic svg{width:16px;height:16px;stroke:var(--deep);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.kpi .v{font-size:30px;font-weight:700;letter-spacing:-.5px;margin:14px 0 6px}
+.kpi .v small{font-size:15px;font-weight:600;color:var(--muted);margin-left:2px}
+.kpi .ft{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:600;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.pill.up{background:var(--okbg);color:var(--okc)}.pill.dn{background:var(--critbg);color:var(--crit)}.pill.flat{background:var(--line2);color:var(--ink2)}
+.kpi.hero{background:var(--deep);color:#fff;position:relative;overflow:hidden}
+.kpi.hero .lbl{color:#CFE3D6}.kpi.hero .ic{background:rgba(255,255,255,.12)}.kpi.hero .ic svg{stroke:var(--lime)}
+.kpi.hero .ft{color:#B9D2C2}.kpi.hero .v small{color:#B9D2C2}
+.kpi.hero .pill.up{background:var(--lime);color:var(--deep)}.kpi.hero .pill.dn{background:#F5C2BC;color:#7A1F17}.kpi.hero .pill.flat{background:rgba(255,255,255,.15);color:#fff}
+.kpi.hero:after{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;border:26px solid rgba(205,235,107,.13)}
+.bar{height:8px;border-radius:8px;background:var(--line2);overflow:hidden;position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:8px;background:var(--deep)}
+.kpi.hero .bar{background:rgba(255,255,255,.14)}.kpi.hero .bar i{background:var(--lime)}
+/* tabs / seg */
+.seg{display:inline-flex;background:var(--line2);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:500;color:var(--ink2)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+/* tables */
+table{border-collapse:collapse;width:100%}
+th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--line2);vertical-align:middle}
+tr.row:hover td{background:#F7FAF5;cursor:pointer}
+td.r,th.r{text-align:right}
+.tbl-wrap{overflow:auto}
+.sku b{font-weight:600;display:block}
+.sku small{color:var(--muted);font-size:12px}
+.brand{display:inline-block;font-size:11px;font-weight:600;color:var(--deep);background:var(--mint);border-radius:6px;padding:1px 6px;margin-right:6px}
+.brand.comp{background:#EEE9E2;color:#6B5A45}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.st svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.st.s2{background:var(--critbg);color:var(--crit)}.st.s1{background:var(--warnbg);color:var(--warn)}.st.s0{background:var(--infobg);color:var(--info)}.st.ok{background:var(--okbg);color:var(--okc)}
+.cpill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:var(--ink2)}
+.cpill i{width:8px;height:8px;border-radius:50%}
+/* matrix */
+.mx td.c{text-align:center;padding:6px 4px;min-width:92px}
+.cell{border-radius:10px;padding:6px 6px;line-height:1.2;position:relative}
+.cell b{font-weight:600;font-size:13px;display:block}
+.cell small{font-size:11px;color:var(--ink2)}
+.cell .km{position:absolute;top:-6px;right:-2px;font-size:10px;font-weight:700;background:var(--deep);color:var(--lime);border-radius:6px;padding:0 4px}
+.cell.na{color:#B9C3BC}
+.cell.out{outline:1.5px dashed var(--info)}
+.grp td{background:#F6F9F4;font-weight:600;font-size:12.5px;color:var(--deep);padding:7px 10px}
+/* timeline */
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line2);cursor:pointer}
+.tl li:last-child{border-bottom:0}
+.tl .ti{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;font-weight:700;font-size:13px}
+.tl .ti.dn{background:var(--critbg);color:var(--crit)}.tl .ti.up{background:var(--okbg);color:var(--okc)}
+.tl .tx{flex:1;min-width:0}
+.tl .tx b{display:block;font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl .tx small{color:var(--muted);font-size:12px}
+.tl .tv{text-align:right;font-size:12.5px;white-space:nowrap}
+.tl .tv small{display:block;color:var(--muted)}
+/* promo bars */
+.pb{display:grid;grid-template-columns:92px 1fr 64px;gap:12px;align-items:center;padding:7px 0}
+.pb .n{font-weight:500;font-size:13px;display:flex;align-items:center;gap:7px}
+.pb .n i{width:8px;height:8px;border-radius:50%}
+.pb .v{text-align:right;font-size:12.5px;font-weight:600}
+.pb .v small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+/* alerts list */
+.al{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line2);cursor:pointer}
+.al:last-child{border-bottom:0}
+.al .ix{flex:1;min-width:0}
+.al .ix ul{margin:6px 0 0;padding:0 0 0 16px;color:var(--ink2);font-size:13px}
+.al .px{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;max-width:46%}
+.mini{border:1px solid var(--line);border-radius:10px;padding:4px 8px;font-size:12px;line-height:1.25;min-width:70px}
+.mini b{display:block;font-weight:600}
+.mini.lo{border-color:#EDB9AE;background:#FCF1EE}.mini.hi{border-color:#B8D4E2;background:#F0F6FA}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.fbtn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:500;color:var(--ink2)}
+.fbtn.on{background:var(--deep);border-color:var(--deep);color:#fff}
+select.fsel{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:12.5px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:500}
+.btn.primary{background:var(--deep);border-color:var(--deep);color:#fff}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(15,30,22,.38);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:20}
+.ov.on{display:flex}
+.modal{background:var(--card);border-radius:24px;max-width:980px;width:100%;padding:24px 26px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal .mh{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.modal h2{margin:0;font-size:19px}
+.kv{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.kv div{background:var(--line2);border-radius:14px;padding:10px 14px;min-width:120px}
+.kv small{display:block;color:var(--muted);font-size:11.5px}
+.kv b{font-size:16px}
+.combo{display:inline-block;font-size:11.5px;background:var(--lime2);color:var(--deep);border-radius:6px;padding:1px 6px;margin:1px 2px;font-weight:500}
+.muted{color:var(--muted)}
+.gate{max-width:560px;margin:60px auto}
+#tip{position:fixed;z-index:50;pointer-events:none;background:#14261C;color:#fff;font-size:12px;border-radius:10px;padding:8px 10px;display:none;max-width:280px;line-height:1.45;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+#tip .tr{display:flex;gap:8px;align-items:center;justify-content:space-between}
+#tip i{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.pop{position:absolute;right:28px;top:70px;background:var(--card);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.15);padding:18px;width:300px;z-index:15;display:none}
+.pop.on{display:block}
+.pop label{display:flex;justify-content:space-between;align-items:center;margin:8px 0;font-size:13px}
+.pop input{width:64px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;text-align:right}
+.score-ring{display:flex;align-items:center;gap:18px}
+svg text{font-family:inherit}
+.mono{display:inline-grid;place-items:center;border-radius:30%;color:#fff;font-weight:700;flex:none;letter-spacing:-.3px;text-transform:uppercase}
+.nav a .mono{border-radius:7px}
+.nav a .cnt.okc{background:var(--okbg);color:var(--okc)}
+.nav{overflow:auto;min-height:0;flex:1}
+.inds{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.inds button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:500;color:var(--ink2)}
+.inds button.on{background:var(--lime);border-color:var(--lime);color:var(--deep);font-weight:600}
+.hd2{display:flex;align-items:baseline;gap:12px;margin:4px 2px 12px;flex-wrap:wrap}
+.hd2 h3{margin:0;font-size:16px;font-weight:600}
+.bgrid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.bcard{text-decoration:none;color:inherit;display:block;transition:transform .12s,box-shadow .12s}
+.bcard:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(20,38,28,.05),0 14px 32px rgba(20,38,28,.09)}
+.bcard .bh{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.bcard .bh b{display:block;font-size:16px}
+.bcard .bh small{color:var(--muted);font-size:12.5px}
+.bcard .bm{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.bcard .bm small{display:block;color:var(--muted);font-size:11.5px}
+.bcard .bm b{font-size:22px;font-weight:700}
+.bcard .bm b span{font-size:12px;color:var(--muted);font-weight:500}
+.bcard .bf{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--ink2)}
+.bhead{display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.pgrid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));margin-bottom:22px}
+.pcard{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:16px 18px;cursor:pointer;border-top:4px solid transparent;transition:box-shadow .12s}
+.pcard:hover{box-shadow:0 2px 4px rgba(20,38,28,.05),0 14px 32px rgba(20,38,28,.09)}
+.pcard.sev2{border-top-color:var(--crit)}.pcard.sev1{border-top-color:#E8B23A}.pcard.sev0{border-top-color:#9DB2C8}.pcard.sev-1{border-top-color:#7CC29A}
+.pcard .ph{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.pcard .ph b{display:block;font-size:15px}
+.pcard .ph small{color:var(--muted);font-size:12px}
+.pcard .pk{display:flex;gap:14px;font-size:12.5px;color:var(--muted);margin:10px 0 8px}
+.pcard .pk b{color:var(--ink);font-weight:600}
+.pcard .pch{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.pcard .pch div{background:var(--line2);border-radius:10px;padding:5px 8px;line-height:1.25}
+.pcard .pch div.lo{background:#FCF1EE}
+.pcard .pch b{display:block;font-size:13.5px}
+.pcard .pch small{color:var(--muted);font-size:11px}
+.pcard .pi{margin-top:10px;font-size:12.5px;border-radius:10px;padding:7px 10px}
+.pi.s2{background:var(--critbg);color:#8E2A22}.pi.s1{background:var(--warnbg);color:#7A5300}.pi.s0{background:var(--infobg);color:var(--info)}
+@media (max-width:1180px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g32{grid-template-columns:1fr}}
+@media (max-width:860px){.shell{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;overflow:auto;padding:10px}.side .navlbl,.side .foot,.logo small{display:none}.logo{padding:0 8px}.nav{display:flex;gap:4px}.nav a{white-space:nowrap}.main{padding:16px}.search{width:100%}.al{flex-direction:column}.al .px{max-width:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="logo"><div class="mk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CDEB6B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3.5 4.2 6 7.6 6 11a6 6 0 0 1-12 0c0-3.4 2.5-6.8 6-11z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/></svg></div><div><b>Calofic Price</b><small>Kiểm soát giá bán lẻ</small></div></div>
+    <div class="navlbl">Theo dõi</div>
+    <nav class="nav" id="nav"></nav>
+    <div class="foot" id="foot"><b>Nguồn dữ liệu</b><span>Đang kết nối…</span></div>
+  </aside>
+  <main class="main">
+    <div class="top">
+      <div><h1 id="title">Tổng quan</h1><div class="sub" id="subtitle"></div><div class="inds" id="inds"></div></div>
+      <div class="sp"></div>
+      <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" placeholder="Tìm sản phẩm, thương hiệu…" autocomplete="off"></label>
+      <span class="chip" id="status"><span class="dot load"></span><span>Đang tải…</span></span>
+      <button class="iconbtn" id="reload" type="button" aria-label="Tải lại" data-tip="Tải lại dữ liệu"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+      <button class="iconbtn" id="cfg" type="button" aria-label="Ngưỡng cảnh báo" data-tip="Ngưỡng cảnh báo"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+    </div>
+    <div class="pop" id="pop"></div>
+    <div id="app"></div>
+  </main>
+</div>
+<div class="ov" id="ov"><div class="modal" id="modal"></div></div>
+<div id="tip"></div>
+<script src="config.js"></script>
+<script>
+const CHAINS = ['SGC', 'WCM', 'LOTTE', 'EMART', 'KFM', 'BHX', 'GO', 'AEON'];
+const CHAIN_NAME = { SGC: 'Co.op', WCM: 'WinMart', LOTTE: 'Lotte', EMART: 'Emart', KFM: 'Kingfood', BHX: 'Bách Hóa Xanh', GO: 'GO!', AEON: 'AEON' };
+const CHAIN_SHORT = { SGC: 'Co.op', WCM: 'WinMart', LOTTE: 'Lotte', EMART: 'Emart', KFM: 'Kingfood', BHX: 'BHX', GO: 'GO!', AEON: 'AEON' };
+const OUR_BRANDS = [
+  ['neptune olive', 'Neptune Olive'], ['simply', 'Simply'], ['meizan', 'Meizan'], ['neptune', 'Neptune'],
+  ['cai lan', 'Cái Lân'], ['kiddy', 'Kiddy'], ['olivoila', 'Olivoilà'], ['orchid', 'Orchid']
+];
+const DAY = 86400000;
+
+function norm(s) {
+  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[đĐ]/g, 'd').toLowerCase().replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function clean(s) { return String(s == null ? '' : s).replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+function num(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') return isFinite(v) && v > 0 ? Math.round(v) : null;
+  const d = String(v).replace(/[^\d]/g, '');
+  return d ? Number(d) || null : null;
+}
+function chainCode(s) {
+  const n = norm(s).replace(/[^a-z]/g, '');
+  if (n === 'go' || n === 'bigc') return 'GO';
+  const u = n.toUpperCase();
+  return CHAINS.includes(u) ? u : null;
+}
+function parseDate(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') return Math.round((v - 25569) * DAY);
+  let m = String(v).match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3]);
+  m = String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+  if (m) return Date.UTC(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0));
+  return null;
+}
+function sizeOf(n) {
+  const re = /(\d+(?:[.,]\d+)?)\s*(ml|lit|l|kg|gr|g)(?![a-z])/g;
+  let m;
+  while ((m = re.exec(n))) {
+    const v = parseFloat(m[1].replace(',', '.'));
+    if (!v) continue;
+    const u = m[2];
+    if (u === 'ml') return { v: Math.round(v), u: 'ml' };
+    if (u === 'l' || u === 'lit') return { v: Math.round(v * 1000), u: 'ml' };
+    if (u === 'kg') return { v: Math.round(v * 1000), u: 'g' };
+    return { v: Math.round(v), u: 'g' };
+  }
+  return null;
+}
+function sizeLabel(s) {
+  if (!s) return '';
+  if (s.v >= 1000) return (s.v / 1000).toString().replace('.', ',') + (s.u === 'ml' ? 'L' : 'kg');
+  return s.v + (s.u === 'ml' ? 'ml' : 'g');
+}
+function catOf(n) {
+  let c;
+  if (/kiddy|tre em|cho be|\bvio\b|baby|kids/.test(n)) c = 'Dầu trẻ em';
+  else if (/\bbo\b|margarine/.test(n)) c = 'Bơ thực vật';
+  else if (/\bgao\b|\brbo\b/.test(n)) c = 'Dầu gạo';
+  else if (/\bphong\b|peanut/.test(n)) c = 'Dầu đậu phộng';
+  else if (/\bnanh\b|soya|soybean/.test(n)) c = 'Dầu đậu nành';
+  else if (/huong duong|h\.duong|sunflower/.test(n)) c = 'Dầu hướng dương';
+  else if (/hat cai|canola/.test(n)) c = 'Dầu hạt cải';
+  else if (/\bme\b|\bvung\b|sesame/.test(n)) c = 'Dầu mè';
+  else if (/neptune/.test(n)) c = 'Dầu ăn pha trộn';
+  else if (/\boliu\b|olive|\bo liu\b|olivoila/.test(n)) c = /poma?n?ce/.test(n) ? 'Dầu ô liu Pomace' : 'Dầu ô liu';
+  else if (/\bdua\b|coconut/.test(n)) c = 'Dầu dừa';
+  else c = 'Dầu ăn pha trộn';
+  if (/hop qua|qua tet|\bhq\b/.test(n)) c += ' (hộp quà)';
+  return c;
+}
+const BRAND_LABEL = { 'cai lan': 'Cái Lân', 'olivoila': 'Olivoilà' };
+let BRANDS = OUR_BRANDS.slice();
+function addBrands(list) {
+  const have = new Set(BRANDS.map(b => b[0]));
+  for (const v of list) { const k = norm(v); if (k && k.length > 1 && !have.has(k)) { have.add(k); BRANDS.push([k, BRAND_LABEL[k] || clean(v)]); } }
+  BRANDS.sort((a, b) => (a[0] === 'neptune olive' ? -1 : b[0] === 'neptune olive' ? 1 : b[0].length - a[0].length));
+}
+function isOilInd(ind) { return /oil|fat|dau an|dau|bo thuc vat/.test(norm(ind)); }
+function genericType(n, brandKey, size) {
+  let t = n.replace(/\(only [^)]*\)/g, ' ').replace(new RegExp('\\b' + brandKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g'), ' ')
+    .replace(/(\d+(?:[.,]\d+)?)\s*(ml|lit|l|kg|gr|g)(?![a-z])/g, ' ').replace(/\b(chai|tui|goi|hop|hu|lon|thung)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  t = t.split(' ').slice(0, 4).join(' ');
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Sản phẩm';
+}
+function ourBrandOf(n) {
+  for (const [k, label] of BRANDS) {
+    if (k === 'neptune olive') { if (/neptune/.test(n) && /olive/.test(n)) return { key: k, label }; continue; }
+    if (n.includes(k)) return { key: k, label };
+  }
+  return null;
+}
+function median(a) {
+  const s = a.filter(x => x != null && isFinite(x)).sort((x, y) => x - y);
+  if (!s.length) return null;
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+function rowsOf(payload) {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (payload.values) return payload.values;
+  if (payload.content && payload.content.values) return payload.content.values;
+  return [];
+}
+function parseCSV(text) {
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(f); f = ''; }
+    else if (c === '\n') { row.push(f); rows.push(row); row = []; f = ''; }
+    else if (c !== '\r') f += c;
+  }
+  if (f || row.length) { row.push(f); rows.push(row); }
+  return rows;
+}
+function keyOfUrl(url) {
+  let u;
+  try { u = new URL(String(url || '').trim()); } catch (e) { return null; }
+  const h = u.hostname, p = u.pathname.replace(/\/+$/, '');
+  let m;
+  if (h.includes('lottemart')) return (m = p.match(/-p(\d+)$/)) ? { chain: 'LOTTE', key: 'LOTTE:p' + m[1] } : null;
+  if (h.includes('cooponline')) return (m = p.match(/--s(\d+)/)) ? { chain: 'SGC', key: 'SGC:s' + m[1] } : null;
+  if (h.includes('winmart')) return (m = p.match(/--s(\d+)/)) ? { chain: 'WCM', key: 'WCM:s' + m[1] } : null;
+  if (h.includes('emartmall')) { const id = u.searchParams.get('product_id'); return id ? { chain: 'EMART', key: 'EMART:' + id } : null; }
+  const seg = p.split('/').filter(Boolean).pop();
+  if (!seg) return null;
+  if (h.includes('kingfoodmart')) return { chain: 'KFM', key: 'KFM:' + seg };
+  if (h.includes('bachhoaxanh')) return { chain: 'BHX', key: 'BHX:' + seg };
+  return null;
+}
+
+/* Build listings from RAW DATA sheet (manual scrape): Total link + Giá hiện tại */
+function rawListings(total, cur) {
+  const TL = rowsOf(total), CUR = rowsOf(cur);
+  const price = new Map();
+  let t = null;
+  for (const r of CUR.slice(1)) {
+    if (!r || !r[0]) continue;
+    const tt = parseDate(r[6]);
+    if (tt && (!t || tt > t)) t = tt;
+    price.set(String(r[0]).trim(), { price: num(r[2]), list: num(r[3]), stock: clean(r[4]) });
+  }
+  const out = [], seen = new Set();
+  for (const r of TL.slice(1)) {
+    if (!r) continue;
+    const k = keyOfUrl(r[1]);
+    if (!k || seen.has(k.key)) continue;
+    seen.add(k.key);
+    const p = price.get(k.key);
+    if (!p || !p.price) continue;
+    out.push({ key: k.key, chain: k.chain, url: String(r[1]).trim(), name: clean(r[3]), company: clean(r[5]), brandCol: clean(r[6]), price: p.price, list: p.list || p.price, stock: p.stock });
+  }
+  return { listings: out, at: t };
+}
+
+function validList(price, list) {
+  if (!list || !price) return null;
+  if (list < price) return null;
+  if (list > price * 1.8) return null;
+  return list;
+}
+
+function buildModel(raw, opts) {
+  opts = Object.assign({ under: 8, spread: 10, promo: 15 }, opts || {});
+  const REC = rowsOf(raw.recent);
+  const rsp = new Map();
+  for (const r of rowsOf(raw.note).slice(1)) { if (r && r[2] && num(r[10])) rsp.set(norm(r[2]), num(r[10])); }
+
+  addBrands(REC.slice(1).map(r => r && r[3]).filter(Boolean));
+  const MASTER = rowsOf(raw.master).slice(1).filter(r => r && r[0] && r[2]);
+  const indByName = new Map(), indByBrand = new Map();
+  for (const r of MASTER) {
+    const n = norm(r[2]); indByName.set(n, clean(r[0]));
+    const b = ourBrandOf(n); if (b && !indByBrand.has(b.key)) indByBrand.set(b.key, clean(r[0]));
+  }
+  const skus = new Map();
+  const dateSet = new Set();
+  function skuFor(name, brandCol, pack) {
+    const n = norm(name);
+    const ob = ourBrandOf(n) || ourBrandOf(norm(brandCol));
+    const size = sizeOf(n) || sizeOf(norm(pack));
+    const bk = ob ? ob.key : norm(brandCol) || 'khac';
+    const ind = indByName.get(n) || indByBrand.get(bk) || (MASTER.length ? 'Khác' : 'Oils & Fats');
+    const cat = isOilInd(ind) ? catOf(n) : genericType(n, bk, size);
+    const sig = bk + '|' + cat + '|' + (size ? size.v + size.u : '');
+    if (!skus.has(sig)) skus.set(sig, { sig, ind, ours: !!ob, brand: ob ? ob.label : (clean(brandCol) || 'Khác'), brandKey: bk, cat, size, sizeLabel: sizeLabel(size), names: new Set(), canon: null, days: new Map(), combos: {}, raw: {} });
+    const s = skus.get(sig);
+    s.names.add(clean(name));
+    const isCanon = /^[\x20-\x7E]+$/.test(clean(name)) && !/only emartmall/i.test(name);
+    if (isCanon && (!s.canon || clean(name).length < s.canon.length)) s.canon = clean(name);
+    return s;
+  }
+  for (const r of REC.slice(1)) {
+    if (!r || !r[0] || !r[2]) continue;
+    const d = parseDate(r[0]); const ch = chainCode(r[1]);
+    if (d == null || !ch) continue;
+    const price = num(r[6]); if (!price) continue;
+    const type = clean(r[5]);
+    const s = skuFor(r[2], r[3], r[4]);
+    dateSet.add(d);
+    const combo = type.match(/combo\s*(\d+)/i);
+    if (combo) {
+      const nU = +combo[1];
+      if (!s.combos[ch]) s.combos[ch] = new Map();
+      if (!s.combos[ch].has(d)) s.combos[ch].set(d, []);
+      s.combos[ch].get(d).push({ n: nU, price, unit: Math.round(price / nU), list: num(r[7]) });
+      continue;
+    }
+    if (!s.days.has(d)) s.days.set(d, {});
+    const day = s.days.get(d);
+    const list = validList(price, num(r[7]));
+    const prev = day[ch];
+    const rec = { price, list, variants: 1, names: [clean(r[2])] };
+    if (prev) { rec.variants = prev.variants + 1; rec.names = prev.names.concat(rec.names); if (prev.price < price) { rec.price = prev.price; rec.list = prev.list; } }
+    day[ch] = rec;
+  }
+  const dates = [...dateSet].sort((a, b) => a - b);
+  const latest = dates[dates.length - 1] || null;
+  const prevDay = dates.length > 1 ? dates[dates.length - 2] : null;
+
+  const rawL = raw.total && raw.cur ? rawListings(raw.total, raw.cur) : { listings: [], at: null };
+  const ourSkus = [...skus.values()].filter(s => s.ours);
+  for (const L of rawL.listings) {
+    const n = norm(L.name);
+    const ob = ourBrandOf(n) || ourBrandOf(norm(L.brandCol));
+    L.cat = catOf(n); L.size = sizeOf(n); L.sizeLabel = sizeLabel(L.size); L.ours = !!ob;
+    L.brand = ob ? ob.label : (L.brandCol || L.company || 'Khác');
+    L.brandKey = ob ? ob.key : norm(L.brandCol || L.company);
+    L.promo = L.list > L.price ? Math.round((1 - L.price / L.list) * 100) : 0;
+    if (!ob || (L.chain !== 'LOTTE' && L.chain !== 'BHX')) continue;
+    const sig = L.brandKey + '|' + L.cat + '|' + (L.size ? L.size.v + L.size.u : '');
+    const s = skus.get(sig);
+    if (s && (!s.raw[L.chain] || L.price < s.raw[L.chain].price)) s.raw[L.chain] = L;
+  }
+
+  const out = [];
+  for (const s of ourSkus) {
+    s.rsp = rsp.get(norm(s.canon || '')) || null;
+    s.title = `${s.brand} · ${s.cat} ${s.sizeLabel}`.trim();
+    s.name = s.canon || [...s.names][0];
+    s.offers = {};
+    s.history = {};
+    for (const ch of CHAINS) {
+      const series = [];
+      for (const d of dates) { const x = s.days.get(d) && s.days.get(d)[ch]; if (x) series.push({ t: d, price: x.price, list: x.list }); }
+      if (series.length) s.history[ch] = series;
+      const last = series[series.length - 1];
+      if (last) {
+        const prev = series.length > 1 ? series[series.length - 2] : null;
+        const dayRec = s.days.get(last.t)[ch];
+        s.offers[ch] = { chain: ch, price: last.price, list: last.list, t: last.t, stale: latest && last.t < latest - DAY, prev: prev ? prev.price : null, variants: dayRec.variants, names: dayRec.names, src: 'n8n' };
+      } else if (s.raw[ch]) {
+        const L = s.raw[ch];
+        s.offers[ch] = { chain: ch, price: L.price, list: validList(L.price, L.list), t: rawL.at, stale: false, prev: null, variants: 1, names: [L.name], url: L.url, src: 'raw', stock: L.stock };
+      }
+      const cm = s.combos[ch];
+      if (cm && s.offers[ch]) { const lastD = Math.max(...cm.keys()); s.offers[ch].combos = cm.get(lastD).sort((a, b) => a.n - b.n); }
+    }
+    for (const ch in s.offers) { const o = s.offers[ch]; o.promo = o.list && o.list > o.price ? Math.round((1 - o.price / o.list) * 100) : 0; }
+    if (!Object.keys(s.offers).length) continue;
+    evalSku(s, opts);
+    out.push(s);
+  }
+
+  const chainsWithData = CHAINS.filter(ch => out.some(s => s.offers[ch]));
+  // competitor groups from raw listings (all brands), plus ours from n8n current
+  const groups = new Map();
+  const addG = (cat, size, item) => {
+    if (!size) return;
+    const id = cat + '|' + size.v + size.u;
+    if (!groups.has(id)) groups.set(id, { id, cat, size, sizeLabel: sizeLabel(size), label: cat + ' ' + sizeLabel(size), rows: new Map() });
+    const g = groups.get(id);
+    if (!g.rows.has(item.brandKey)) g.rows.set(item.brandKey, { brand: item.brand, ours: item.ours, cells: {}, names: new Set() });
+    const row = g.rows.get(item.brandKey);
+    row.names.add(item.name);
+    if (!row.cells[item.chain] || item.price < row.cells[item.chain].price) row.cells[item.chain] = item;
+  };
+  for (const s of out) for (const ch in s.offers) { const o = s.offers[ch]; if (o.outlier) continue; addG(s.cat, s.size, { brandKey: s.brandKey, brand: s.brand, ours: true, name: s.name, chain: ch, price: o.price, promo: o.promo, url: o.url }); }
+  for (const L of rawL.listings) if (!L.ours) addG(L.cat, L.size, { brandKey: L.brandKey, brand: L.brand, ours: false, name: L.name, chain: L.chain, price: L.price, promo: L.promo, url: L.url });
+  const benchmarks = [...groups.values()].map(g => {
+    const rows = [...g.rows.values()].map(r => Object.assign(r, { names: [...r.names], median: median(Object.values(r.cells).map(c => c.price)) }))
+      .sort((a, b) => (b.ours - a.ours) || (a.median - b.median));
+    return Object.assign(g, { rows, perL: g.size.v ? 1000 / g.size.v : 1 });
+  }).filter(g => g.rows.some(r => r.ours) && g.rows.some(r => !r.ours)).sort((a, b) => b.rows.length - a.rows.length);
+
+  const agg = aggregate(out, dates, chainsWithData, opts, latest);
+  const industries = [...new Set(out.map(s => s.ind))];
+  return Object.assign(agg, { industries, aggregate: (list) => aggregate(list, dates, chainsWithData, opts, latest), skus: out, dates, latest, prevDay, chains: chainsWithData, benchmarks, rawAt: rawL.at, rawCount: rawL.listings.length, opts });
+}
+
+function aggregate(out, dates, chainsWithData, opts, latest) {
+
+  // portfolio index: per day, per chain, avg (price/median-of-day - 1)
+  const index = {};
+  for (const ch of chainsWithData) index[ch] = [];
+  for (const d of dates) {
+    const per = {};
+    for (const s of out) {
+      const day = s.days.get(d); if (!day) continue;
+      const ps = Object.values(day).map(x => x.price);
+      if (ps.length < 2) continue;
+      const m = median(ps);
+      for (const ch in day) {
+        const r = day[ch].price / m - 1;
+        if (Math.abs(r) > 0.6) continue;
+        (per[ch] = per[ch] || []).push(r * 100);
+      }
+    }
+    for (const ch of chainsWithData) if (per[ch] && per[ch].length) index[ch].push({ t: d, v: per[ch].reduce((a, b) => a + b, 0) / per[ch].length, n: per[ch].length });
+  }
+
+  // changes between previous day and latest day
+  const changes = [];
+  for (const s of out) for (const ch in s.history) {
+    const h = s.history[ch];
+    for (let i = h.length - 1; i > 0 && i >= h.length - 7; i--) {
+      if (h[i].price !== h[i - 1].price) changes.push({ sku: s, chain: ch, t: h[i].t, from: h[i - 1].price, to: h[i].price, pct: (h[i].price / h[i - 1].price - 1) * 100 });
+    }
+  }
+  changes.sort((a, b) => b.t - a.t || Math.abs(b.pct) - Math.abs(a.pct));
+
+  // daily discipline score (n8n days only)
+  const daily = dates.map(d => {
+    let inBand = 0, total = 0, spreadN = 0, promoN = 0, skuN = 0;
+    for (const s of out) {
+      const day = s.days.get(d); if (!day) continue;
+      const xs = Object.values(day); const m0 = median(xs.map(x => x.price));
+      const good = xs.filter(x => !(xs.length >= 3 && (x.price > m0 * 2.2 || x.price < m0 * 0.45)));
+      const ref = s.rsp || median(good.map(x => x.price));
+      skuN++;
+      for (const x of good) { total++; if (Math.abs(x.price / ref - 1) * 100 <= opts.under) inBand++; if (x.list && x.list > x.price * 1.03) promoN++; }
+      if (good.length > 1) { const ps = good.map(x => x.price); if ((Math.max(...ps) / Math.min(...ps) - 1) * 100 > opts.spread) spreadN++; }
+    }
+    return { t: d, score: total ? Math.round(inBand / total * 100) : null, inBand, total, spreadN, promoN, skuN };
+  });
+  const cheapest = {}, promoBy = {};
+  for (const ch of chainsWithData) { cheapest[ch] = 0; promoBy[ch] = { n: 0, promo: 0, depth: [] }; }
+  for (const s of out) {
+    const good = Object.values(s.offers).filter(x => !x.outlier);
+    for (const x of good) { const p = promoBy[x.chain]; p.n++; if (x.promo > 0) { p.promo++; p.depth.push(x.promo); } }
+    if (good.length < 2) continue;
+    for (const x of good) if (x.price === s.min) cheapest[x.chain]++;
+  }
+  for (const ch in promoBy) { const p = promoBy[ch]; p.avg = p.depth.length ? p.depth.reduce((a, b) => a + b, 0) / p.depth.length : 0; p.max = p.depth.length ? Math.max(...p.depth) : 0; }
+
+  return { index, changes, daily, cheapest, promoBy };
+}
+
+function evalSku(s, o) {
+  const offers = Object.values(s.offers);
+  const ps0 = offers.map(x => x.price);
+  const m0 = median(ps0);
+  for (const x of offers) x.outlier = offers.length >= 3 && m0 && (x.price > m0 * 2.2 || x.price < m0 * 0.45);
+  const good = offers.filter(x => !x.outlier);
+  const prices = good.map(x => x.price);
+  s.median = median(prices);
+  s.ref = s.rsp || s.median;
+  s.refType = s.rsp ? 'RSP' : 'trung vị';
+  s.min = prices.length ? Math.min(...prices) : null;
+  s.max = prices.length ? Math.max(...prices) : null;
+  s.spread = prices.length > 1 ? (s.max / s.min - 1) * 100 : 0;
+  for (const x of good) x.dev = s.ref ? (x.price / s.ref - 1) * 100 : 0;
+  s.issues = [];
+  const N = c => CHAIN_NAME[c];
+  for (const x of good) if (s.ref && x.dev < -o.under) s.issues.push({ sev: 2, type: 'under', chain: x.chain, text: `${N(x.chain)} bán ${fmt(x.price)}, thấp hơn ${s.refType} ${Math.round(-x.dev)}%` });
+  if (good.length > 1 && s.spread > o.spread) {
+    const lo = good.find(x => x.price === s.min), hi = good.find(x => x.price === s.max);
+    s.issues.push({ sev: 2, type: 'spread', text: `Chênh ${Math.round(s.spread)}% giữa ${N(lo.chain)} (${fmt(lo.price)}) và ${N(hi.chain)} (${fmt(hi.price)})` });
+  }
+  for (const x of good) for (const c of (x.combos || [])) {
+    if (s.ref && c.unit < s.ref * (1 - o.under / 100)) s.issues.push({ sev: 2, type: 'combo', chain: x.chain, text: `${N(x.chain)} combo ${c.n}: ${fmt(c.unit)}/sp, thấp hơn ${s.refType} ${Math.round((1 - c.unit / s.ref) * 100)}%` });
+  }
+  const deep = good.filter(x => x.promo >= o.promo), flat = good.filter(x => x.promo < 3);
+  if (deep.length && flat.length) s.issues.push({ sev: 1, type: 'promo', text: `${deep.map(x => N(x.chain) + ' KM −' + x.promo + '%').join(', ')} trong khi ${flat.map(x => N(x.chain)).join(', ')} giữ giá` });
+  const lists = good.map(x => x.list).filter(Boolean);
+  if (lists.length > 1) {
+    const g = (Math.max(...lists) / Math.min(...lists) - 1) * 100;
+    if (g > 5) s.issues.push({ sev: 1, type: 'list', text: `Giá niêm yết lệch ${Math.round(g)}% giữa các chuỗi (${fmt(Math.min(...lists))} – ${fmt(Math.max(...lists))})` });
+  }
+  const bad = offers.filter(x => x.outlier);
+  if (bad.length) s.issues.push({ sev: 0, type: 'outlier', text: `Nghi lỗi dữ liệu: ${bad.map(x => N(x.chain) + ' ' + fmt(x.price)).join(', ')} (lệch quá xa các chuỗi khác, đã loại khỏi so sánh)` });
+  const stale = offers.filter(x => x.stale && x.src === 'n8n');
+  if (stale.length) s.issues.push({ sev: 0, type: 'stale', text: `Chưa có giá mới ở ${stale.map(x => N(x.chain)).join(', ')}` });
+  s.sev = s.issues.reduce((m, i) => Math.max(m, i.sev), -1);
+  s.promoCount = good.filter(x => x.promo > 0).length;
+}
+
+function fmt(v) { return v == null ? '–' : Math.round(v).toLocaleString('vi-VN') + 'đ'; }
+function fmtK(v) { return v == null ? '–' : (v / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 1 }); }
+function fmtDate(t, withYear) { if (t == null) return ''; const d = new Date(t); const p = n => String(n).padStart(2, '0'); return `${p(d.getUTCDate())}/${p(d.getUTCMonth() + 1)}` + (withYear ? '/' + d.getUTCFullYear() : ''); }
+
+if (typeof module !== 'undefined') module.exports = { buildModel, parseCSV, norm, fmt, CHAINS };
+
+</script>
+<script>
+(function () {
+  const CFG = Object.assign({
+    mode: 'mcp',
+    n8nSheet: '15_zNT0t9h3F282mfJc5isXImy6Mcb6kkvAB5peUTF68',
+    rawSheet: '1wMmOskXbcLdSwwzrWu9ntQ1vHM28p2yEgbsyK9yWtrQ',
+    csv: {}
+  }, window.PC_CONFIG || {});
+  const SRC = {
+    recent: { sheet: CFG.n8nSheet, range: 'PAGE_RECENT!A:J', need: true },
+    total: { sheet: CFG.rawSheet, range: "'Total link '!A:G" },
+    cur: { sheet: CFG.rawSheet, range: "'Giá hiện tại'!A:G" },
+    note: { sheet: CFG.rawSheet, range: 'Note!A:K' },
+    master: { sheet: CFG.n8nSheet, range: "'Price Input '!A:D" }
+  };
+  const IND_LABEL = Object.assign({ 'Oils & Fats': 'Dầu ăn & Bơ' }, CFG.industryLabels || {});
+  const indL = i => IND_LABEL[i] || i;
+  const BRAND_COLOR = Object.assign({ simply: '#3A9D5D', neptune: '#C9962B', meizan: '#C8463D', 'cai lan': '#E07B2A', kiddy: '#3B82C4', olivoila: '#6E8A1F', orchid: '#8B5BB5', 'neptune olive': '#7C8F3A' }, CFG.brandColors || {});
+  const bColor = k => BRAND_COLOR[k] || ['#2F6F8F', '#9A5B3C', '#5B6BB5', '#3E8E7E', '#A0527A', '#6F7A2E'][[...k].reduce((a, c) => a + c.charCodeAt(0), 0) % 6];
+  const mono = (s, size) => `<span class="mono" style="background:${bColor(s.brandKey || s.key)};width:${size || 34}px;height:${size || 34}px;font-size:${(size || 34) * .42}px">${esc(initials(s.brand || s.label))}</span>`;
+  const initials = n => { const w = String(n).split(/\s+/).filter(Boolean); return (w.length > 1 ? w[0][0] + w[1][0] : w[0].slice(0, 2)).toUpperCase(); };
+  const SERVER = 'Google Sheets', TOOL = 'get_values';
+  const COLOR = { SGC: '#2a78d6', WCM: '#eb6834', LOTTE: '#1baf7a', EMART: '#e87ba4', KFM: '#eda100', BHX: '#008300', GO: '#6250d6', AEON: '#e34948' };
+  const TOOLS = ['canh-bao', 'ma-tran', 'khuyen-mai', 'doi-thu', 'tra-cuu'];
+  const VIEWS = [
+    ['thuong-hieu', 'Thương hiệu', ''],
+    ['tong-quan', 'Tổng quan', '<rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/>'],
+    ['canh-bao', 'Cảnh báo', '<path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17.5v.01"/>'],
+    ['ma-tran', 'Ma trận giá', '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>'],
+    ['khuyen-mai', 'Khuyến mãi', '<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>'],
+    ['doi-thu', 'Đối thủ', '<path d="M7 20V10M12 20V4M17 20v-7"/>'],
+    ['tra-cuu', 'Tra cứu', '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>']
+  ];
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const k = v => v == null ? '–' : (v / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + 'k';
+  const pct = (v, d) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toLocaleString('vi-VN', { maximumFractionDigits: d == null ? 0 : d }) + '%';
+  const N = c => CHAIN_NAME[c] || c, S = c => CHAIN_SHORT[c] || c;
+  const dot = c => `<i style="background:${COLOR[c]}"></i>`;
+  const ICON = {
+    s2: '<svg viewBox="0 0 24 24"><path d="M12 7v6M12 17v.01"/></svg>',
+    s1: '<svg viewBox="0 0 24 24"><path d="M12 7v6M12 17v.01"/></svg>',
+    s0: '<svg viewBox="0 0 24 24"><path d="M12 8v.01M12 11v6"/></svg>',
+    ok: '<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>'
+  };
+  const SEVTXT = { 2: 'Cần xử lý', 1: 'Theo dõi', 0: 'Dữ liệu', '-1': 'Ổn định' };
+  const stPill = sev => { const c = sev === 2 ? 's2' : sev === 1 ? 's1' : sev === 0 ? 's0' : 'ok'; return `<span class="st ${c}">${ICON[c]}${SEVTXT[sev]}</span>`; };
+
+  let raw = {}, model = null, view = 'tong-quan', q = '', mcp = null, stamp = null, brandSel = null, ind = 'all';
+  try { ind = localStorage.getItem('pc2-ind') || 'all'; } catch (e) { }
+  let prefs = { under: 8, spread: 10, promo: 15 };
+  const ui = { sev: 'all', brand: 'all', chain: 'all', trend: 'index', bench: 0 };
+  function loadPrefs() { try { const p = JSON.parse(localStorage.getItem('pc2-thr') || 'null'); if (p) prefs = Object.assign(prefs, p); } catch (e) { } }
+  function savePrefs() { try { localStorage.setItem('pc2-thr', JSON.stringify(prefs)); } catch (e) { } }
+
+  function setStatus(kind, text) { $('#status').innerHTML = `<span class="dot ${kind}"></span><span>${esc(text)}</span>`; }
+  function rebuild() {
+    if (!raw.recent) return;
+    model = buildModel(raw, prefs);
+    if (ind !== 'all' && !model.industries.includes(ind)) ind = 'all';
+    if (model.industries.length === 1) ind = 'all';
+    renderNav(); render();
+  }
+
+  /* ---------- nav ---------- */
+  function renderNav() {
+    const link = id => { const v = VIEWS.find(x => x[0] === id); const nAl = id === 'canh-bao' && model ? scope().filter(s => s.sev === 2).length : 0; return `<a href="#${id}" class="${view === id ? 'on' : ''}"><svg viewBox="0 0 24 24">${v[2]}</svg>${v[1]}${nAl ? `<span class="cnt">${nAl}</span>` : ''}</a>`; };
+    let h = link('tong-quan');
+    if (model) {
+      h += `<div class="navlbl">Thương hiệu</div>` + brandList().map(b => { const n2 = b.skus.filter(s => s.sev === 2).length; return `<a href="#thuong-hieu/${encodeURIComponent(b.key)}" class="${view === 'thuong-hieu' && brandSel === b.key ? 'on' : ''}">${mono(b, 22)}${esc(b.brand)}${n2 ? `<span class="cnt">${n2}</span>` : `<span class="cnt okc">✓</span>`}</a>`; }).join('');
+    }
+    h += `<div class="navlbl">Công cụ</div>` + TOOLS.map(link).join('');
+    $('#nav').innerHTML = h;
+    if (model) {
+      const src = CFG.mode === 'csv' ? 'CSV đã xuất bản' : 'Google Sheet (n8n + RAW DATA)';
+      $('#foot').innerHTML = `<b>Nguồn dữ liệu</b>${esc(src)}<br>Ngày mới nhất: <b style="display:inline">${fmtDate(model.latest, true)}</b><br>${model.dates.length} ngày · ${model.chains.length} chuỗi`;
+      const inds = model.industries;
+      $('#inds').innerHTML = (inds.length > 1 ? [['all', 'Tất cả ngành']] : []).concat(inds.map(i => [i, indL(i)])).map(([v, l]) => `<button type="button" class="${ind === v || inds.length === 1 ? 'on' : ''}" data-ind="${esc(v)}">${esc(l)} <span class="muted">${v === 'all' ? model.skus.length : model.skus.filter(s => s.ind === v).length}</span></button>`).join('');
+      document.querySelectorAll('#inds [data-ind]').forEach(el => el.onclick = () => { ind = el.getAttribute('data-ind'); try { localStorage.setItem('pc2-ind', ind); } catch (e) { } if (view === 'thuong-hieu' && !scope().some(s => s.brandKey === brandSel)) location.hash = 'tong-quan'; renderNav(); render(); });
+    }
+  }
+  function route() {
+    const h = (location.hash || '').slice(1).split('/');
+    view = VIEWS.some(v => v[0] === h[0]) ? h[0] : 'tong-quan';
+    brandSel = view === 'thuong-hieu' ? decodeURIComponent(h[1] || '') : null;
+    if (model && ind !== 'all' && !model.industries.includes(ind)) ind = 'all';
+    renderNav(); render(); window.scrollTo(0, 0);
+    const skuH = view === 'thuong-hieu' ? h[2] : h[1];
+    if (skuH && model) openSku(decodeURIComponent(skuH));
+  }
+
+  /* ---------- helpers ---------- */
+  function match(s) {
+    if (!q) return true;
+    const t = norm(q);
+    return norm(s.title + ' ' + s.name + ' ' + [...s.names].join(' ')).includes(t);
+  }
+  function scope() { return model.skus.filter(s => ind === 'all' || s.ind === ind); }
+  function brandList() {
+    const m = new Map();
+    for (const s of scope()) { if (!m.has(s.brandKey)) m.set(s.brandKey, { key: s.brandKey, brand: s.brand, skus: [] }); m.get(s.brandKey).skus.push(s); }
+    return [...m.values()].sort((a, b) => b.skus.length - a.skus.length);
+  }
+  function filtered() {
+    return scope().filter(s => match(s) && (ui.brand === 'all' || s.brand === ui.brand) && (ui.chain === 'all' || s.offers[ui.chain]));
+  }
+  function sortSku(a, b) { return b.sev - a.sev || b.issues.length - a.issues.length || b.spread - a.spread; }
+  function brands() { return [...new Set(scope().map(s => s.brand))].sort(); }
+  function delta(cur, prev, goodUp, unit) {
+    if (prev == null || cur == null) return '<span class="pill flat">–</span>';
+    const d = cur - prev;
+    if (!d) return `<span class="pill flat">= hôm qua</span>`;
+    const good = goodUp ? d > 0 : d < 0;
+    return `<span class="pill ${good ? 'up' : 'dn'}">${d > 0 ? '↑' : '↓'} ${Math.abs(d)}${unit || ''}</span>`;
+  }
+  function skuCell(s) { return `<div class="sku"><b>${esc(s.cat)} ${esc(s.sizeLabel)}</b><small><span class="brand">${esc(s.brand)}</span>${esc(s.name)}</small></div>`; }
+
+  /* ---------- charts ---------- */
+  function lineChart(series, o) {
+    o = Object.assign({ w: 760, h: 260, fmtY: v => v, zero: false, step: false }, o);
+    const P = { l: 52, r: 74, t: 14, b: 28 };
+    const all = series.flatMap(s => s.pts);
+    if (!all.length) return '<div class="empty">Chưa đủ dữ liệu</div>';
+    const ts = [...new Set(all.map(p => p.t))].sort((a, b) => a - b);
+    let lo = Math.min(...all.map(p => p.v)), hi = Math.max(...all.map(p => p.v));
+    if (o.zero) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+    const pad = (hi - lo) * 0.12 || Math.abs(hi) * 0.05 || 1; lo -= pad; hi += pad;
+    const t0 = ts[0], t1 = ts[ts.length - 1] === t0 ? t0 + 1 : ts[ts.length - 1];
+    const X = t => P.l + (t - t0) / (t1 - t0) * (o.w - P.l - P.r);
+    const Y = v => P.t + (hi - v) / (hi - lo) * (o.h - P.t - P.b);
+    const ticks = niceTicks(lo, hi, 5);
+    let g = ticks.map(v => `<line x1="${P.l}" x2="${o.w - P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="${o.zero && v === 0 ? '#9AA79F' : '#EEF2EC'}" stroke-width="1" ${o.zero && v === 0 ? 'stroke-dasharray="3 3"' : ''}/><text x="${P.l - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="#7D8B82">${o.fmtY(v)}</text>`).join('');
+    const every = Math.max(1, Math.ceil(ts.length / 7));
+    g += ts.map((t, i) => (i % every === 0 || i === ts.length - 1) && !(i !== ts.length - 1 && ts.length - 1 - i < every / 2) ? `<text x="${X(t)}" y="${o.h - 8}" text-anchor="middle" font-size="11" fill="#7D8B82">${fmtDate(t)}</text>` : '').join('');
+    const labels = [];
+    for (const s of series) {
+      if (!s.pts.length) continue;
+      let d = '';
+      s.pts.forEach((p, i) => {
+        if (i === 0) d += `M${X(p.t)},${Y(p.v)}`;
+        else if (o.step) d += `H${X(p.t)}V${Y(p.v)}`;
+        else d += `L${X(p.t)},${Y(p.v)}`;
+      });
+      if (o.step) d += `H${o.w - P.r}`;
+      if (s.area) {
+        const base = Y(o.zero ? 0 : lo);
+        g += `<path d="${d}V${base}H${X(s.pts[0].t)}Z" fill="${s.color}" opacity=".08"/>`;
+      }
+      g += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+      const last = s.pts[s.pts.length - 1];
+      g += `<circle cx="${o.step ? o.w - P.r : X(last.t)}" cy="${Y(last.v)}" r="4" fill="${s.color}" stroke="#fff" stroke-width="2"/>`;
+      labels.push({ y: Y(last.v), text: s.label, color: s.color, x: (o.step ? o.w - P.r : X(last.t)) + 8 });
+    }
+    labels.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 13) labels[i].y = labels[i - 1].y + 13;
+    if (series.length <= 6) g += labels.map(l => `<text x="${l.x}" y="${l.y + 4}" font-size="11.5" font-weight="600" fill="#4A5B50">${esc(l.text)}</text>`).join('');
+    // hover columns
+    const colW = (o.w - P.l - P.r) / Math.max(1, ts.length - 1);
+    g += ts.map(t => {
+      const rows = series.map(s => { const p = s.pts.find(p => p.t === t) || (o.step ? [...s.pts].reverse().find(p => p.t <= t) : null); return p ? { s, p } : null; }).filter(Boolean).sort((a, b) => b.p.v - a.p.v);
+      const tip = `<b>${fmtDate(t, true)}</b>` + rows.map(r => `<div class="tr"><span><i style="background:${r.s.color}"></i>${esc(r.s.label)}</span><b>${o.fmtY(r.p.v, true)}</b></div>`).join('');
+      return `<g class="hv"><rect x="${X(t) - colW / 2}" y="${P.t}" width="${colW}" height="${o.h - P.t - P.b}" fill="transparent" data-tip="${esc(tip)}"/><line x1="${X(t)}" x2="${X(t)}" y1="${P.t}" y2="${o.h - P.b}" stroke="#14261C" stroke-opacity=".25" class="xh" pointer-events="none"/></g>`;
+    }).join('');
+    return `<svg viewBox="0 0 ${o.w} ${o.h}" width="100%" style="display:block;overflow:visible"><style>.hv .xh{opacity:0}.hv:hover .xh{opacity:1}</style>${g}</svg>`;
+  }
+  function niceTicks(lo, hi, n) {
+    const span = hi - lo, raw0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw0)));
+    const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw0) || mag * 10;
+    const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(Math.round(v * 1e6) / 1e6);
+    return out;
+  }
+  function donut(items, center, sub) {
+    const tot = items.reduce((a, b) => a + b.v, 0) || 1;
+    const R = 62, C = 2 * Math.PI * R; let off = 0;
+    const segs = items.filter(i => i.v > 0).map(i => {
+      const len = i.v / tot * C; const gap = items.filter(x => x.v > 0).length > 1 ? 3 : 0;
+      const s = `<circle cx="80" cy="80" r="${R}" fill="none" stroke="${i.color}" stroke-width="18" stroke-dasharray="${Math.max(0, len - gap)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)" data-tip="${esc(`<b>${i.label}</b><br>${i.v} SKU rẻ nhất (${Math.round(i.v / tot * 100)}%)`)}"/>`;
+      off += len; return s;
+    }).join('');
+    return `<svg viewBox="0 0 160 160" width="170" height="170"><circle cx="80" cy="80" r="${R}" fill="none" stroke="#EEF2EC" stroke-width="18"/>${segs}<text x="80" y="78" text-anchor="middle" font-size="26" font-weight="700" fill="#14261C">${center}</text><text x="80" y="98" text-anchor="middle" font-size="11" fill="#7D8B82">${sub}</text></svg>`;
+  }
+  function ring(v) {
+    const R = 44, C = 2 * Math.PI * R;
+    return `<svg viewBox="0 0 110 110" width="104" height="104"><circle cx="55" cy="55" r="${R}" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="10"/><circle cx="55" cy="55" r="${R}" fill="none" stroke="#CDEB6B" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C * v / 100} ${C}" transform="rotate(-90 55 55)"/><text x="55" y="62" text-anchor="middle" font-size="24" font-weight="700" fill="#fff">${v}</text></svg>`;
+  }
+  function ladder(s) {
+    const offers = Object.values(s.offers);
+    const ps = offers.map(o => o.price).concat(s.ref ? [s.ref] : []);
+    const lo = Math.min(...ps) * 0.94, hi = Math.max(...ps) * 1.04;
+    const W = 860, H = 92, L = 20, R = 20;
+    const X = v => L + (v - lo) / (hi - lo) * (W - L - R);
+    let g = '';
+    if (s.ref) {
+      const f = s.ref * (1 - prefs.under / 100);
+      g += `<rect x="${X(lo)}" y="26" width="${X(f) - X(lo)}" height="34" fill="#FBE7E5" rx="6"/><text x="${X(lo) + 6}" y="74" font-size="10.5" fill="#D03B3B">dưới sàn −${prefs.under}%</text>`;
+      g += `<line x1="${X(s.ref)}" x2="${X(s.ref)}" y1="26" y2="60" stroke="#1F4D3A" stroke-width="1.5" stroke-dasharray="4 3"/><line x1="${W - R - 150}" x2="${W - R - 136}" y1="-8" y2="-8" stroke="#1F4D3A" stroke-width="1.5" stroke-dasharray="4 3"/><text x="${W - R - 130}" y="-4" font-size="11" font-weight="600" fill="#1F4D3A">${s.refType} ${k(s.ref)}</text>`;
+    }
+    g += `<line x1="${L}" x2="${W - R}" y1="43" y2="43" stroke="#E3E9E0" stroke-width="2"/>`;
+    const sorted = offers.slice().sort((a, b) => a.price - b.price);
+    const lastX = { u: -1e9, d: -1e9 };
+    sorted.forEach((o, i) => {
+      const x = X(o.price); let up = i % 2 === 0;
+      if (x - lastX[up ? 'u' : 'd'] < 90 && x - lastX[up ? 'd' : 'u'] >= 90) up = !up;
+      lastX[up ? 'u' : 'd'] = x;
+      g += `<circle cx="${x}" cy="43" r="8" fill="${COLOR[o.chain]}" stroke="#fff" stroke-width="2" data-tip="${esc(`<b>${N(o.chain)}</b><br>${fmt(o.price)}${o.list ? ' · niêm yết ' + fmt(o.list) : ''}`)}"/>`;
+      g += `<text x="${x}" y="${up ? 86 : 22}" text-anchor="middle" font-size="11.5" fill="#14261C"><tspan font-weight="600">${S(o.chain)}</tspan> ${k(o.price)}${o.outlier ? ' ⚠' : ''}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible">${g}</svg>`;
+  }
+  function cellBg(dev) {
+    if (dev == null) return '#F6F8F5';
+    const a = Math.min(1, Math.abs(dev) / 20);
+    if (Math.abs(dev) < 2) return '#F2F5F1';
+    return dev < 0 ? `rgba(194,84,58,${0.08 + a * 0.32})` : `rgba(62,124,156,${0.08 + a * 0.3})`;
+  }
+
+  /* ---------- views ---------- */
+  function render() {
+    const app = $('#app');
+    const t = VIEWS.find(v => v[0] === view);
+    $('#title').textContent = t ? t[1] : '';
+    if (!model) return;
+    $('#subtitle').textContent = `Giá ngày ${fmtDate(model.latest, true)} · so với ${model.skus.some(s => s.rsp) ? 'RSP (nếu có) hoặc ' : ''}trung vị các chuỗi`;
+    if (view === 'thuong-hieu') { const b = brandList().find(x => x.key === brandSel); if (!b) { view = 'tong-quan'; } else $('#title').textContent = b.brand; }
+    const f = { 'tong-quan': vOverview, 'thuong-hieu': vBrand, 'canh-bao': vAlerts, 'ma-tran': vMatrix, 'khuyen-mai': vPromo, 'doi-thu': vComp, 'tra-cuu': vLookup }[view];
+    app.innerHTML = f();
+    bind();
+  }
+
+  function scoreNow(list) {
+    let inBand = 0, total = 0;
+    for (const s of list) for (const o of Object.values(s.offers)) { if (o.outlier || !s.ref) continue; total++; if (Math.abs(o.price / s.ref - 1) * 100 <= prefs.under) inBand++; }
+    return { inBand, total, score: total ? Math.round(inBand / total * 100) : null };
+  }
+  function kpiRow(list, agg) {
+    const D = agg.daily, last = D[D.length - 1] || {}, prev = D[D.length - 2] || {};
+    const cur = Object.assign({}, last, scoreNow(list));
+    const sev2 = list.filter(s => s.sev === 2);
+    const offersAll = list.flatMap(s => Object.values(s.offers).filter(o => !o.outlier));
+    const onPromo = offersAll.filter(o => o.promo > 0);
+    const avgP = onPromo.length ? Math.round(onPromo.reduce((a, o) => a + o.promo, 0) / onPromo.length) : 0;
+    const ch7 = agg.changes.filter(c => c.t > model.latest - 7 * DAY);
+    return `<div class="grid g4" style="margin-bottom:18px">
+      <div class="card kpi hero"><div class="score-ring">${ring(cur.score || 0)}<div><div class="lbl">Điểm kỷ luật giá</div><div style="font-size:12.5px;color:#B9D2C2;margin:6px 0 8px">${cur.inBand || 0}/${cur.total || 0} điểm bán trong ±${prefs.under}% giá tham chiếu</div>${delta(last.score, prev.score, true, ' điểm')}</div></div></div>
+      <div class="card kpi"><div class="lbl"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17.5v.01"/></svg></span>SKU cần xử lý</div><div class="v num">${sev2.length}<small>/ ${list.length}</small></div><div class="ft">${delta(cur.spreadN, prev.spreadN, false)} SKU chênh &gt;${prefs.spread}% giữa chuỗi</div></div>
+      <div class="card kpi"><div class="lbl"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span>Điểm bán đang KM</div><div class="v num">${Math.round(onPromo.length / Math.max(1, offersAll.length) * 100)}<small>%</small></div><div class="ft">${delta(cur.promoN, prev.promoN, false)} giảm TB −${avgP}%</div></div>
+      <div class="card kpi"><div class="lbl"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 3 8-8"/><path d="M15 7h5v5"/></svg></span>Thay đổi giá 7 ngày</div><div class="v num">${ch7.length}<small>lần</small></div><div class="ft"><span class="pill flat">${agg.changes.filter(c => c.t === model.latest).length} hôm nay</span> ${ch7.filter(c => c.pct < 0).length} giảm · ${ch7.filter(c => c.pct > 0).length} tăng</div></div>
+    </div>`;
+  }
+  function spark(pts, color) {
+    if (pts.length < 2) return '';
+    const W = 120, H = 32, vs = pts.map(p => p.v), lo = Math.min(...vs) - 2, hi = Math.max(...vs) + 2;
+    const X = i => i / (pts.length - 1) * W, Y = v => H - (v - lo) / (hi - lo || 1) * H;
+    const d = pts.map((p, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(p.v).toFixed(1)).join('');
+    return `<svg viewBox="0 0 ${W} ${H + 2}" width="${W}" height="${H + 2}" style="overflow:visible"><path d="${d}L${W},${H + 2}L0,${H + 2}Z" fill="${color}" opacity=".1"/><path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/><circle cx="${W}" cy="${Y(vs[vs.length - 1])}" r="3" fill="${color}"/></svg>`;
+  }
+  function brandCard(b) {
+    const agg = model.aggregate(b.skus), D = agg.daily, cur = scoreNow(b.skus);
+    const n2 = b.skus.filter(s => s.sev === 2).length, n1 = b.skus.filter(s => s.sev === 1).length;
+    const offers = b.skus.flatMap(s => Object.values(s.offers).filter(o => !o.outlier));
+    const pr = offers.filter(o => o.promo > 0), avgP = pr.length ? Math.round(pr.reduce((a, o) => a + o.promo, 0) / pr.length) : 0;
+    const chs = model.chains.filter(c => b.skus.some(s => s.offers[c]));
+    const cheap = Object.entries(agg.cheapest).filter(e => e[1] > 0).sort((x, y) => y[1] - x[1])[0];
+    const worst = b.skus.filter(s => s.sev === 2).sort(sortSku)[0];
+    return `<a class="card bcard" href="#thuong-hieu/${encodeURIComponent(b.key)}">
+      <div class="bh">${mono(b, 42)}<div style="flex:1;min-width:0"><b>${esc(b.brand)}</b><small>${b.skus.length} SKU · ${chs.length} chuỗi</small></div>${n2 ? `<span class="st s2">${ICON.s2}${n2} cần xử lý</span>` : n1 ? `<span class="st s1">${ICON.s1}${n1} theo dõi</span>` : `<span class="st ok">${ICON.ok}Ổn định</span>`}</div>
+      <div class="bm"><div><small>Kỷ luật giá</small><b class="num">${cur.score != null ? cur.score : '–'}<span>/100</span></b></div><div><small>KM trung bình</small><b class="num">${avgP ? '−' + avgP + '%' : '0%'}</b></div><div style="text-align:right">${spark(D.filter(d => d.score != null).map(d => ({ v: d.score })), bColor(b.key))}</div></div>
+      <div class="bar" style="margin:4px 0 12px"><i style="width:${cur.score || 0}%;background:${bColor(b.key)}"></i></div>
+      <div class="bf"><span>${cheap ? `Rẻ nhất: <span class="cpill">${dot(cheap[0])}${S(cheap[0])}</span>` : 'Chưa đủ chuỗi để so'}</span>${worst ? `<span class="muted" style="text-align:right">${esc(worst.cat)} ${esc(worst.sizeLabel)}: chênh ${Math.round(worst.spread)}%</span>` : ''}</div>
+    </a>`;
+  }
+  function vOverview() {
+    const m = model, list = scope(), agg = m.aggregate(list);
+    const idxSeries = m.chains.filter(c => agg.index[c] && agg.index[c].length > 1).map(c => ({ key: c, label: S(c), color: COLOR[c], pts: agg.index[c] }));
+    const bl = brandList();
+    const cards = `<div class="hd2"><h3>Thương hiệu</h3><span class="hint">Bấm vào thương hiệu để xem từng sản phẩm</span></div><div class="grid bgrid" style="margin-bottom:22px">${bl.map(brandCard).join('')}</div>`;
+    const chart = `<div class="card"><div class="hd" style="margin-bottom:4px"><h3>Chỉ số giá theo chuỗi</h3><span class="sp"></span><div class="legend">${idxSeries.map(s => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join('')}</div></div><div class="hint" style="margin-bottom:10px">% so với trung vị giá các chuỗi, bình quân mọi SKU · dưới 0 = chuỗi đang bán rẻ hơn mặt bằng</div>${lineChart(idxSeries, { zero: true, fmtY: (v, t) => pct(v, t ? 1 : 0) })}</div>`;
+    const ch = m.chains.map(c => ({ c, label: S(c), v: agg.cheapest[c] || 0, color: COLOR[c] })).sort((a, b) => b.v - a.v);
+    const nCmp = list.filter(s => Object.values(s.offers).filter(o => !o.outlier).length > 1).length;
+    const dn = `<div class="card"><div class="hd"><h3>Chuỗi bán rẻ nhất</h3><span class="sp"></span><span class="hint">${nCmp} SKU có ≥2 chuỗi</span></div><div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">${donut(ch, ch[0] ? ch[0].v : 0, 'SKU · ' + (ch[0] ? ch[0].label : ''))}<div style="flex:1;min-width:140px">${ch.map(i => `<div class="pb" style="grid-template-columns:1fr 40px"><span class="n"><i style="background:${i.color}"></i>${esc(i.label)}</span><span class="v num">${i.v}</span></div>`).join('')}</div></div></div>`;
+    const recent = `<div class="card"><div class="hd"><h3>Biến động giá gần đây</h3></div>${changeList(agg.changes.filter(c => match(c.sku)).slice(0, 7))}</div>`;
+    return kpiRow(list, agg) + cards + `<div class="grid g32" style="margin-bottom:18px">${chart}${dn}</div><div class="grid g32">${priorityTable(list)}${recent}</div>`;
+  }
+  function priorityTable(list, limit) {
+    const top = list.filter(s => s.sev >= 1 && match(s)).sort(sortSku).slice(0, limit || 8);
+    return `<div class="card"><div class="hd"><h3>Cảnh báo ưu tiên</h3><span class="sp"></span><a href="#canh-bao" class="btn">Tất cả cảnh báo</a></div><div class="tbl-wrap"><table><thead><tr><th>Sản phẩm</th><th>Vấn đề chính</th><th class="r">Thấp – cao</th><th class="r">Chênh</th><th>Trạng thái</th></tr></thead><tbody>${top.map(s => {
+      const lo = Object.values(s.offers).find(o => o.price === s.min && !o.outlier), hi = Object.values(s.offers).find(o => o.price === s.max && !o.outlier);
+      return `<tr class="row" data-sku="${esc(s.sig)}"><td>${skuCell(s)}</td><td style="font-size:13px;color:var(--ink2);max-width:320px">${esc(s.issues[0].text)}${s.issues.length > 1 ? ` <span class="muted">+${s.issues.length - 1}</span>` : ''}</td><td class="r num" style="white-space:nowrap"><span class="cpill">${dot(lo.chain)}${k(s.min)}</span> – <span class="cpill">${dot(hi.chain)}${k(s.max)}</span></td><td class="r num"><b>${Math.round(s.spread)}%</b></td><td>${stPill(s.sev)}</td></tr>`;
+    }).join('') || '<tr><td colspan="5" class="empty">Không có cảnh báo</td></tr>'}</tbody></table></div></div>`;
+  }
+  function strip(s) {
+    const offers = Object.values(s.offers).filter(o => !o.outlier);
+    if (!offers.length) return '';
+    const ps = offers.map(o => o.price).concat(s.ref ? [s.ref, s.ref * (1 - prefs.under / 100)] : []);
+    let lo = Math.min(...ps), hi = Math.max(...ps); const pad = (hi - lo) * 0.08 || hi * 0.05; lo -= pad; hi += pad;
+    const W = 300, X = v => 8 + (v - lo) / (hi - lo) * (W - 16);
+    let g = `<line x1="8" x2="${W - 8}" y1="16" y2="16" stroke="#E3E9E0" stroke-width="2" stroke-linecap="round"/>`;
+    if (s.ref) {
+      const f = s.ref * (1 - prefs.under / 100);
+      g += `<rect x="${X(lo)}" y="8" width="${Math.max(0, X(f) - X(lo))}" height="16" rx="5" fill="#FBE7E5"/>`;
+      g += `<line x1="${X(s.ref)}" x2="${X(s.ref)}" y1="4" y2="28" stroke="#1F4D3A" stroke-width="1.5" stroke-dasharray="3 2"/>`;
+    }
+    g += offers.sort((a, b) => b.price - a.price).map(o => `<circle cx="${X(o.price)}" cy="16" r="6.5" fill="${COLOR[o.chain]}" stroke="#fff" stroke-width="2" data-tip="${esc(`<b>${N(o.chain)}</b> ${fmt(o.price)}${o.promo ? ' (KM −' + o.promo + '%)' : ''}`)}"/>`).join('');
+    return `<svg viewBox="0 0 ${W} 32" width="100%" height="32" style="display:block;overflow:visible">${g}</svg>`;
+  }
+  function productCard(s) {
+    const offers = Object.values(s.offers).sort((a, b) => a.price - b.price);
+    const main = s.issues.find(i => i.sev === 2) || s.issues.find(i => i.sev === 1) || s.issues[0];
+    return `<div class="pcard sev${s.sev}" data-sku="${esc(s.sig)}">
+      <div class="ph"><div style="min-width:0"><b>${esc(s.cat)} ${esc(s.sizeLabel)}</b><small>${esc(s.name)}</small></div>${stPill(s.sev)}</div>
+      <div class="pk"><span>${s.refType === 'RSP' ? 'RSP' : 'Trung vị'} <b class="num">${k(s.ref)}</b></span><span>Chênh <b class="num" style="color:${s.spread > prefs.spread ? 'var(--crit)' : 'inherit'}">${Math.round(s.spread)}%</b></span><span>KM <b class="num">${s.promoCount}/${offers.length}</b></span></div>
+      ${strip(s)}
+      <div class="pch">${offers.map(o => `<div class="${o.price === s.min && offers.length > 1 && !o.outlier ? 'lo' : ''}"><span class="cpill">${dot(o.chain)}${S(o.chain)}</span><b class="num">${k(o.price)}${o.outlier ? ' ⚠' : ''}</b><small class="num">${[o.promo ? '−' + o.promo + '%' : 'giá thường', o.combos ? 'C' + o.combos.map(c => c.n).join('/') : ''].filter(Boolean).join(' · ')}</small></div>`).join('')}</div>
+      ${main ? `<div class="pi ${main.sev === 2 ? 's2' : main.sev === 1 ? 's1' : 's0'}">${esc(main.text)}${s.issues.length > 1 ? ` <span class="muted">· +${s.issues.length - 1}</span>` : ''}</div>` : ''}
+    </div>`;
+  }
+  function vBrand() {
+    const b = brandList().find(x => x.key === brandSel);
+    const list = b.skus.filter(match), agg = model.aggregate(b.skus);
+    const cats = new Map();
+    for (const s of list.slice().sort((x, y) => x.cat.localeCompare(y.cat) || ((x.size || {}).v || 0) - ((y.size || {}).v || 0))) { if (!cats.has(s.cat)) cats.set(s.cat, []); cats.get(s.cat).push(s); }
+    const idx = model.chains.filter(c => agg.index[c] && agg.index[c].length > 1).map(c => ({ label: S(c), color: COLOR[c], pts: agg.index[c] }));
+    const n2 = b.skus.filter(s => s.sev === 2).length;
+    const head = `<div class="bhead card">${mono(b, 54)}<div style="flex:1"><div class="hint">${esc([...new Set(b.skus.map(s => indL(s.ind)))].join(" · "))}</div><h2 style="margin:2px 0 0;font-size:22px">${esc(b.brand)}</h2></div><div class="seg" id="bsort"><button type="button" class="${ui.bsort !== 'cat' ? 'on' : ''}" data-bs="sev">Ưu tiên cảnh báo</button><button type="button" class="${ui.bsort === 'cat' ? 'on' : ''}" data-bs="cat">Theo dòng sản phẩm</button></div></div>`;
+    let body;
+    if (ui.bsort === 'cat') body = [...cats.entries()].map(([c, arr]) => `<div class="hd2"><h3>${esc(c)}</h3><span class="hint">${arr.length} SKU</span></div><div class="pgrid">${arr.map(productCard).join('')}</div>`).join('');
+    else body = `<div class="hd2"><h3>Sản phẩm</h3><span class="hint">${list.length} SKU · ${n2} cần xử lý · chấm tròn = giá từng chuỗi, vạch đứt = giá tham chiếu, vùng hồng = dưới sàn −${prefs.under}%</span></div><div class="pgrid">${list.slice().sort(sortSku).map(productCard).join('')}</div>`;
+    const lg = `<div class="legend" style="margin:0 0 14px">${model.chains.filter(c => b.skus.some(s => s.offers[c])).map(c => `<span><i style="background:${COLOR[c]};border-radius:50%"></i>${N(c)}</span>`).join('')}</div>`;
+    const bottom = `<div class="grid g32" style="margin-top:22px"><div class="card"><div class="hd" style="margin-bottom:4px"><h3>Chỉ số giá ${esc(b.brand)} theo chuỗi</h3><span class="sp"></span><div class="legend">${idx.map(s => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join('')}</div></div><div class="hint" style="margin-bottom:10px">% so với trung vị các chuỗi, bình quân các SKU ${esc(b.brand)}</div>${lineChart(idx, { h: 240, zero: true, fmtY: (v, t) => pct(v, t ? 1 : 0) })}</div><div class="card"><div class="hd"><h3>Đổi giá 7 ngày</h3></div>${changeList(agg.changes.filter(c => match(c.sku)).slice(0, 8))}</div></div>`;
+    return head + kpiRow(b.skus, agg) + lg + body + bottom;
+  }
+  function changeList(list) {
+    if (!list.length) return '<div class="empty">Không có thay đổi giá trong 7 ngày</div>';
+    return `<ul class="tl">${list.map(c => `<li data-sku="${esc(c.sku.sig)}"><span class="ti ${c.pct < 0 ? 'dn' : 'up'}">${c.pct < 0 ? '↓' : '↑'}</span><span class="tx"><b>${esc(c.sku.brand)} ${esc(c.sku.cat)} ${esc(c.sku.sizeLabel)}</b><small><span class="cpill">${dot(c.chain)}${N(c.chain)}</span> · ${fmtDate(c.t)}</small></span><span class="tv num"><b>${k(c.to)}</b><small>${k(c.from)} · ${pct(c.pct, 1)}</small></span></li>`).join('')}</ul>`;
+  }
+
+  function filterBar(withSev) {
+    const sevs = [['all', 'Tất cả'], ['2', 'Cần xử lý'], ['1', 'Theo dõi'], ['0', 'Dữ liệu']];
+    return `<div class="filters">${withSev ? sevs.map(([v, l]) => `<button class="fbtn ${ui.sev === v ? 'on' : ''}" data-f="sev" data-v="${v}" type="button">${l}</button>`).join('') : ''}
+      <select class="fsel" data-f="brand"><option value="all">Mọi thương hiệu</option>${brands().map(b => `<option ${ui.brand === b ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select>
+      <select class="fsel" data-f="chain"><option value="all">Mọi chuỗi</option>${model.chains.map(c => `<option value="${c}" ${ui.chain === c ? 'selected' : ''}>${N(c)}</option>`).join('')}</select></div>`;
+  }
+  function vAlerts() {
+    let list = filtered().filter(s => s.issues.length).sort(sortSku);
+    if (ui.sev !== 'all') list = list.filter(s => s.issues.some(i => String(i.sev) === ui.sev));
+    return `${filterBar(true)}<div class="card">${list.map(s => {
+      const iss = ui.sev === 'all' ? s.issues : s.issues.filter(i => String(i.sev) === ui.sev);
+      const offers = Object.values(s.offers).sort((a, b) => a.price - b.price);
+      return `<div class="al" data-sku="${esc(s.sig)}"><div>${stPill(s.sev)}</div><div class="ix">${skuCell(s)}<ul>${iss.map(i => `<li>${esc(i.text)}</li>`).join('')}</ul></div><div class="px">${offers.map(o => `<div class="mini ${o.price === s.min && !o.outlier && offers.length > 1 ? 'lo' : o.price === s.max && !o.outlier && offers.length > 1 ? 'hi' : ''}"><span class="cpill">${dot(o.chain)}${S(o.chain)}</span><b class="num">${k(o.price)}${o.outlier ? ' ⚠' : ''}</b>${o.promo ? `<small class="muted">KM −${o.promo}%</small>` : '<small class="muted">giá thường</small>'}</div>`).join('')}</div></div>`;
+    }).join('') || '<div class="empty">Không có cảnh báo khớp bộ lọc</div>'}</div>`;
+  }
+
+  function vMatrix() {
+    const list = filtered().sort((a, b) => a.brand.localeCompare(b.brand) || a.cat.localeCompare(b.cat) || ((a.size || {}).v || 0) - ((b.size || {}).v || 0));
+    const chains = model.chains;
+    let lastB = '', rows = '';
+    for (const s of list) {
+      if (s.brand !== lastB) { rows += `<tr class="grp"><td colspan="${chains.length + 3}">${esc(s.brand)}</td></tr>`; lastB = s.brand; }
+      rows += `<tr class="row" data-sku="${esc(s.sig)}"><td>${skuCell(s)}</td><td class="r num"><b>${k(s.ref)}</b><br><small class="muted">${s.refType}</small></td>${chains.map(c => {
+        const o = s.offers[c];
+        if (!o) return '<td class="c"><div class="cell na">–</div></td>';
+        const tip = `<b>${N(c)}</b> · ${fmt(o.price)}${o.list ? '<br>Niêm yết ' + fmt(o.list) : ''}${o.promo ? ' (−' + o.promo + '%)' : ''}<br>${o.outlier ? 'Nghi lỗi dữ liệu, loại khỏi so sánh' : 'Lệch ' + pct(o.dev || 0, 1) + ' so với ' + s.refType}${o.combos ? '<br>Combo: ' + o.combos.map(x => x.n + 'sp ' + k(x.unit) + '/sp').join(', ') : ''}${o.src === 'raw' ? '<br><i>Giá chụp thủ công ' + fmtDate(o.t) + '</i>' : ''}`;
+        return `<td class="c"><div class="cell ${o.outlier ? 'out' : ''}" style="background:${o.outlier ? '#fff' : cellBg(o.dev)}" data-tip="${esc(tip)}">${o.promo ? `<span class="km">−${o.promo}%</span>` : ''}<b class="num">${k(o.price)}</b><small class="num">${o.outlier ? 'nghi lỗi' : pct(o.dev || 0)}</small></div></td>`;
+      }).join('')}<td class="r num"><b style="color:${s.spread > prefs.spread ? 'var(--crit)' : 'inherit'}">${Math.round(s.spread)}%</b></td></tr>`;
+    }
+    return `${filterBar(false)}<div class="card"><div class="hd"><h3>Giá bán theo chuỗi</h3><span class="sp"></span><div class="legend"><span><i style="background:rgba(194,84,58,.38)"></i>Thấp hơn tham chiếu</span><span><i style="background:#F2F5F1;border:1px solid #E3E9E0"></i>Trong ±2%</span><span><i style="background:rgba(62,124,156,.36)"></i>Cao hơn tham chiếu</span></div></div><div class="tbl-wrap"><table class="mx"><thead><tr><th>Sản phẩm</th><th class="r">Tham chiếu</th>${chains.map(c => `<th style="text-align:center"><span class="cpill">${dot(c)}${S(c)}</span></th>`).join('')}<th class="r">Chênh</th></tr></thead><tbody>${rows || `<tr><td colspan="${chains.length + 3}" class="empty">Không có sản phẩm</td></tr>`}</tbody></table></div></div>`;
+  }
+
+  function vPromo() {
+    const list = filtered().filter(s => Object.values(s.offers).some(o => o.promo > 0 || o.combos)).sort((a, b) => {
+      const pa = Object.values(a.offers).map(o => o.promo), pb = Object.values(b.offers).map(o => o.promo);
+      return (Math.max(...pb) - Math.min(...pb)) - (Math.max(...pa) - Math.min(...pa));
+    });
+    const chains = model.chains;
+    return `${filterBar(false)}<div class="card"><div class="hd"><h3>Khuyến mãi theo SKU</h3><span class="hint">% giảm so với giá niêm yết · combo quy ra giá/sp</span><span class="sp"></span></div><div class="tbl-wrap"><table><thead><tr><th>Sản phẩm</th>${chains.map(c => `<th><span class="cpill">${dot(c)}${S(c)}</span></th>`).join('')}<th class="r">Lệch KM</th></tr></thead><tbody>${list.map(s => {
+      const ps = Object.values(s.offers).filter(o => !o.outlier).map(o => o.promo);
+      const gap = Math.max(...ps) - Math.min(...ps);
+      return `<tr class="row" data-sku="${esc(s.sig)}"><td>${skuCell(s)}</td>${chains.map(c => {
+        const o = s.offers[c]; if (!o) return '<td class="muted">–</td>';
+        return `<td style="min-width:110px"><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="width:54px;flex:none"><i style="width:${Math.min(100, o.promo / 40 * 100)}%;background:${o.promo >= prefs.promo ? 'var(--deep)' : '#8DB59E'}"></i></div><b class="num" style="font-size:12.5px">${o.promo ? '−' + o.promo + '%' : '0%'}</b></div><small class="muted num">${k(o.price)}</small>${(o.combos || []).map(x => `<span class="combo" data-tip="Combo ${x.n}: ${fmt(x.price)} → ${fmt(x.unit)}/sp">C${x.n} ${k(x.unit)}</span>`).join('')}</td>`;
+      }).join('')}<td class="r num"><b style="color:${gap >= prefs.promo ? 'var(--warn)' : 'inherit'}">${gap} đ.%</b></td></tr>`;
+    }).join('') || '<tr><td class="empty">Không có SKU khuyến mãi</td></tr>'}</tbody></table></div></div>`;
+  }
+
+  function vComp() {
+    const B = model.benchmarks.filter(g => !q || g.rows.some(r => norm(r.brand + ' ' + r.names.join(' ')).includes(norm(q))));
+    if (!B.length) return `<div class="card"><div class="empty">${raw.total && raw.cur ? 'Chưa có nhóm so sánh với đối thủ' : 'Đang đọc giá đối thủ từ sheet RAW DATA…'}</div></div>`;
+    if (ui.bench >= B.length) ui.bench = 0;
+    const g = B[ui.bench];
+    const chains = model.chains.filter(c => g.rows.some(r => r.cells[c]));
+    const ours = g.rows.filter(r => r.ours), base = median(ours.map(r => r.median));
+    const maxM = Math.max(...g.rows.map(r => r.median));
+    return `<div class="filters">${B.map((x, i) => `<button class="fbtn ${i === ui.bench ? 'on' : ''}" data-bench="${i}" type="button">${esc(x.label)} <span class="muted">${x.rows.length}</span></button>`).join('')}</div>
+      <div class="grid g32"><div class="card"><div class="hd"><h3>${esc(g.label)} · giá theo chuỗi</h3><span class="sp"></span><span class="hint">Calofic từ n8n · đối thủ từ RAW DATA ${model.rawAt ? fmtDate(model.rawAt) : ''}</span></div><div class="tbl-wrap"><table><thead><tr><th>Thương hiệu</th>${chains.map(c => `<th class="r"><span class="cpill">${dot(c)}${S(c)}</span></th>`).join('')}<th class="r">Trung vị</th><th class="r">Chỉ số</th></tr></thead><tbody>${g.rows.map(r => `<tr><td><span class="brand ${r.ours ? '' : 'comp'}">${r.ours ? 'Calofic' : 'Đối thủ'}</span><b>${esc(r.brand)}</b><br><small class="muted">${esc(r.names[0])}</small></td>${chains.map(c => { const x = r.cells[c]; return `<td class="r num">${x ? (x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" style="color:inherit">${k(x.price)}</a>` : k(x.price)) + (x.promo ? `<br><small class="muted">−${x.promo}%</small>` : '') : '<span class="muted">–</span>'}</td>`; }).join('')}<td class="r num"><b>${k(r.median)}</b></td><td class="r num">${base ? Math.round(r.median / base * 100) : '–'}</td></tr>`).join('')}</tbody></table></div><div class="hint" style="margin-top:8px">Chỉ số = trung vị giá thương hiệu ÷ trung vị Calofic × 100.</div></div>
+      <div class="card"><div class="hd"><h3>Thang giá trung vị</h3></div>${g.rows.slice().sort((a, b) => a.median - b.median).map(r => `<div class="pb" style="grid-template-columns:110px 1fr 56px"><span class="n" style="font-weight:${r.ours ? 600 : 400}">${esc(r.brand)}</span><div class="bar"><i style="width:${r.median / maxM * 100}%;background:${r.ours ? 'var(--deep)' : '#C9B9A3'}"></i></div><span class="v num">${k(r.median)}</span></div>`).join('')}</div></div>`;
+  }
+
+  function vLookup() {
+    const rows = [];
+    for (const s of filtered()) for (const c in s.offers) { const o = s.offers[c]; rows.push({ s, o }); }
+    rows.sort((a, b) => a.s.title.localeCompare(b.s.title) || a.o.price - b.o.price);
+    return `${filterBar(false)}<div class="card"><div class="hd"><h3>${rows.length} điểm giá</h3><span class="sp"></span><button class="btn" id="copy" type="button">Sao chép (dán vào Excel)</button></div><div class="tbl-wrap"><table><thead><tr><th>Sản phẩm</th><th>Chuỗi</th><th class="r">Giá bán</th><th class="r">Niêm yết</th><th class="r">KM</th><th class="r">So tham chiếu</th><th>Combo</th><th>Ngày</th></tr></thead><tbody>${rows.map(({ s, o }) => `<tr class="row" data-sku="${esc(s.sig)}"><td>${skuCell(s)}</td><td><span class="cpill">${dot(o.chain)}${N(o.chain)}</span></td><td class="r num"><b>${fmt(o.price)}</b></td><td class="r num">${o.list ? fmt(o.list) : '–'}</td><td class="r num">${o.promo ? '−' + o.promo + '%' : ''}</td><td class="r num">${o.outlier ? '<span class="st s0">nghi lỗi</span>' : pct(o.dev || 0, 1)}</td><td>${(o.combos || []).map(x => `<span class="combo">C${x.n} ${k(x.unit)}</span>`).join('')}</td><td class="muted">${fmtDate(o.t)}${o.src === 'raw' ? ' · thủ công' : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
+  }
+
+  /* ---------- modal ---------- */
+  function openSku(sig) {
+    const s = model.skus.find(x => x.sig === sig); if (!s) return;
+    const offers = Object.values(s.offers).sort((a, b) => a.price - b.price);
+    const hist = Object.keys(s.history).map(c => ({ label: S(c), color: COLOR[c], pts: s.history[c].map(p => ({ t: p.t, v: p.price })) }));
+    $('#modal').innerHTML = `<div class="mh"><div style="flex:1">${stPill(s.sev)}<h2 style="margin-top:8px">${esc(s.brand)} · ${esc(s.cat)} ${esc(s.sizeLabel)}</h2><div class="muted">${esc([...s.names].join(' · '))}</div></div><button class="iconbtn" id="close" type="button" aria-label="Đóng"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <div class="kv"><div><small>${s.refType === 'RSP' ? 'RSP' : 'Trung vị các chuỗi'}</small><b class="num">${fmt(s.ref)}</b></div><div><small>Thấp nhất</small><b class="num">${fmt(s.min)}</b></div><div><small>Cao nhất</small><b class="num">${fmt(s.max)}</b></div><div><small>Chênh lệch</small><b class="num">${Math.round(s.spread)}%</b></div><div><small>Chuỗi đang KM</small><b class="num">${s.promoCount}/${offers.length}</b></div></div>
+      ${s.issues.length ? `<div class="card" style="box-shadow:none;background:#FAFBF8;border:1px solid var(--line);margin-bottom:14px;padding:14px 18px"><ul style="margin:0;padding-left:18px">${s.issues.map(i => `<li style="margin:3px 0"><b style="color:${i.sev === 2 ? 'var(--crit)' : i.sev === 1 ? 'var(--warn)' : 'var(--info)'}">${SEVTXT[i.sev]}:</b> ${esc(i.text)}</li>`).join('')}</ul></div>` : ''}
+      <h3 style="margin:6px 0 4px;font-size:14px">Thang giá hôm nay</h3>${ladder(s)}
+      <h3 style="margin:18px 0 6px;font-size:14px">Diễn biến giá bán ${model.dates.length} ngày</h3>${hist.length ? lineChart(hist, { w: 900, h: 230, step: true, fmtY: (v, t) => t ? fmt(v) : k(v) }) : '<div class="empty">Chưa có lịch sử</div>'}
+      <div class="tbl-wrap" style="margin-top:14px"><table><thead><tr><th>Chuỗi</th><th class="r">Giá bán</th><th class="r">Niêm yết</th><th class="r">KM</th><th class="r">So ${s.refType}</th><th class="r">Hôm trước</th><th>Combo (giá/sp)</th><th>Nguồn</th></tr></thead><tbody>${offers.map(o => `<tr><td><span class="cpill">${dot(o.chain)}${N(o.chain)}</span>${o.variants > 1 ? `<br><small class="muted" data-tip="${esc(o.names.join('<br>'))}">${o.variants} tên SP gộp, lấy giá thấp nhất</small>` : ''}</td><td class="r num"><b>${fmt(o.price)}</b></td><td class="r num">${o.list ? fmt(o.list) : '–'}</td><td class="r num">${o.promo ? '−' + o.promo + '%' : ''}</td><td class="r num">${o.outlier ? '<span class="st s0">nghi lỗi</span>' : pct(o.dev || 0, 1)}</td><td class="r num">${o.prev && o.prev !== o.price ? fmt(o.prev) : '<span class="muted">=</span>'}</td><td>${(o.combos || []).map(x => `<span class="combo" data-tip="${fmt(x.price)} cho ${x.n} sp">C${x.n} ${fmt(x.unit)}</span>`).join('') || '<span class="muted">–</span>'}</td><td class="muted">${o.src === 'raw' ? (o.url ? `<a href="${esc(o.url)}" target="_blank" rel="noopener">thủ công</a>` : 'thủ công') + ' ' + fmtDate(o.t) : 'n8n ' + fmtDate(o.t)}</td></tr>`).join('')}</tbody></table></div>`;
+    $('#ov').classList.add('on');
+    $('#close').onclick = closeSku;
+  }
+  function closeSku() { $('#ov').classList.remove('on'); const want = '#' + view + (brandSel ? '/' + encodeURIComponent(brandSel) : ''); if (location.hash !== want) history.replaceState(null, '', want); }
+
+  /* ---------- binding ---------- */
+  function bind() {
+    document.querySelectorAll('#app [data-sku]').forEach(el => el.onclick = e => { if (e.target.closest('a')) return; openSku(el.getAttribute('data-sku')); });
+    document.querySelectorAll('#app [data-f]').forEach(el => {
+      const f = el.getAttribute('data-f');
+      if (el.tagName === 'SELECT') el.onchange = () => { ui[f] = el.value; render(); };
+      else el.onclick = () => { ui[f] = el.getAttribute('data-v'); render(); };
+    });
+    document.querySelectorAll('#app [data-bs]').forEach(el => el.onclick = () => { ui.bsort = el.getAttribute('data-bs'); render(); });
+    document.querySelectorAll('#app [data-bench]').forEach(el => el.onclick = () => { ui.bench = +el.getAttribute('data-bench'); render(); });
+    const cp = $('#copy');
+    if (cp) cp.onclick = () => {
+      const lines = [['Thương hiệu', 'Sản phẩm', 'Quy cách', 'Chuỗi', 'Giá bán', 'Niêm yết', 'KM %', 'Lệch tham chiếu %', 'Ngày'].join('\t')];
+      for (const s of filtered()) for (const c in s.offers) { const o = s.offers[c]; lines.push([s.brand, s.name, s.sizeLabel, N(c), o.price, o.list || '', o.promo || '', o.outlier ? 'nghi lỗi' : Math.round((o.dev || 0) * 10) / 10, fmtDate(o.t, true)].join('\t')); }
+      const ta = document.createElement('textarea'); ta.value = lines.join('\n'); document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); cp.textContent = 'Đã sao chép ✓'; } catch (e) { cp.textContent = 'Không sao chép được'; }
+      ta.remove(); setTimeout(() => { cp.textContent = 'Sao chép (dán vào Excel)'; }, 1800);
+    };
+  }
+  $('#ov').addEventListener('click', e => { if (e.target.id === 'ov') closeSku(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSku(); });
+  $('#q').addEventListener('input', e => { q = e.target.value.trim(); render(); });
+  $('#cfg').onclick = () => {
+    const p = $('#pop');
+    p.innerHTML = `<b>Ngưỡng cảnh báo</b><label>Bán thấp hơn tham chiếu (%)<input type="number" min="1" max="50" data-p="under" value="${prefs.under}"></label><label>Chênh giữa các chuỗi (%)<input type="number" min="1" max="80" data-p="spread" value="${prefs.spread}"></label><label>KM sâu (%)<input type="number" min="1" max="80" data-p="promo" value="${prefs.promo}"></label><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" type="button" id="pcancel">Đóng</button><button class="btn primary" type="button" id="papply">Áp dụng</button></div>`;
+    p.classList.toggle('on');
+    $('#pcancel').onclick = () => p.classList.remove('on');
+    $('#papply').onclick = () => { p.querySelectorAll('[data-p]').forEach(i => { const v = +i.value; if (v > 0) prefs[i.getAttribute('data-p')] = v; }); savePrefs(); p.classList.remove('on'); rebuild(); };
+  };
+  window.addEventListener('hashchange', route);
+  const tip = $('#tip');
+  document.addEventListener('mousemove', e => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (!el) { tip.style.display = 'none'; return; }
+    tip.innerHTML = el.getAttribute('data-tip');
+    tip.style.display = 'block';
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    let x = e.clientX + 14, y = e.clientY + 14;
+    if (x + w > innerWidth - 8) x = e.clientX - w - 14;
+    if (y + h > innerHeight - 8) y = e.clientY - h - 14;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  });
+
+  /* ---------- data ---------- */
+  function gate(html) { $('#app').innerHTML = `<div class="gate card" style="padding:28px">${html}</div>`; }
+  function errorFor(err) {
+    const c = err && err.code;
+    if (c === 'server_not_connected' || c === 'selection_required') return { t: 'Chưa kết nối Google Sheets', h: '<p>Trang đọc giá trực tiếp từ Google Sheet của bạn. Thêm kết nối <b>Google Sheets</b> trong claude.ai → Settings → Connectors, rồi tải lại trang.</p>' };
+    if (c === 'needs_reauth') return { t: 'Cần kết nối lại Google Sheets', h: '<p>Phiên đăng nhập Google Sheets đã hết hạn. Kết nối lại trong claude.ai → Settings → Connectors, rồi bấm Tải lại.</p>' };
+    if (c === 'approval_required' || c === 'consent_required') return { t: 'Cần cho phép đọc Google Sheet', h: '<p>Trang cần quyền đọc file giá bằng kết nối Google Sheets của bạn.</p><button class="btn primary" id="allowBtn" type="button">Cho phép đọc Google Sheet</button>' };
+    if (c === 'not_in_manifest' || c === 'blocked_by_policy') return { t: 'Trang chưa được phép dùng Google Sheets', h: '<p>Kết nối Google Sheets đang bị tắt cho trang này hoặc bị chính sách tổ chức chặn.</p>' };
+    if (c === 'tool_error') return { t: 'Không đọc được Google Sheet', h: `<p>Google Sheets báo lỗi: ${esc(err.message || '')}. Kiểm tra bạn có quyền xem file và tab PAGE_RECENT còn tồn tại.</p>` };
+    return { t: 'Tạm thời không đọc được Google Sheet', h: '<p>Kết nối đang gián đoạn. Thử bấm Tải lại sau ít phút.</p>' };
+  }
+  function statusOk() {
+    const done = Object.keys(SRC).filter(x => raw[x]).length, tot = Object.keys(SRC).length;
+    if (done < tot) setStatus('load', `Đang đọc dữ liệu (${done}/${tot})…`);
+    else setStatus('ok', (CFG.mode === 'csv' ? 'CSV' : 'Google Sheet') + (stamp ? ' · đọc lúc ' + new Date(stamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''));
+  }
+  function onEvent(key, ev) {
+    if (ev.type === 'data') {
+      raw[key] = ev.result.payload != null ? ev.result.payload : ev.result;
+      if (ev.result.cache && ev.result.cache.storedAt) stamp = ev.result.cache.storedAt; else stamp = Date.now();
+      statusOk(); rebuild();
+    } else {
+      const err = ev.error || {};
+      const authz = ['needs_reauth', 'server_not_connected', 'blocked_by_policy', 'approval_required', 'not_in_manifest', 'consent_required', 'selection_required'].includes(err.code);
+      if (authz && SRC[key].need) { delete raw[key]; model = null; }
+      const m = errorFor(err);
+      setStatus('err', SRC[key].need ? m.t : 'Thiếu giá đối thủ: ' + m.t);
+      if (!model) { gate(`<h2 style="margin-top:0">${m.t}</h2>${m.h}`); const b = $('#allowBtn'); if (b) b.onclick = requestAccess; }
+    }
+  }
+  const unsub = [];
+  function watchAll() {
+    unsub.splice(0).forEach(u => { try { u(); } catch (e) { } });
+    for (const key in SRC) unsub.push(mcp.watchTool(SERVER, TOOL, { spreadsheetId: SRC[key].sheet, range: SRC[key].range }, ev => onEvent(key, ev), { cache: { staleTime: 5 * 60000, gcTime: 7 * 86400000 }, refetchInterval: 10 * 60000 }));
+  }
+  async function requestAccess() {
+    setStatus('load', 'Đang xin quyền đọc…');
+    for (const key in SRC) {
+      try { const r = await mcp.callTool(SERVER, TOOL, { spreadsheetId: SRC[key].sheet, range: SRC[key].range }); onEvent(key, { type: 'data', result: r }); }
+      catch (err) { onEvent(key, { type: 'error', error: err }); return; }
+    }
+    watchAll();
+  }
+  async function loadCsv() {
+    setStatus('load', 'Đang tải CSV…');
+    await Promise.all(Object.keys(SRC).map(async key => {
+      const url = CFG.csv[key]; if (!url) { raw[key] = raw[key] || []; return; }
+      try {
+        const r = await fetch(url + (url.includes('?') ? '&' : '?') + '_=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const txt = await r.text();
+        if (/^\s*</.test(txt)) throw new Error('not csv');
+        raw[key] = parseCSV(txt);
+      } catch (e) { if (SRC[key].need) throw e; }
+    }));
+    stamp = Date.now(); statusOk(); rebuild();
+  }
+  async function reload() {
+    if (CFG.mode === 'csv') { try { await loadCsv(); } catch (e) { setStatus('err', 'Không tải được CSV'); } return; }
+    if (!mcp) return;
+    setStatus('load', 'Đang tải lại…');
+    try { await mcp.invalidate(SERVER, TOOL); } catch (e) { }
+    watchAll();
+  }
+  $('#reload').onclick = reload;
+
+  loadPrefs();
+  route();
+  (async () => {
+    if (CFG.mode === 'csv') {
+      if (!CFG.csv || !CFG.csv.recent) { setStatus('err', 'Chưa cấu hình dữ liệu'); gate('<h2 style="margin-top:0">Chưa cấu hình nguồn dữ liệu</h2><p>Mở file <b>config.js</b> trong repo và dán link CSV đã xuất bản của tab PAGE_RECENT (và các tab khác). Xem hướng dẫn trong README.md.</p>'); return; }
+      try { await loadCsv(); } catch (e) { setStatus('err', 'Không tải được CSV'); gate('<h2 style="margin-top:0">Không tải được dữ liệu</h2><p>Kiểm tra lại đường dẫn CSV đã xuất bản trong cấu hình PC_CONFIG.</p>'); }
+      setInterval(() => loadCsv().catch(() => { }), 15 * 60000);
+      return;
+    }
+    try { mcp = window.claude && window.claude.use ? await window.claude.use('mcp') : null; } catch (e) { mcp = null; }
+    if (!mcp) {
+      setStatus('err', 'Không có kết nối dữ liệu');
+      gate('<h2 style="margin-top:0">Mở trang trong Claude để xem giá</h2><p>Trang đọc giá trực tiếp từ Google Sheet "PRICE ALERT_AUTOMATION" (tab PAGE_RECENT) qua kết nối Google Sheets của người xem.</p>');
+      return;
+    }
+    watchAll();
+  })();
+})();
+
+</script>
+</body>
+</html>
