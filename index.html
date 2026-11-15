@@ -435,6 +435,16 @@ table.list.st tr.tot td{font-weight:700;border-top:2px solid var(--line-2);backg
 .od{display:inline-flex;align-items:center;gap:8px}.od b{display:inline-block;height:8px;border-radius:4px;background:var(--miss)}
 .acc{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:start}
 @media (max-width:1100px){.acc{grid-template-columns:1fr}.rr{grid-template-columns:110px 1fr}.rr .tx{grid-column:2}}
+.news{display:flex;flex-direction:column}
+.news .it{display:grid;grid-template-columns:12px 92px 1fr auto;gap:12px;align-items:start;padding:12px 4px;border-top:1px solid var(--line);font-size:13.5px;line-height:1.55}
+.news .it:first-child{border-top:0}
+.news .dot{width:10px;height:10px;border-radius:50%;margin-top:6px}
+.news .tag{font-size:11.5px;color:var(--ink-2);background:var(--panel-2);border-radius:6px;padding:2px 8px;text-align:center;margin-top:1px}
+.news .it b{font-weight:650}
+.news .go{font-size:12.5px;color:var(--act);background:none;border:0;cursor:pointer;padding:2px 4px;white-space:nowrap;font-family:inherit}
+.news .go:hover{text-decoration:underline}
+.news .sec{font-size:12px;font-weight:600;color:var(--muted);padding:14px 4px 4px}
+@media (max-width:760px){.news .it{grid-template-columns:12px 1fr}.news .tag{display:none}.news .go{grid-column:2;justify-self:start}}
 .fc-note{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-top:12px;padding:10px 14px;background:var(--panel-2);border-radius:12px}
 .fc-adj{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .fc-adj span{font-size:12.5px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:var(--panel)}
@@ -565,6 +575,7 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     <a href="#sec-brand" data-sec="sec-brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5V5a1 1 0 0 1 1-1h7.5L20 11.5 12.5 19z"/><circle cx="8.5" cy="8.5" r="1.3"/></svg><span>Nhãn hàng &amp; phân khúc</span></a>
     <a href="#sec-size" data-sec="sec-size"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3h4v3l2 3v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9l2-3z"/><path d="M8 13h8"/></svg><span>Cơ cấu packsize</span></a>
     <a href="#sec-store" data-sec="sec-store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9l1.5-5h13L20 9M4 9h16M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0A2.7 2.7 0 0 0 20 9M5.5 11.5V20h13v-8.5"/><path d="M10 20v-4.5h4V20"/></svg><span>Doanh số theo store</span></a>
+    <a href="#newsPanel" data-sec="newsPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h11v14H7a2 2 0 0 1-2-2z"/><path d="M16 9h3v8a2 2 0 0 1-2 2"/><path d="M8 9h5M8 12.5h5M8 16h3"/></svg><span>Bản tin</span></a>
   </nav>
 
   <div class="side-foot">
@@ -769,6 +780,13 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
       <div class="tbl-foot"><span id="fStore"></span><button class="ghost" id="stMore" style="padding:7px 12px"></button></div>
     </section>
   </div>
+
+  <section class="panel" id="newsPanel">
+    <div class="ph"><div><h2 id="tNews">Bản tin</h2><p id="hNews"></p></div>
+      <div class="keys"><span><i style="background:var(--miss)"></i>Cần xử lý</span><span><i style="background:var(--near)"></i>Theo dõi</span><span><i style="background:var(--ok)"></i>Tin tốt</span><span><i style="background:var(--act)"></i>Thông tin</span></div></div>
+    <div class="news" id="newsList"></div>
+    <div class="tbl-foot"><span id="fNews"></span><button class="ghost" id="newsMore" style="padding:7px 12px"></button></div>
+  </section>
 
   <footer id="foot"></footer>
 </main>
@@ -1109,6 +1127,7 @@ function render(){
   drawMatrix(cur, ly, L, Y);
   if (HAS_X) drawSize(cur, ly, L, Y);
   drawStores(Y, L);
+  drawNews(Y, partial, ud);
   firstDraw = false;
 }
 
@@ -1453,6 +1472,7 @@ function drawTet(){
   const ty = Object.keys(TET_DAY).map(Number).find(y => { const t = new Date(TET_DAY[y]+'T00:00:00'); return (t-up)/864e5 >= -28 && (t-up)/864e5 <= 110; });
   const show = ty && TET_DAY[ty-1] && (D.daily||[]).length;
   $('tetPanel').style.display = show ? '' : 'none';
+  TET_INFO = null;
   if (!show) return;
   const T0 = new Date(TET_DAY[ty]+'T00:00:00'), off = Math.round((T0 - new Date(TET_DAY[ty-1]+'T00:00:00'))/864e5);
   const day = new Map();
@@ -1481,6 +1501,7 @@ function drawTet(){
     wk.push({k, s0, t, a, n}); }
   const cur = wk.find(o => o.n > 0 && o.n < 7), lab = k => k<0 ? `T${k}` : k===0 ? 'T+0' : `T+${k}`;
   const ds = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+  TET_INFO = {ty, T0, cur, wk, firstIn: (up - W0)/864e5, lab, ds, est};
   $('tTet').textContent = `Target Tết ${ty} theo tuần`;
   const firstIn = (up - W0)/864e5;
   $('hTet').textContent = cur ? `Tuần này (${lab(cur.k)}): cần ${tn(cur.t)} t · đã đạt ${tn(cur.a)} t (${nf(cur.t? cur.a/cur.t*100 : 0,0)}%) · còn ${7-cur.n} ngày. Mùng 1 Tết: ${ds(T0)}/${ty}.`
@@ -1501,6 +1522,136 @@ function drawTet(){
   $('nTet').innerHTML = `<b>Cách chia:</b> target từng tháng được chia xuống ngày theo nhịp bán quanh Tết ${ty-1} (khớp theo ngày âm lịch, lùi ${off} ngày), rồi cộng thành tuần, nên các tuần cao điểm trước Tết nhận target lớn hơn. Theo bộ lọc Khu vực, Khách hàng, Ngành hàng.` +
     (est.length ? ` Tháng ${est.join(', ')} chưa có target, đang dùng <b>ước tính</b> = cùng kỳ × tăng trưởng lũy kế năm (${fmtPct(gr-1)}); sẽ tự thay bằng target thật khi có file.` : '');
 }
+
+
+/* =================== BẢN TIN ===================
+   Nhận xét tự động, tính lại mỗi lần cập nhật số liệu hoặc đổi bộ lọc. Chỉ dùng quy tắc và ngưỡng cố định, không đoán.
+   - Chọn tất cả khách hàng: đánh giá chung + so sánh giữa các hệ thống.
+   - Chọn 1 hệ thống: đi sâu vào ngành, store, nhãn hàng của hệ thống đó.
+   Theo giai đoạn: đầu tháng tổng kết tháng trước · từ ngày 15 ước chốt tháng · cuối quý tiến độ quý · mùa Tết tiến độ tuần Tết.
+   Ngưỡng báo biến động: lệch ≥ 15% và ≥ 5 tấn (hoặc ≥ 3% tổng phạm vi). */
+let TET_INFO = null, NEWS_ALL = false;
+function drawNews(Y, partial, udArg){
+  const latest = R.reduce((x,r)=>r[1]>x?r[1]:x, 0);
+  $('newsPanel').style.display = Y===latest ? '' : 'none';
+  if (Y!==latest) return;
+  const dm = D.dims, [uy,um,ud] = D.updated.split('-').map(Number), nd = new Date(uy, um, 0).getDate();
+  const done = ud >= nd, Lc = done ? um : um-1, one = S.cust >= 0;
+  const scope = [one ? dm.customer[S.cust] : 'toàn kênh MT', S.bu ? BU_LABEL[S.bu] : '', S.cat>=0 ? dm.category[S.cat] : ''].filter(Boolean).join(' · ');
+  const pc = (a,b) => b ? nf(a/b*100,0)+'%' : '–', sg = v => (v>0?'+':'') + nf(v*100,0) + '%';
+  const N = []; const add = (lvl, tag, html, go, w=0) => N.push({lvl, tag, html, go, w});
+  // ---- gom số (tấn) ----
+  const A = new Map(), inc = (m, k, v) => m.set(k, (m.get(k)||0) + v);
+  const CU = new Map(), CC = new Map(), ST = new Map(), BR = new Map(), BUs = new Map();
+  R.forEach(r => { if (r[1] < Y-1 || !pass(r)) return; const y = r[1], m = r[2], t = r[9];
+    inc(A, `${y}|${m}`, t); inc(A, `${y}|${m}|${r[4]}`, t);
+    inc(CU, `${y}|${m}|${r[3]}`, t); inc(CC, `${y}|${m}|${r[4]}|${r[3]}`, t);
+    if (one) inc(ST, `${y}|${m}|${r[4]}|${r[7]}`, t), inc(ST, `${y}|${m}|*|${r[7]}`, t);
+    inc(BR, `${y}|${m}|${r[4]}|${r[5]}`, t);
+    if (y===Y) { const k = r[3]+'|'+r[7]; let o = BUs.get(k); if (!o) BUs.set(k, o = {}); o[r[0]] = (o[r[0]]||0) + t; } });
+  const T = new Map();
+  (D.target||[]).forEach(t => { if ((S.bu && t[0]!==S.bu) || (S.cust>=0 && t[3]!==S.cust) || (S.cat>=0 && t[4]!==S.cat) || (S.seg>=0 && t[6]!==S.seg) || !tBP(t)) return;
+    inc(T, `${t[1]}|${t[2]}`, t[5]); inc(T, `${t[1]}|${t[2]}|${t[4]}`, t[5]); inc(T, `${t[1]}|${t[2]}|c${t[3]}`, t[5]); });
+  const g = (m, k) => m.get(k) || 0;
+  const cats = [...new Set([...A.keys()].map(k => k.split('|')).filter(k => k.length===3).map(k => +k[2]))];
+  const custs = [...new Set([...CU.keys()].map(k => +k.split('|')[2]))];
+  const tot = g(A, `${Y}|${Lc}`), thr = Math.max(5, tot*.03);
+
+  // 1) Tháng đang chạy: tiến độ + ước chốt (từ ngày 15)
+  if (!done && um===Lc+1) {
+    const a = g(A, `${Y}|${um}`), t = g(T, `${Y}|${um}`);
+    let proj = null; try { const fc = fcCompute(Y, true, ud); proj = 0; fc.ser.forEach(o => { if ((!S.bu || o.bu===S.bu) && o.f[um]!=null) proj += o.f[um]; }); } catch(e) {}
+    if (t > 0) {
+      const r = proj!=null ? proj/t : a/t*nd/ud, lvl = r >= 1 ? 'ok' : r >= .9 ? 'near' : 'miss';
+      const need = Math.max(0, t-a)/Math.max(1, nd-ud), cur = a/ud;
+      add(lvl, 'Tiến độ tháng', `Tháng ${um} sau ${ud}/${nd} ngày đạt <b>${tn(a)}/${tn(t)} tấn (${pc(a,t)})</b>.` +
+        (ud >= 15 && proj!=null ? ` Dự báo chốt khoảng <b>${tn(proj)} tấn, tương đương ${pc(proj,t)} target</b>.` : '') +
+        (a < t ? ` Cần bán ${tn(need)} t/ngày trong ${nd-ud} ngày còn lại, hiện đang bán ${tn(cur)} t/ngày.` : ' Đã vượt target tháng.'), 'todoPanel', 900);
+    }
+  }
+  // 2) Đầu tháng (hoặc tháng vừa chốt): tổng kết tháng trước
+  if (Lc >= 1 && (done || ud <= 7)) {
+    const a = g(A, `${Y}|${Lc}`), t = g(T, `${Y}|${Lc}`), ly = g(A, `${Y-1}|${Lc}`);
+    if (a > 0) {
+      const lvl = !t ? 'info' : a >= t ? 'ok' : a >= .9*t ? 'near' : 'miss';
+      let ex = '';
+      if (!one) { const rk = custs.map(c => ({c, a: g(CU, `${Y}|${Lc}|${c}`), t: g(T, `${Y}|${Lc}|c${c}`)})).filter(o => o.t >= 20).sort((x,y) => y.a/y.t - x.a/x.t);
+        if (rk.length >= 4) ex = ` Tốt nhất: ${rk.slice(0,2).map(o => `${esc(dm.customer[o.c])} ${pc(o.a,o.t)}`).join(', ')}. Thấp nhất: ${rk.slice(-2).reverse().map(o => `${esc(dm.customer[o.c])} ${pc(o.a,o.t)}`).join(', ')}.`; }
+      else { const rk = cats.map(c => ({c, a: g(A, `${Y}|${Lc}|${c}`), t: g(T, `${Y}|${Lc}|${c}`)})).filter(o => o.t >= 5).sort((x,y) => y.a/y.t - x.a/x.t);
+        if (rk.length >= 2) ex = ` Ngành tốt nhất: ${esc(dm.category[rk[0].c])} ${pc(rk[0].a,rk[0].t)}; thấp nhất: ${esc(dm.category[rk[rk.length-1].c])} ${pc(rk[rk.length-1].a,rk[rk.length-1].t)}.`; }
+      add(lvl, 'Tổng kết tháng', `Chốt tháng ${Lc}: <b>${tn(a)} tấn${t ? `, đạt ${pc(a,t)} target` : ''}</b>${ly ? `, ${a>=ly?'tăng':'giảm'} ${nf(Math.abs(a/ly-1)*100,0)}% so với cùng kỳ` : ''}.` + ex, 'trkMxPanel', 850);
+    }
+  }
+  // 3) Lũy kế năm
+  { let a = 0, t = 0, ly = 0; for (let m = 1; m <= Lc; m++) { a += g(A, `${Y}|${m}`); t += g(T, `${Y}|${m}`); ly += g(A, `${Y-1}|${m}`); }
+    if (t > 0) { const r = a/t; add(r >= 1 ? 'ok' : r >= .95 ? 'near' : 'miss', 'Lũy kế năm', `Lũy kế T1–T${Lc}: <b>${tn(a)}/${tn(t)} tấn (${pc(a,t)})</b>, ${a>=t ? `vượt ${tn(a-t)} tấn` : `còn thiếu ${tn(t-a)} tấn`}${ly ? `; so với cùng kỳ ${sg(a/ly-1)}` : ''}.`, 'trkPanel', 400 + Math.abs(1-r)*100); } }
+  // 4) Biến động ngành tháng vừa chốt (so cùng kỳ), kèm nguyên nhân chính
+  const mv = [];
+  if (Lc >= 1) cats.forEach(c => { const a = g(A, `${Y}|${Lc}|${c}`), ly = g(A, `${Y-1}|${Lc}|${c}`); if (ly < 3) return;
+    const d = a - ly; if (Math.abs(d) < thr || Math.abs(d/ly) < .15) return;
+    // nguyên nhân: hệ thống (toàn kênh) hoặc store (1 hệ thống) đóng góp lớn nhất cùng chiều
+    let who = null, wd = 0;
+    if (!one) custs.forEach(cu => { const x = g(CC, `${Y}|${Lc}|${c}|${cu}`) - g(CC, `${Y-1}|${Lc}|${c}|${cu}`); if (Math.sign(x)===Math.sign(d) && Math.abs(x) > Math.abs(wd)) { wd = x; who = dm.customer[cu]; } });
+    else { const sts = new Set(); ST.forEach((v,k) => { const p = k.split('|'); if (p[2]==String(c) && +p[1]===Lc) sts.add(+p[3]); });
+      sts.forEach(st => { const x = g(ST, `${Y}|${Lc}|${c}|${st}`) - g(ST, `${Y-1}|${Lc}|${c}|${st}`); if (Math.sign(x)===Math.sign(d) && Math.abs(x) > Math.abs(wd)) { wd = x; who = dm.store[st]; } }); }
+    mv.push({c, a, ly, d, who, wd}); });
+  mv.sort((x,y) => Math.abs(y.d) - Math.abs(x.d));
+  mv.filter(o => o.d < 0).slice(0,3).forEach(o => add('miss', 'Biến động', `<b>${esc(dm.category[o.c])}</b> tháng ${Lc} giảm <b>${nf(-o.d/o.ly*100,0)}% (−${tn(-o.d)} tấn)</b> so với cùng kỳ (${tn(o.a)} so với ${tn(o.ly)} t).` + (o.who ? ` Giảm nhiều nhất ở ${esc(o.who)} (−${tn(-o.wd)} t).` : ''), 'sec-trend', 600 - o.d));
+  mv.filter(o => o.d > 0).slice(0,2).forEach(o => add('ok', 'Biến động', `<b>${esc(dm.category[o.c])}</b> tháng ${Lc} tăng <b>${nf(o.d/o.ly*100,0)}% (+${tn(o.d)} tấn)</b> so với cùng kỳ.` + (o.who ? ` Đóng góp chính từ ${esc(o.who)} (+${tn(o.wd)} t).` : ''), 'sec-trend', 150 + o.d));
+  // 5) Ngành giảm 3 tháng liên tiếp so với cùng kỳ
+  if (Lc >= 3) cats.forEach(c => { let k = 0, sa = 0, sl = 0; for (let m = Lc; m > Lc-3; m--) { const a = g(A, `${Y}|${m}|${c}`), l = g(A, `${Y-1}|${m}|${c}`); if (l >= 3 && a < l) { k++; sa += a; sl += l; } }
+    if (k === 3 && !mv.some(o => o.c===c && o.d<0)) add('near', 'Xu hướng', `<b>${esc(dm.category[c])}</b> thấp hơn cùng kỳ <b>3 tháng liên tiếp</b> (T${Lc-2}–T${Lc}: ${sg(sa/sl-1)}).`, 'sec-trend', 500); });
+  // 6) Hệ thống (toàn kênh) hoặc store (1 hệ thống)
+  if (!one) {
+    const rk = custs.map(cu => { let a = 0, t = 0, low = 0; for (let m = 1; m <= Lc; m++) { const x = g(CU, `${Y}|${m}|${cu}`), y = g(T, `${Y}|${m}|c${cu}`); a += x; t += y; }
+      for (let m = Lc; m > Lc-3 && m >= 1; m--) { const x = g(CU, `${Y}|${m}|${cu}`), y = g(T, `${Y}|${m}|c${cu}`); if (y > 0 && x < .9*y) low++; } return {cu, a, t, low}; }).filter(o => o.t >= 50);
+    rk.filter(o => o.low === 3).sort((x,y) => (y.t-y.a) - (x.t-x.a)).slice(0,3).forEach(o => add('miss', 'Hệ thống', `<b>${esc(dm.customer[o.cu])}</b> dưới 90% target <b>3 tháng liên tiếp</b>; lũy kế đạt ${pc(o.a,o.t)} (thiếu ${tn(o.t-o.a)} tấn).`, 'trkMxPanel', 550 + (o.t-o.a)/10));
+    const best = rk.slice().sort((x,y) => y.a/y.t - x.a/x.t)[0];
+    if (best && best.a >= best.t) add('ok', 'Hệ thống', `<b>${esc(dm.customer[best.cu])}</b> dẫn đầu về % đạt lũy kế: <b>${pc(best.a,best.t)}</b> (${tn(best.a)}/${tn(best.t)} tấn).`, 'trkRank', 140);
+  } else if (Lc >= 4) {
+    const sts = new Set(); ST.forEach((v,k) => { const p = k.split('|'); if (p[2]==='*') sts.add(+p[3]); });
+    const dr = [...sts].map(st => { const a = g(ST, `${Y}|${Lc}|*|${st}`), b = (g(ST, `${Y}|${Lc-1}|*|${st}`) + g(ST, `${Y}|${Lc-2}|*|${st}`) + g(ST, `${Y}|${Lc-3}|*|${st}`))/3; return {st, a, b, d: a-b}; })
+      .filter(o => o.b >= 3 && o.d < 0 && -o.d/o.b >= .3).sort((x,y) => x.d - y.d).slice(0,3);
+    if (dr.length) add('near', 'Store', `Store giảm mạnh tháng ${Lc} so với bình quân 3 tháng trước: ${dr.map(o => `<b>${esc(dm.store[o.st])}</b> ${tn(o.a)} t (−${nf(-o.d/o.b*100,0)}%)`).join('; ')}.`, 'sec-store', 480);
+  }
+  // 7) Thị phần nhãn hàng trong ngành (lũy kế năm so với cùng kỳ)
+  { const big = cats.map(c => { let v = 0; for (let m = 1; m <= Lc; m++) v += g(A, `${Y}|${m}|${c}`); return {c, v}; }).sort((x,y) => y.v - x.v).slice(0,3);
+    big.forEach(({c, v}) => { if (v < 30) return; let lv = 0; const cur = new Map(), old = new Map();
+      for (let m = 1; m <= Lc; m++) lv += g(A, `${Y-1}|${m}|${c}`);
+      if (lv < 30) return;
+      BR.forEach((x,k) => { const p = k.split('|'); if (+p[2]!==c || +p[1] > Lc) return; inc(+p[0]===Y ? cur : old, +p[3], x); });
+      let bb = null, bd = 0; cur.forEach((x,b) => { const d = x/v - (old.get(b)||0)/lv; if (x >= 10 && Math.abs(d) > Math.abs(bd)) { bd = d; bb = b; } });
+      if (bb!=null && Math.abs(bd) >= .03) add(bd > 0 ? 'ok' : 'near', 'Nhãn hàng', `Trong ${esc(dm.category[c])}, tỷ trọng <b>${esc(dm.brand[bb])}</b> ${bd>0?'tăng':'giảm'} <b>${nf(Math.abs(bd)*100,1)} điểm</b> so với cùng kỳ (lũy kế T1–T${Lc}: ${nf(cur.get(bb)/v*100,1)}%).`, 'sec-brand', bd > 0 ? 120 : 300); }); }
+  // 8) Store quá hạn đặt hàng (từ mục Việc cần làm)
+  if (OD_LIST.length) { const tr = OD_LIST.reduce((x,o)=>x+o.risk,0);
+    add(OD_LIST.length >= 10 ? 'miss' : 'near', 'Đặt hàng', `<b>${OD_LIST.length} cặp store × ngành</b> đã quá chu kỳ đặt hàng (khoảng ${tn(tr)} tấn có nguy cơ hụt). Lớn nhất: ${OD_LIST.slice(0,3).map(o => `${esc(o.store)} – ${esc(o.cat)}`).join('; ')}.`, 'todoPanel', 520); }
+  // 9) Cuối quý
+  if (!done && [3,6,9,12].includes(um) && ud >= 10) { const q0 = um-2; let a = 0, t = 0; for (let m = q0; m <= um; m++) { a += g(A, `${Y}|${m}`); t += g(T, `${Y}|${m}`); }
+    if (t > 0) add(a/t >= (ud/nd*1/3+2/3) ? 'ok' : 'near', 'Cuối quý', `Quý ${um/3} (T${q0}–T${um}) đến nay đạt <b>${tn(a)}/${tn(t)} tấn (${pc(a,t)})</b>, còn ${nd-ud} ngày để chốt quý.`, 'trkPanel', 700); }
+  // 10) Mùa Tết
+  if (TET_INFO) { const ti = TET_INFO, ttot = ti.wk.reduce((x,o)=>x+o.t,0);
+    if (ti.cur) add(ti.cur.a >= ti.cur.t*ti.cur.n/7 ? 'ok' : 'near', 'Tết ' + ti.ty, `Tuần ${ti.lab(ti.cur.k)}: đạt <b>${tn(ti.cur.a)}/${tn(ti.cur.t)} tấn (${pc(ti.cur.a, ti.cur.t)})</b> sau ${ti.cur.n}/7 ngày. Mùng 1 Tết: ${ti.ds(ti.T0)}.`, 'tetPanel', 800);
+    else if (ti.firstIn < 0) add('info', 'Tết ' + ti.ty, `Còn <b>${Math.ceil(-ti.firstIn)} ngày</b> đến tuần T-8. Target 12 tuần quanh Tết khoảng <b>${tn(ttot)} tấn</b>${ti.est.length ? ` (tháng ${ti.est.join(', ')} đang ước tính vì chưa có target)` : ''}.`, 'tetPanel', 90); }
+  // 11) Dữ liệu cần rà soát: store bị ghi lẫn 2 miền
+  if (!S.bu) { let n = 0, v = 0; BUs.forEach(o => { const xs = Object.values(o); if (xs.length > 1) { n++; v += xs.reduce((a,b)=>a+b,0) - Math.max(...xs); } });
+    if (n && v >= 1) add('info', 'Dữ liệu', `<b>${n} store</b> có số liệu ghi ở cả NBU và SBU (khoảng ${tn(v)} tấn nằm ở miền phụ). Nên kiểm tra cột Region trong file nguồn để số theo miền chính xác.`, 'mapPanel', 60); }
+
+  // ---- hiển thị ----
+  const LV = {miss: 3, near: 2, ok: 1, info: 0}, CO = {miss:'var(--miss)', near:'var(--near)', ok:'var(--ok)', info:'var(--act)'};
+  N.sort((a,b) => (LV[b.lvl] - LV[a.lvl]) || (b.w - a.w));
+  const PIN = o => ['Tiến độ tháng','Tổng kết tháng','Cuối quý'].includes(o.tag) || (o.tag.startsWith('Tết') && o.lvl!=='info');   // tin theo giai đoạn luôn đứng đầu
+  const top = N.filter(PIN).sort((x,y) => y.w - x.w), rest = N.filter(o => !PIN(o)), lim = NEWS_ALL ? 99 : 8;
+  const sh = [...top, ...rest].slice(0, lim);
+  const row = o => `<div class="it"><i class="dot" style="background:${CO[o.lvl]}"></i><span class="tag">${o.tag}</span><div>${o.html}</div><button class="go" data-go="${o.go}" type="button">Xem</button></div>`;
+  $('tNews').textContent = `Bản tin · ${scope.charAt(0).toUpperCase() + scope.slice(1)}`;
+  $('hNews').textContent = `Tự động nhận xét từ số liệu đến ${String(ud).padStart(2,'0')}/${String(um).padStart(2,'0')}/${uy}, thay đổi theo bộ lọc. ${one ? 'Đang xem chi tiết một hệ thống: ngành, store, nhãn hàng.' : 'Đang xem toàn kênh: đánh giá chung và so sánh giữa các hệ thống.'}`;
+  $('newsList').innerHTML = sh.length ? sh.map(row).join('') : `<div style="color:var(--muted);padding:10px 4px">Không có biến động đáng chú ý theo bộ lọc đang chọn.</div>`;
+  $('fNews').textContent = `${N.filter(o=>o.lvl==='miss').length} tin cần xử lý · ${N.filter(o=>o.lvl==='near').length} theo dõi · ${N.filter(o=>o.lvl==='ok').length} tin tốt`;
+  $('newsMore').hidden = N.length <= 8; $('newsMore').textContent = NEWS_ALL ? 'Thu gọn' : `Xem tất cả (${N.length})`;
+  $('newsList').querySelectorAll('.go').forEach(b => b.onclick = () => { const el = $(b.dataset.go); if (!el || el.style.display==='none') return;
+    const fb = $('fbar'), off = getComputedStyle(fb).position==='sticky' ? fb.offsetHeight + 16 : 12; scrollTo({top: el.getBoundingClientRect().top + scrollY - off, behavior: 'smooth'}); });
+}
+$('newsMore').addEventListener('click', () => { NEWS_ALL = !NEWS_ALL; render(); });
 
 /* =================== DỰ BÁO THEO LỊCH SỬ ===================
    Mô hình v2 (kiểm chứng lùi T2–T10/2026, dự báo trước 1–3 tháng, chọn sai số WAPE thấp nhất trong ~110 phương án):
