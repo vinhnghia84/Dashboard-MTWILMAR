@@ -9,5 +9,8 @@ window.PC_CONFIG = {
     cur: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8NZy38-ISkt9HmeOqE_EzpUR5Skt4FmbSWL4eb0tD-oZZUuHWGnWE8KD0dCq79XuzUWfGKRjD3fo2/pub?gid=900002&single=true&output=csv'
   },
   // Tên hiển thị cho ngành hàng mới, ví dụ: { 'Rice': 'Gạo', 'Flour': 'Bột mì' }
-  industryLabels: {}
+  industryLabels: {},
+  // Logo thương hiệu: đặt file PNG/SVG vào thư mục logos/ (xem logos/README.md). Thiếu file thì tự hiện chữ viết tắt.
+  logoBase: 'logos/',
+  brandLogos: {}
 };
