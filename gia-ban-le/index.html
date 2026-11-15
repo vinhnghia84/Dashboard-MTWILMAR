@@ -437,16 +437,33 @@ function buildModel(raw, opts) {
       const nU = +combo[1];
       if (!s.combos[ch]) s.combos[ch] = new Map();
       if (!s.combos[ch].has(d)) s.combos[ch].set(d, []);
-      s.combos[ch].get(d).push({ n: nU, price, unit: Math.round(price / nU), list: num(r[7]) });
+      s.combos[ch].get(d).push({ n: nU, price, unit: Math.round(price / nU), list: num(r[7]), obs: num(r[9]) || 1 });
       continue;
     }
     if (!s.days.has(d)) s.days.set(d, {});
     const day = s.days.get(d);
-    const list = validList(price, num(r[7]));
-    const prev = day[ch];
-    const rec = { price, list, variants: 1, names: [clean(r[2])] };
-    if (prev) { rec.variants = prev.variants + 1; rec.names = prev.names.concat(rec.names); if (prev.price < price) { rec.price = prev.price; rec.list = prev.list; } }
-    day[ch] = rec;
+    if (!day[ch]) day[ch] = { groups: [], names: [] };
+    const nm = clean(r[2]);
+    if (!day[ch].names.includes(nm)) day[ch].names.push(nm);
+    day[ch].groups.push({ price, list: num(r[7]), obs: num(r[9]) || 1 });
+  }
+  // collapse price groups per chain/day: representative = most frequent price (mode)
+  for (const s of skus.values()) for (const day of s.days.values()) for (const ch in day) {
+    const g = day[ch].groups;
+    const byP = new Map();
+    for (const x of g) { const y = byP.get(x.price) || { price: x.price, list: 0, obs: 0 }; y.obs += x.obs; y.list = Math.max(y.list, x.list || 0); byP.set(x.price, y); }
+    const dist = [...byP.values()].sort((a, b) => a.price - b.price);
+    const top = dist.slice().sort((a, b) => b.obs - a.obs || a.price - b.price)[0];
+    const sane = dist.filter(x => x.price <= top.price * 2.2 && x.price >= top.price * 0.45);
+    const tot = sane.reduce((a, x) => a + x.obs, 0);
+    day[ch] = { price: top.price, list: validList(top.price, top.list), variants: day[ch].names.length, names: day[ch].names,
+      dist: sane.map(x => ({ price: x.price, obs: x.obs, share: x.obs / tot })), share: top.obs / tot,
+      lo: sane[0].price, hi: sane[sane.length - 1].price, nObs: tot };
+  }
+  for (const s of skus.values()) for (const ch in s.combos) for (const [d, arr] of s.combos[ch]) {
+    const byN = new Map();
+    for (const c of arr) { if (!byN.has(c.n)) byN.set(c.n, []); byN.get(c.n).push(c); }
+    s.combos[ch].set(d, [...byN.values()].map(list => list.sort((a, b) => b.obs - a.obs || a.price - b.price)[0]));
   }
   const dates = [...dateSet].sort((a, b) => a - b);
   const latest = dates[dates.length - 1] || null;
@@ -482,7 +499,7 @@ function buildModel(raw, opts) {
       if (last) {
         const prev = series.length > 1 ? series[series.length - 2] : null;
         const dayRec = s.days.get(last.t)[ch];
-        s.offers[ch] = { chain: ch, price: last.price, list: last.list, t: last.t, stale: latest && last.t < latest - DAY, prev: prev ? prev.price : null, variants: dayRec.variants, names: dayRec.names, src: 'n8n' };
+        s.offers[ch] = { chain: ch, price: last.price, list: last.list, t: last.t, stale: latest && last.t < latest - DAY, prev: prev ? prev.price : null, variants: dayRec.variants, names: dayRec.names, dist: dayRec.dist, share: dayRec.share, lo: dayRec.lo, hi: dayRec.hi, src: 'n8n' };
       } else if (s.raw[ch]) {
         const L = s.raw[ch];
         s.offers[ch] = { chain: ch, price: L.price, list: validList(L.price, L.list), t: rawL.at, stale: false, prev: null, variants: 1, names: [L.name], url: L.url, src: 'raw', stock: L.stock };
@@ -610,6 +627,11 @@ function evalSku(s, o) {
   if (lists.length > 1) {
     const g = (Math.max(...lists) / Math.min(...lists) - 1) * 100;
     if (g > 5) s.issues.push({ sev: 1, type: 'list', text: `Giá niêm yết lệch ${Math.round(g)}% giữa các chuỗi (${fmt(Math.min(...lists))} – ${fmt(Math.max(...lists))})` });
+  }
+  for (const x of good) if (x.dist && x.lo < x.price * (1 - o.under / 100)) {
+    const low = x.dist.filter(d => d.price < x.price * (1 - o.under / 100));
+    const sh = Math.round(low.reduce((a, d) => a + d.share, 0) * 100);
+    s.issues.push({ sev: sh >= 25 ? 1 : 0, type: 'disp', chain: x.chain, text: `${N(x.chain)}: giá phổ biến ${fmt(x.price)}, nhưng ${sh}% lượt ghi nhận thấp hơn ≥${o.under}% (thấp nhất ${fmt(x.lo)})` });
   }
   const bad = offers.filter(x => x.outlier);
   if (bad.length) s.issues.push({ sev: 0, type: 'outlier', text: `Nghi lỗi dữ liệu: ${bad.map(x => N(x.chain) + ' ' + fmt(x.price)).join(', ')} (lệch quá xa các chuỗi khác, đã loại khỏi so sánh)` });
@@ -815,7 +837,7 @@ if (typeof module !== 'undefined') module.exports = { buildModel, parseCSV, norm
     const offers = Object.values(s.offers);
     const ps = offers.map(o => o.price).concat(s.ref ? [s.ref] : []);
     const lo = Math.min(...ps) * 0.94, hi = Math.max(...ps) * 1.04;
-    const W = 860, H = 92, L = 20, R = 20;
+    const W = 860, H = 110, L = 20, R = 20;
     const X = v => L + (v - lo) / (hi - lo) * (W - L - R);
     let g = '';
     if (s.ref) {
@@ -825,13 +847,15 @@ if (typeof module !== 'undefined') module.exports = { buildModel, parseCSV, norm
     }
     g += `<line x1="${L}" x2="${W - R}" y1="43" y2="43" stroke="#E3E9E0" stroke-width="2"/>`;
     const sorted = offers.slice().sort((a, b) => a.price - b.price);
-    const lastX = { u: -1e9, d: -1e9 };
-    sorted.forEach((o, i) => {
-      const x = X(o.price); let up = i % 2 === 0;
-      if (x - lastX[up ? 'u' : 'd'] < 90 && x - lastX[up ? 'd' : 'u'] >= 90) up = !up;
-      lastX[up ? 'u' : 'd'] = x;
+    const slots = [22, 88, 6, 104], used = slots.map(() => []);
+    sorted.forEach(o => {
+      const x = X(o.price), lbl = `${S(o.chain)} ${k(o.price)}${o.outlier ? ' ⚠' : ''}`, w = lbl.length * 6.6 + 8;
+      let si = slots.findIndex((y, i) => used[i].every(([a, b]) => x + w / 2 < a || x - w / 2 > b));
+      if (si < 0) si = 0;
+      used[si].push([x - w / 2, x + w / 2]);
       g += `<circle cx="${x}" cy="43" r="8" fill="${COLOR[o.chain]}" stroke="#fff" stroke-width="2" data-tip="${esc(`<b>${N(o.chain)}</b><br>${fmt(o.price)}${o.list ? ' · niêm yết ' + fmt(o.list) : ''}`)}"/>`;
-      g += `<text x="${x}" y="${up ? 86 : 22}" text-anchor="middle" font-size="11.5" fill="#14261C"><tspan font-weight="600">${S(o.chain)}</tspan> ${k(o.price)}${o.outlier ? ' ⚠' : ''}</text>`;
+      if (si > 1) g += `<line x1="${x}" x2="${x}" y1="${si === 2 ? 10 : 52}" y2="${si === 2 ? 34 : 98}" stroke="#C9D3CC" stroke-width="1"/>`;
+      g += `<text x="${x}" y="${slots[si]}" text-anchor="middle" font-size="11.5" fill="#14261C"><tspan font-weight="600">${S(o.chain)}</tspan> ${k(o.price)}${o.outlier ? ' ⚠' : ''}</text>`;
     });
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible">${g}</svg>`;
   }
@@ -1040,7 +1064,7 @@ if (typeof module !== 'undefined') module.exports = { buildModel, parseCSV, norm
       ${s.issues.length ? `<div class="card" style="box-shadow:none;background:#FAFBF8;border:1px solid var(--line);margin-bottom:14px;padding:14px 18px"><ul style="margin:0;padding-left:18px">${s.issues.map(i => `<li style="margin:3px 0"><b style="color:${i.sev === 2 ? 'var(--crit)' : i.sev === 1 ? 'var(--warn)' : 'var(--info)'}">${SEVTXT[i.sev]}:</b> ${esc(i.text)}</li>`).join('')}</ul></div>` : ''}
       <h3 style="margin:6px 0 4px;font-size:14px">Thang giá hôm nay</h3>${ladder(s)}
       <h3 style="margin:18px 0 6px;font-size:14px">Diễn biến giá bán ${model.dates.length} ngày</h3>${hist.length ? lineChart(hist, { w: 900, h: 230, step: true, fmtY: (v, t) => t ? fmt(v) : k(v) }) : '<div class="empty">Chưa có lịch sử</div>'}
-      <div class="tbl-wrap" style="margin-top:14px"><table><thead><tr><th>Chuỗi</th><th class="r">Giá bán</th><th class="r">Niêm yết</th><th class="r">KM</th><th class="r">So ${s.refType}</th><th class="r">Hôm trước</th><th>Combo (giá/sp)</th><th>Nguồn</th></tr></thead><tbody>${offers.map(o => `<tr><td><span class="cpill">${dot(o.chain)}${N(o.chain)}</span>${o.variants > 1 ? `<br><small class="muted" data-tip="${esc(o.names.join('<br>'))}">${o.variants} tên SP gộp, lấy giá thấp nhất</small>` : ''}</td><td class="r num"><b>${fmt(o.price)}</b></td><td class="r num">${o.list ? fmt(o.list) : '–'}</td><td class="r num">${o.promo ? '−' + o.promo + '%' : ''}</td><td class="r num">${o.outlier ? '<span class="st s0">nghi lỗi</span>' : pct(o.dev || 0, 1)}</td><td class="r num">${o.prev && o.prev !== o.price ? fmt(o.prev) : '<span class="muted">=</span>'}</td><td>${(o.combos || []).map(x => `<span class="combo" data-tip="${fmt(x.price)} cho ${x.n} sp">C${x.n} ${fmt(x.unit)}</span>`).join('') || '<span class="muted">–</span>'}</td><td class="muted">${o.src === 'raw' ? (o.url ? `<a href="${esc(o.url)}" target="_blank" rel="noopener">thủ công</a>` : 'thủ công') + ' ' + fmtDate(o.t) : 'n8n ' + fmtDate(o.t)}</td></tr>`).join('')}</tbody></table></div>`;
+      <div class="tbl-wrap" style="margin-top:14px"><table><thead><tr><th>Chuỗi</th><th class="r">Giá phổ biến</th><th class="r">Niêm yết</th><th class="r">KM</th><th class="r">So ${s.refType}</th><th class="r">Hôm trước</th><th>Combo (giá/sp)</th><th>Nguồn</th></tr></thead><tbody>${offers.map(o => `<tr><td><span class="cpill">${dot(o.chain)}${N(o.chain)}</span>${o.dist && o.dist.length > 1 ? `<br>${o.dist.slice().sort((a, b) => b.share - a.share).slice(0, 5).map(d => `<span class="combo" style="background:${d.price === o.price ? 'var(--lime2)' : 'var(--line2)'};color:var(--ink2)" data-tip="${Math.round(d.share * 100)}% lượt ghi nhận">${k(d.price)} · ${Math.round(d.share * 100)}%</span>`).join('')}` : ''}${o.variants > 1 ? `<br><small class="muted" data-tip="${esc(o.names.join('<br>'))}">${o.variants} tên SP gộp, lấy giá thấp nhất</small>` : ''}</td><td class="r num"><b>${fmt(o.price)}</b></td><td class="r num">${o.list ? fmt(o.list) : '–'}</td><td class="r num">${o.promo ? '−' + o.promo + '%' : ''}</td><td class="r num">${o.outlier ? '<span class="st s0">nghi lỗi</span>' : pct(o.dev || 0, 1)}</td><td class="r num">${o.prev && o.prev !== o.price ? fmt(o.prev) : '<span class="muted">=</span>'}</td><td>${(o.combos || []).map(x => `<span class="combo" data-tip="${fmt(x.price)} cho ${x.n} sp">C${x.n} ${fmt(x.unit)}</span>`).join('') || '<span class="muted">–</span>'}</td><td class="muted">${o.src === 'raw' ? (o.url ? `<a href="${esc(o.url)}" target="_blank" rel="noopener">thủ công</a>` : 'thủ công') + ' ' + fmtDate(o.t) : 'n8n ' + fmtDate(o.t)}</td></tr>`).join('')}</tbody></table></div>`;
     $('#ov').classList.add('on');
     $('#close').onclick = closeSku;
   }
