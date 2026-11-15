@@ -234,7 +234,7 @@ const CHAIN_NAME = { SGC: 'Co.op', WCM: 'WinMart', LOTTE: 'Lotte', EMART: 'Emart
 const CHAIN_SHORT = { SGC: 'Co.op', WCM: 'WinMart', LOTTE: 'Lotte', EMART: 'Emart', KFM: 'Kingfood', BHX: 'BHX', GO: 'GO!', AEON: 'AEON' };
 const OUR_BRANDS = [
   ['neptune olive', 'Neptune Olive'], ['simply', 'Simply'], ['meizan', 'Meizan'], ['neptune', 'Neptune'],
-  ['cai lan', 'Cái Lân'], ['kiddy', 'Kiddy'], ['olivoila', 'Olivoilà'], ['orchid', 'Orchid']
+  ['cai lan', 'Cái Lân'], ['kiddy', 'Kiddy'], ['olivoila', 'Olivoilà'], ['orchid', 'Orchid'], ['orchild', 'Orchid']
 ];
 const DAY = 86400000;
 
@@ -251,7 +251,7 @@ function num(v) {
 }
 function chainCode(s) {
   const n = norm(s).replace(/[^a-z]/g, '');
-  if (n === 'go' || n === 'bigc') return 'GO';
+  if (n === 'go' || n === 'bigc' || n === 'crv') return 'GO';
   const u = n.toUpperCase();
   return CHAINS.includes(u) ? u : null;
 }
@@ -317,7 +317,7 @@ function genericType(n, brandKey, size) {
 function ourBrandOf(n) {
   for (const [k, label] of BRANDS) {
     if (k === 'neptune olive') { if (/neptune/.test(n) && /olive/.test(n)) return { key: k, label }; continue; }
-    if (n.includes(k)) return { key: k, label };
+    if (n.includes(k)) return { key: k === 'orchild' ? 'orchid' : k, label };
   }
   return null;
 }
@@ -355,6 +355,7 @@ function keyOfUrl(url) {
   if (h.includes('lottemart')) return (m = p.match(/-p(\d+)$/)) ? { chain: 'LOTTE', key: 'LOTTE:p' + m[1] } : null;
   if (h.includes('cooponline')) return (m = p.match(/--s(\d+)/)) ? { chain: 'SGC', key: 'SGC:s' + m[1] } : null;
   if (h.includes('winmart')) return (m = p.match(/--s(\d+)/)) ? { chain: 'WCM', key: 'WCM:s' + m[1] } : null;
+  if (h.includes('sieuthi-go')) { const code = (u.hash || '').replace('#', '') || u.searchParams.get('keyword'); return code ? { chain: 'GO', key: 'GO:' + code } : null; }
   if (h.includes('emartmall')) { const id = u.searchParams.get('product_id'); return id ? { chain: 'EMART', key: 'EMART:' + id } : null; }
   const seg = p.split('/').filter(Boolean).pop();
   if (!seg) return null;
@@ -381,7 +382,7 @@ function rawListings(total, cur) {
     if (!k || seen.has(k.key)) continue;
     seen.add(k.key);
     const p = price.get(k.key);
-    if (!p || !p.price) continue;
+    if (!p || !p.price || /sắp có|hết hàng/i.test(p.stock)) continue;
     out.push({ key: k.key, chain: k.chain, url: String(r[1]).trim(), name: clean(r[3]), company: clean(r[5]), brandCol: clean(r[6]), price: p.price, list: p.list || p.price, stock: p.stock });
   }
   return { listings: out, at: t };
@@ -478,7 +479,7 @@ function buildModel(raw, opts) {
     L.brand = ob ? ob.label : (L.brandCol || L.company || 'Khác');
     L.brandKey = ob ? ob.key : norm(L.brandCol || L.company);
     L.promo = L.list > L.price ? Math.round((1 - L.price / L.list) * 100) : 0;
-    if (!ob || (L.chain !== 'LOTTE' && L.chain !== 'BHX')) continue;
+    if (!ob || !['LOTTE', 'BHX', 'GO', 'AEON'].includes(L.chain)) continue;
     const sig = L.brandKey + '|' + L.cat + '|' + (L.size ? L.size.v + L.size.u : '');
     const s = skus.get(sig);
     if (s && (!s.raw[L.chain] || L.price < s.raw[L.chain].price)) s.raw[L.chain] = L;
