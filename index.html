@@ -423,6 +423,18 @@ table.list.st tr.tot td{font-weight:700;border-top:2px solid var(--line-2);backg
 .fc-kpis .v{font-size:24px;font-weight:750;letter-spacing:-.02em;margin-top:4px}
 .fc-kpis .v small{font-size:12.5px;font-weight:500;color:var(--muted);margin-left:5px;letter-spacing:0}
 .fc-kpis .d{font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.45}
+.rr{display:grid;grid-template-columns:150px 1fr 190px;gap:6px 14px;align-items:center;font-size:13px}
+.rr .tr{position:relative;height:12px;background:var(--panel-2);border-radius:6px}
+.rr .tr b{position:absolute;left:0;top:0;bottom:0;border-radius:6px}
+.rr .tr i{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);border-radius:1px}
+.rr .tx{font-size:12.5px;color:var(--ink-2)}
+.rr .tx em{font-style:normal;font-size:11px;background:color-mix(in srgb,var(--near) 16%,transparent);color:var(--near);border-radius:6px;padding:1px 6px;margin-left:6px}
+.todo-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:22px 0 10px}
+.todo-h h3{font-size:15px;font-weight:650}
+.todo-h p{font-size:12.5px;color:var(--muted);margin-top:2px}
+.od{display:inline-flex;align-items:center;gap:8px}.od b{display:inline-block;height:8px;border-radius:4px;background:var(--miss)}
+.acc{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:start}
+@media (max-width:1100px){.acc{grid-template-columns:1fr}.rr{grid-template-columns:110px 1fr}.rr .tx{grid-column:2}}
 .fc-note{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-top:12px;padding:10px 14px;background:var(--panel-2);border-radius:12px}
 .fc-adj{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .fc-adj span{font-size:12.5px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:var(--panel)}
@@ -544,6 +556,7 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
 
   <nav class="nav" id="nav" aria-label="Các phần của báo cáo">
     <a href="#sec-tong" data-sec="sec-tong"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg><span>Tổng quan</span></a>
+    <a href="#todoPanel" data-sec="todoPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg><span>Việc cần làm</span></a>
     <a href="#trkPanel" data-sec="trkPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2"/></svg><span>Tiến độ target</span></a>
     <a href="#fcPanel" data-sec="fcPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18l5-5 3 3 4-5"/><path d="M16 11l4-4" stroke-dasharray="2 2.2"/><path d="M4 4v16h16"/></svg><span>Dự báo</span></a>
     <a href="#sec-trend" data-sec="sec-trend"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V7M15 20v-6M20 20V9"/></svg><span>Xu hướng theo tháng</span></a>
@@ -607,6 +620,15 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     <div class="stats" id="stats"></div>
   </section>
 
+  <section class="panel" id="todoPanel">
+    <div class="ph"><div><h2 id="tTodo">Việc cần làm hôm nay</h2><p id="hTodo"></p></div></div>
+    <div class="fc-kpis" id="todoKpi"></div>
+    <div class="todo-h"><div><h3>Tốc độ bán theo ngành</h3><p>Thanh màu là sản lượng đang bán mỗi ngày, vạch đen là mức cần bán mỗi ngày để đạt target tháng.</p></div></div>
+    <div class="rr" id="todoRR"></div>
+    <div class="todo-h"><div><h3>Store quá hạn đặt hàng</h3><p id="hOd"></p></div><button class="ghost" id="odCsv" type="button">Xuất CSV</button></div>
+    <div class="tblwrap" id="todoOd"></div>
+  </section>
+
   <section class="panel" id="trkPanel">
     <div class="ph">
       <div><h2 id="tTrk">Tiến độ đạt target</h2><p id="hTrk"></p></div>
@@ -656,6 +678,13 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     </section>
   </div>
 
+  <section class="panel" id="tetPanel">
+    <div class="ph"><div><h2 id="tTet">Target Tết theo tuần</h2><p id="hTet"></p></div>
+      <div class="keys"><span><i style="background:var(--line)"></i>Target tuần</span><span><i style="background:var(--ok)"></i>Thực tế</span><span><i style="background:var(--near)"></i>Tuần đang chạy</span></div></div>
+    <div id="cTet"></div>
+    <div class="fc-note" id="nTet"></div>
+  </section>
+
   <section class="panel" id="fcPanel">
     <div class="ph">
       <div><h2 id="tFc">Dự báo theo lịch sử</h2><p id="hFc"></p></div>
@@ -665,6 +694,13 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     <div class="ph" style="margin:4px 0 8px"><div></div><div class="keys" id="fcKeys"></div></div>
     <div id="cFc"></div>
     <div class="fc-note" id="fcNote"></div>
+  </section>
+
+  <section class="panel" id="fcAccPanel">
+    <div class="ph"><div><h2>Độ chính xác dự báo</h2><p id="hAcc"></p></div>
+      <div class="keys"><span><i style="background:color-mix(in srgb,var(--act) 30%,transparent)"></i>Dự báo trước 1 tháng</span><span><i style="background:var(--act)"></i>Thực tế</span></div></div>
+    <div class="acc"><div id="cAcc"></div><div class="tblwrap" id="tAcc"></div></div>
+    <div class="fc-note" id="nAcc"></div>
   </section>
 
   <section class="panel" id="fcCatPanel">
@@ -1060,8 +1096,10 @@ function render(){
   $('warn').innerHTML = w.length ? `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l7 12.5H1z" fill="none" stroke="var(--sbu)" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6v3.5M8 11.5v.5" stroke="var(--sbu)" stroke-width="1.6" stroke-linecap="round"/></svg>
     <div>Số liệu cần rà soát: ${w.join(', ')}. Kiểm tra các cột MT Channel Trans, Business Trans và Delivery Name Trans trong file Excel.</div>` : '';
 
+  drawTodo(Y, L);
   drawTarget(Y, partial, ud);
   drawGroup(Y);
+  drawTet();
   drawForecast(Y, partial, ud);
   drawTrend(cur, ly, Y, hasLy);
   rankList($('cCat'),  'cat',  [...group(R.filter(r=>r[1]===Y && pass(r,'cat')),4)],  D.dims.category, 4);
@@ -1309,6 +1347,161 @@ function drawTarget(Y, partial, ud){
   drawMap(Y, L, T, tCats);
 }
 
+
+/* =================== VIỆC CẦN LÀM HÔM NAY ===================
+   1) Tốc độ bán cần thiết: (target tháng − đã bán) ÷ số ngày còn lại, so với tốc độ đang bán (đã bán ÷ số ngày đã qua).
+      Tháng đã hết thì chuyển sang tháng kế tiếp, tốc độ đang bán = bình quân/ngày của tháng vừa xong.
+   2) Store quá hạn đặt hàng: chu kỳ = trung vị khoảng cách giữa các lần đặt (180 ngày gần nhất, ≥3 lần);
+      quá hạn khi số ngày từ lần đặt cuối vượt chu kỳ ít nhất max(3 ngày, nửa chu kỳ). Vắng quá 5 chu kỳ (tối đa 90 ngày) coi như đã ngừng, không cảnh báo. */
+let OD_LIST = [];
+function drawTodo(Y, L){
+  const latest = R.reduce((x,r)=>r[1]>x?r[1]:x, 0);
+  $('todoPanel').style.display = Y===latest ? '' : 'none';
+  if (Y!==latest) return;
+  const [uy,um,ud] = D.updated.split('-').map(Number), dm = D.dims;
+  const ndL = new Date(uy, um, 0).getDate(), done = ud >= ndL;
+  const ty = done ? (um===12 ? uy+1 : uy) : uy, tm = done ? (um===12 ? 1 : um+1) : um;
+  const nd = new Date(ty, tm, 0).getDate(), el = done ? 0 : ud, rem = nd - el;
+  const tOK = t => (!S.bu || t[0]===S.bu) && (S.cust<0 || t[3]===S.cust) && (S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg) && tBP(t);
+  const C = new Map(), g = k => { let o = C.get(k); if (!o) C.set(k, o = {t:0, a:0, p:0}); return o; };
+  (D.target||[]).forEach(t => { if (t[1]===ty && t[2]===tm && tOK(t)) g(t[4]).t += t[5]; });
+  R.forEach(r => { if (!pass(r)) return;
+    if (r[1]===ty && r[2]===tm) g(r[4]).a += r[9];
+    if (r[1]===uy && r[2]===um) g(r[4]).p += r[9]; });
+  const rows = [...C.entries()].filter(([,o]) => o.t>0).map(([c,o]) => {
+    const need = Math.max(0, o.t - o.a) / Math.max(rem, 1), curr = el ? o.a/el : o.p/ndL;
+    return {c, ...o, need, curr, gap: curr - need}; }).sort((a,b) => a.gap - b.gap);
+  const tot = rows.reduce((x,o)=>({t:x.t+o.t, a:x.a+o.a, need:x.need+o.need, curr:x.curr+o.curr}), {t:0,a:0,need:0,curr:0});
+  $('hTodo').textContent = `Tháng ${tm}/${ty}: ${done ? `bắt đầu tháng mới, số liệu đến hết ${String(ud).padStart(2,'0')}/${String(um).padStart(2,'0')}` : `đã qua ${el}/${nd} ngày`}. Theo bộ lọc đang chọn, đơn vị tấn.`;
+  // Store quá hạn
+  const out = [];
+  (D.ord||[]).forEach(([bu, cu, st, cat, ag, tn_]) => {
+    if ((S.bu && bu!==S.bu) || (S.cust>=0 && cu!==S.cust) || (S.cat>=0 && cat!==S.cat)) return;
+    const gaps = []; for (let i = 0; i < ag.length-1; i++) gaps.push(ag[i+1]-ag[i]);
+    gaps.sort((a,b)=>a-b); const m = gaps.length, cyc = m%2 ? gaps[(m-1)/2] : (gaps[m/2-1]+gaps[m/2])/2;
+    const last = ag[0] + (done ? 0 : 0), over = last - cyc;
+    if (cyc < 1 || last > Math.min(90, cyc*5 + 10) || over < Math.max(3, cyc/2)) return;   // quá lâu so với chu kỳ = đã ngừng, không còn là quá hạn
+    const avg = tn_.reduce((x,v)=>x+v,0)/tn_.length;
+    out.push({bu, cust: dm.customer[cu], store: dm.store[st], cat: dm.category[cat], last, cyc, over, avg, risk: avg*Math.min(over/cyc, 3)});
+  });
+  out.sort((a,b) => b.risk - a.risk); OD_LIST = out;
+  const short = rows.filter(o => o.gap < 0).length, risk = out.reduce((x,o)=>x+o.risk,0);
+  $('todoKpi').innerHTML =
+    `<div><div class="k">Còn lại tháng ${tm}</div><div class="v">${rem}<small>ngày</small></div><div class="d">Target ${tn(tot.t)} t · đã bán ${tn(tot.a)} t</div></div>` +
+    `<div><div class="k">Cần bán mỗi ngày</div><div class="v">${tn(tot.need)}<small>tấn</small></div><div class="d">để đạt 100% target tháng</div></div>` +
+    `<div><div class="k">Đang bán mỗi ngày</div><div class="v" style="color:${tot.curr>=tot.need?'var(--ok)':'var(--miss)'}">${tn(tot.curr)}<small>tấn</small></div><div class="d">${tot.curr>=tot.need ? 'đủ tốc độ' : `thiếu ${tn(tot.need-tot.curr)} t/ngày`} · ${short} ngành đang thiếu</div></div>` +
+    `<div><div class="k">Store quá hạn đặt hàng</div><div class="v">${out.length}<small>store × ngành</small></div><div class="d">~${tn(risk)} t có nguy cơ hụt</div></div>`;
+  const mx = Math.max(1e-9, ...rows.map(o => Math.max(o.need, o.curr))) * 1.12;
+  $('todoRR').innerHTML = rows.length ? rows.map(o => {
+    const r = o.need ? o.curr/o.need : 9, col = r >= 1 ? 'var(--ok)' : r >= .9 ? 'var(--near)' : 'var(--miss)';
+    const txt = o.a >= o.t ? `Đã đạt target (${tn(o.a)}/${tn(o.t)} t)` : r >= 1 ? `Đủ, dư ${tn(o.curr-o.need)} t/ngày` : `Thiếu ${tn(o.need-o.curr)} t/ngày${r>=.9?'<em>sát mốc</em>':''}`;
+    return `<div>${dm.category[o.c]}</div><div class="tr" title="Đang bán ${tn(o.curr)} t/ngày · cần ${tn(o.need)} t/ngày"><b style="width:${o.curr/mx*100}%;background:${col}"></b><i style="left:${o.need/mx*100}%"></i></div><div class="tx">${txt}</div>`;
+  }).join('') : `<div style="grid-column:1/-1;color:var(--muted)">Chưa có target tháng ${tm}/${ty} cho bộ lọc đang chọn.</div>`;
+  $('hOd').textContent = out.length ? `${out.length} cặp store × ngành đã quá chu kỳ đặt hàng thường lệ, xếp theo sản lượng có nguy cơ hụt. Hiện 20 dòng đầu, xuất CSV để xem đủ.` : 'Không có store nào quá hạn đặt hàng theo bộ lọc đang chọn.';
+  const dd = n => { const x = new Date(uy, um-1, ud - n); return `${String(x.getDate()).padStart(2,'0')}/${String(x.getMonth()+1).padStart(2,'0')}`; };
+  const om = Math.max(1, ...out.slice(0,20).map(o=>o.over));
+  $('todoOd').innerHTML = out.length ? `<table class="list"><thead><tr><th>Store</th><th>Hệ thống</th><th>Ngành</th><th>Đặt lần cuối</th><th class="v">Chu kỳ</th><th>Quá hạn</th><th class="v">Đơn thường</th></tr></thead><tbody>` +
+    out.slice(0,20).map(o => `<tr><td>${esc(o.store)}</td><td>${esc(o.cust)}</td><td>${esc(o.cat)}</td><td>${dd(o.last)}</td><td class="v" style="font-weight:500">${nf(o.cyc,0)} ngày</td><td><span class="od"><b style="width:${Math.max(6,o.over/om*90)}px"></b>${nf(o.over,0)} ngày</span></td><td class="v">${tn(o.avg)} t</td></tr>`).join('') + '</tbody></table>' : '';
+  $('odCsv').style.display = out.length ? '' : 'none';
+}
+$('odCsv').addEventListener('click', () => {
+  const q = v => `"${String(v).replace(/"/g,'""')}"`;
+  const lines = [['Khu vực','Hệ thống','Store','Ngành hàng','Số ngày từ lần đặt cuối','Chu kỳ (ngày)','Quá hạn (ngày)','Đơn bình quân (tấn)'].map(q).join(',')]
+    .concat(OD_LIST.map(o => [o.bu,o.cust,o.store,o.cat,o.last,nf(o.cyc,0),nf(o.over,0),o.avg.toFixed(3).replace('.',',')].map(q).join(',')));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿'+lines.join('\r\n')], {type:'text/csv;charset=utf-8'}));
+  a.download = `store-qua-han-dat-hang_${D.updated}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+
+/* =================== ĐỘ CHÍNH XÁC DỰ BÁO ===================
+   Mỗi tháng đã qua: dự báo lập từ cuối tháng trước (chỉ dùng số liệu đến lúc đó) so với thực tế. Sai số = |dự báo − thực tế| ÷ thực tế. */
+function drawAcc(ser, Lc, Y){
+  const view = S.bu || FC_VIEW, vb = view==='NTW' ? ['NBU','SBU'] : [view];
+  const S_ = [...ser.values()].filter(o => vb.includes(o.bu));
+  const m0 = Math.max(2, Lc-5), ms = []; for (let m = m0; m <= Lc; m++) ms.push(m);
+  if (!ms.length) { $('fcAccPanel').style.display = 'none'; return; }
+  const M = ms.map(m => { let f = 0, a = 0; S_.forEach(o => { if (o.xp[m]!=null) { f += o.xp[m]; a += o.a[m]; } }); return {m, f, a}; });
+  const cat = new Map(); S_.forEach(o => ms.forEach(m => { if (o.xp[m]==null) return; let c = cat.get(o.cat); if (!c) cat.set(o.cat, c = {e:0, a:0, b:0}); c.e += Math.abs(o.xp[m]-o.a[m]); c.a += o.a[m]; c.b += o.xp[m]-o.a[m]; }));
+  const E = M.reduce((x,o)=>x+Math.abs(o.f-o.a),0), A = M.reduce((x,o)=>x+o.a,0), B = M.reduce((x,o)=>x+o.f-o.a,0);
+  const wape = A ? E/A : 0, bias = A ? B/A : 0;
+  $('hAcc').textContent = `${BU_LABEL[view] || 'Toàn quốc'}, tháng ${m0}–${Lc}/${Y}. Sai số trung bình ${nf(wape*100,1)}%, ${Math.abs(bias) < .02 ? 'dự báo không lệch về phía nào' : bias > 0 ? `dự báo thường cao hơn thực tế ${nf(bias*100,1)}%` : `dự báo thường thấp hơn thực tế ${nf(-bias*100,1)}%`}.`;
+  const W = 620, H = 230, pl = 58, pb = 26, pt = 10, mx = Math.max(...M.map(o=>Math.max(o.f,o.a))) * 1.1 || 1;
+  const bw = (W-pl-10)/M.length, y = v => pt + (H-pt-pb)*(1-v/mx);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Dự báo so với thực tế theo tháng">`;
+  [0,.5,1].forEach(k => { const v = mx/1.1*k, yy = y(v); svg += `<line x1="${pl}" x2="${W-6}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${pl-6}" y="${yy+4}" text-anchor="end">${tn(v)}</text>`; });
+  M.forEach((o,i) => { const x = pl + i*bw + bw*.18, w = bw*.3, e = o.a ? (o.f-o.a)/o.a : 0;
+    const tipH = `<div class="t">Tháng ${o.m}</div>${trow('Dự báo', tn(o.f)+' t','color-mix(in srgb,var(--act) 30%,transparent)')}${trow('Thực tế', tn(o.a)+' t','var(--act)')}${trow('Lệch', fmtPct(e),'')}`;
+    svg += `<g class="hv" data-tip="${esc(tipH)}"><rect x="${pl+i*bw}" y="${pt}" width="${bw}" height="${H-pt-pb}" fill="transparent"/>` +
+      `<rect x="${x}" y="${y(o.f)}" width="${w}" height="${y(0)-y(o.f)}" rx="4" fill="color-mix(in srgb,var(--act) 30%,transparent)"/>` +
+      `<rect x="${x+w+2}" y="${y(o.a)}" width="${w}" height="${y(0)-y(o.a)}" rx="4" fill="var(--act)"/></g>` +
+      `<text x="${pl+i*bw+bw/2}" y="${H-8}" text-anchor="middle">Th${o.m}</text>`; });
+  $('cAcc').innerHTML = svg + '</svg>';
+  $('cAcc').querySelectorAll('.hv').forEach(g => { g.onmousemove = e => showTip(g.dataset.tip, e); g.onmouseleave = hideTip; });
+  const cr = [...cat.entries()].filter(([,c]) => c.a > A*.01).sort((a,b) => b[1].a - a[1].a);
+  $('tAcc').innerHTML = `<table class="list"><thead><tr><th>Ngành hàng</th><th class="v">Sai số</th><th class="v">Lệch</th></tr></thead><tbody>` +
+    cr.map(([k,c]) => { const w = c.e/c.a, b = c.b/c.a, col = w < .1 ? 'var(--ok)' : w < .2 ? 'var(--near)' : 'var(--miss)';
+      return `<tr><td><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${col};margin-right:8px"></i>${esc(D.dims.category[k])}</td><td class="v">${nf(w*100,1)}%</td><td class="v" style="font-weight:500;color:var(--ink-2)">${Math.abs(b)<.02 ? '≈' : b>0 ? '▲ cao '+nf(b*100,0)+'%' : '▼ thấp '+nf(-b*100,0)+'%'}</td></tr>`; }).join('') + '</tbody></table>';
+  $('nAcc').innerHTML = `<b>Cách đọc:</b> mỗi tháng, cột nhạt là con số mô hình đã dự báo từ cuối tháng trước (chỉ dùng số liệu có đến lúc đó), cột đậm là thực tế. Chỉ liệt kê ngành chiếm từ 1% sản lượng. Chấm xanh: sai số dưới 10%, cam: 10–20%, đỏ: trên 20%. ▲ là dự báo thường cao hơn thực tế, ▼ là thấp hơn. Ngành sai số cao thường do target tháng đặt lệch nhiều so với sức bán.`;
+}
+
+/* =================== TARGET TẾT THEO TUẦN ===================
+   Tuần tính theo khoảng cách đến mùng 1 Tết (T-8 … T+3, mỗi tuần 7 ngày, T+0 bắt đầu từ mùng 1).
+   Target tháng được chia xuống từng ngày theo nhịp bán Tết năm trước (khớp theo ngày âm lịch: lùi đúng khoảng cách 2 ngày Tết),
+   rồi cộng lại theo tuần. Tháng chưa có target: ước tính = cùng kỳ × tăng trưởng lũy kế năm (giới hạn 70%–150%). */
+function drawTet(){
+  const dKey = x => x.getFullYear()*10000 + (x.getMonth()+1)*100 + x.getDate();
+  const up = new Date(D.updated+'T00:00:00');
+  const ty = Object.keys(TET_DAY).map(Number).find(y => { const t = new Date(TET_DAY[y]+'T00:00:00'); return (t-up)/864e5 >= -28 && (t-up)/864e5 <= 110; });
+  const show = ty && TET_DAY[ty-1] && (D.daily||[]).length;
+  $('tetPanel').style.display = show ? '' : 'none';
+  if (!show) return;
+  const T0 = new Date(TET_DAY[ty]+'T00:00:00'), off = Math.round((T0 - new Date(TET_DAY[ty-1]+'T00:00:00'))/864e5);
+  const day = new Map();
+  D.daily.forEach(x => { if ((S.bu && x[0]!==S.bu) || (S.cust>=0 && x[7]!==S.cust) || (S.cat>=0 && x[4]!==S.cat)) return;
+    const k = x[1]*10000 + x[2]*100 + x[3]; day.set(k, (day.get(k)||0) + x[6]); });
+  const add = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+  const W0 = add(T0, -56), W1 = add(T0, 28);
+  // target tháng (có thể ước tính)
+  const tOK = t => (!S.bu || t[0]===S.bu) && (S.cust<0 || t[3]===S.cust) && (S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg) && tBP(t);
+  const uy = up.getFullYear(), um = up.getMonth()+1;
+  let ytd = 0, ytdLy = 0; R.forEach(r => { if (!pass(r)) return; if (r[1]===uy && r[2]<=um) ytd += r[9]; if (r[1]===uy-1 && r[2]<=um) ytdLy += r[9]; });
+  const gr = ytdLy ? clamp(ytd/ytdLy, .7, 1.5) : 1, TM = new Map(), est = [];
+  for (let d = new Date(W0.getFullYear(), W0.getMonth(), 1); d < W1; d = new Date(d.getFullYear(), d.getMonth()+1, 1)) {
+    const y = d.getFullYear(), m = d.getMonth()+1; let t = 0;
+    (D.target||[]).forEach(x => { if (x[1]===y && x[2]===m && tOK(x)) t += x[5]; });
+    if (!t) { R.forEach(r => { if (r[1]===y-1 && r[2]===m && pass(r)) t += r[9]; }); t *= gr; if (t) est.push(`${m}/${y}`); }
+    // chia xuống ngày theo nhịp cùng kỳ (khớp Tết)
+    const nd = new Date(y, m, 0).getDate(), w = []; let sw = 0;
+    for (let i = 1; i <= nd; i++) { const v = day.get(dKey(add(new Date(y, m-1, i), -off))) || 0; w.push(v); sw += v; }
+    TM.set(y*100+m, w.map(v => sw ? t*v/sw : t/nd));
+  }
+  const wk = [];
+  for (let k = -8; k <= 3; k++) { let t = 0, a = 0, n = 0; const s0 = add(T0, 7*k);
+    for (let i = 0; i < 7; i++) { const d = add(s0, i); const arr = TM.get(d.getFullYear()*100 + d.getMonth()+1); if (arr) t += arr[d.getDate()-1];
+      if (d <= up) { a += day.get(dKey(d)) || 0; n++; } }
+    wk.push({k, s0, t, a, n}); }
+  const cur = wk.find(o => o.n > 0 && o.n < 7), lab = k => k<0 ? `T${k}` : k===0 ? 'T+0' : `T+${k}`;
+  const ds = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+  $('tTet').textContent = `Target Tết ${ty} theo tuần`;
+  const firstIn = (up - W0)/864e5;
+  $('hTet').textContent = cur ? `Tuần này (${lab(cur.k)}): cần ${tn(cur.t)} t · đã đạt ${tn(cur.a)} t (${nf(cur.t? cur.a/cur.t*100 : 0,0)}%) · còn ${7-cur.n} ngày. Mùng 1 Tết: ${ds(T0)}/${ty}.`
+    : firstIn < 0 ? `Còn ${Math.ceil(-firstIn)} ngày đến tuần T-8 (bắt đầu ${ds(W0)}). Tổng target 12 tuần quanh Tết: ${tn(wk.reduce((x,o)=>x+o.t,0))} t. Mùng 1 Tết: ${ds(T0)}/${ty}.`
+    : `Mùng 1 Tết: ${ds(T0)}/${ty}. Tổng target 12 tuần: ${tn(wk.reduce((x,o)=>x+o.t,0))} t, đã đạt ${tn(wk.reduce((x,o)=>x+o.a,0))} t.`;
+  const Wd = 900, H = 250, pl = 46, pb = 40, pt = 22, mx = Math.max(1e-9, ...wk.map(o=>Math.max(o.t,o.a))) * 1.08, bw = (Wd-pl-8)/wk.length, y = v => pt + (H-pt-pb)*(1-v/mx);
+  let svg = `<svg viewBox="0 0 ${Wd} ${H}" width="100%" role="img" aria-label="Target và thực tế theo tuần quanh Tết">`;
+  [0,.5,1].forEach(k => { const v = mx/1.08*k; svg += `<line x1="${pl}" x2="${Wd-4}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end">${tn(v)}</text>`; });
+  wk.forEach((o,i) => { const x = pl + i*bw, w = bw*.62, x0 = x + (bw-w)/2, ac = o===cur ? 'var(--near)' : o.t && o.a >= o.t ? 'var(--ok)' : 'var(--act)';
+    const tip = `<div class="t">${lab(o.k)} · ${ds(o.s0)}–${ds(add(o.s0,6))}</div>${trow('Target tuần', tn(o.t)+' t','var(--tgt)')}${o.n ? trow('Thực tế', tn(o.a)+' t', ac) + trow('% đạt', o.t ? nf(o.a/o.t*100,0)+'%' : '–','') : ''}`;
+    svg += `<g class="hv" data-tip="${esc(tip)}"><rect x="${x}" y="${pt}" width="${bw}" height="${H-pt-pb}" fill="transparent"/><rect x="${x0}" y="${y(o.t)}" width="${w}" height="${y(0)-y(o.t)}" rx="4" fill="var(--line)"/>` +
+      (o.n ? `<rect x="${x0+w*.2}" y="${y(o.a)}" width="${w*.6}" height="${y(0)-y(o.a)}" rx="4" fill="${ac}"/>` : '') + `</g>` +
+      `<text x="${x+bw/2}" y="${H-22}" text-anchor="middle" style="font-weight:600;fill:var(--ink-2)">${lab(o.k)}</text><text x="${x+bw/2}" y="${H-7}" text-anchor="middle" style="font-size:10.5px">${ds(o.s0)}</text>`; });
+  const xT = pl + 8*bw;
+  svg += `<line x1="${xT}" x2="${xT}" y1="${pt-14}" y2="${H-pb}" stroke="var(--miss)" stroke-dasharray="4 3"/><text x="${xT+5}" y="${pt-4}" style="fill:var(--miss)">Mùng 1 (${ds(T0)})</text>`;
+  $('cTet').innerHTML = svg + '</svg>';
+  $('cTet').querySelectorAll('.hv').forEach(g => { g.onmousemove = e => showTip(g.dataset.tip, e); g.onmouseleave = hideTip; });
+  $('nTet').innerHTML = `<b>Cách chia:</b> target từng tháng được chia xuống ngày theo nhịp bán quanh Tết ${ty-1} (khớp theo ngày âm lịch, lùi ${off} ngày), rồi cộng thành tuần, nên các tuần cao điểm trước Tết nhận target lớn hơn. Theo bộ lọc Khu vực, Khách hàng, Ngành hàng.` +
+    (est.length ? ` Tháng ${est.join(', ')} chưa có target, đang dùng <b>ước tính</b> = cùng kỳ × tăng trưởng lũy kế năm (${fmtPct(gr-1)}); sẽ tự thay bằng target thật khi có file.` : '');
+}
+
 /* =================== DỰ BÁO THEO LỊCH SỬ ===================
    Mô hình v2 (kiểm chứng lùi T2–T10/2026, dự báo trước 1–3 tháng, chọn sai số WAPE thấp nhất trong ~110 phương án):
    Có target:  Dự báo tháng m = target tháng m × tỷ lệ đạt dự kiến
@@ -1361,7 +1554,7 @@ function fcCompute(Y, partial, ud){
     const nd = new Date(Y, L, 0).getDate(), key = d => { const x = new Date(Y, L-1, d - back); return x.getFullYear()*10000 + (x.getMonth()+1)*100 + x.getDate(); };
     const inCum = new Set(), inTot = new Set(); for (let d = 1; d <= nd; d++) { inTot.add(key(d)); if (d <= ud) inCum.add(key(d)); }
     const tot = new Map(), cum = new Map();
-    (D.daily||[]).forEach(x => { if (x[1] < Y-1) return; const dk = x[1]*10000 + x[2]*100 + x[3]; if (!inTot.has(dk)) return;
+    (D.daily||[]).forEach(x => { if (x[1] < Y-1 || (S.cust>=0 && x[7]!==undefined && x[7]!==S.cust)) return; const dk = x[1]*10000 + x[2]*100 + x[3]; if (!inTot.has(dk)) return;
       const k = x[0]+'|'+x[4]; tot.set(k,(tot.get(k)||0)+x[6]); if (inCum.has(dk)) cum.set(k,(cum.get(k)||0)+x[6]); });
     for (const [k,v] of tot) if (v > 0) share.set(k, clamp((cum.get(k)||0)/v, .05, 1)); }
   // chuỗi tổng của từng miền (dùng để "mượn" tỷ lệ đạt chung của miền)
@@ -1386,9 +1579,10 @@ function fcCompute(Y, partial, ud){
 function drawForecast(Y, partial, ud){
   const latest = R.reduce((x,r)=>r[1]>x?r[1]:x, 0);
   const show = Y === latest;
-  ['fcPanel','fcCatPanel'].forEach(id => $(id).style.display = show ? '' : 'none');
+  ['fcPanel','fcCatPanel','fcAccPanel'].forEach(id => $(id).style.display = show ? '' : 'none');
   if (!show) return;
   const {ser, L, Lc} = fcCompute(Y, partial, ud);
+  drawAcc(ser, Lc, Y);
   const view = S.bu || FC_VIEW, vb = view==='NTW' ? ['NBU','SBU'] : [view];
   $('fFcV').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.v===view); b.disabled = !!S.bu && b.dataset.v!==S.bu; b.style.opacity = b.disabled ? .4 : ''; });
   const isRev = S.metric==='rev', U = isRev ? 'tỷ ₫' : 'tấn', fv = isRev ? fB : tn;
