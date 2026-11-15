@@ -605,7 +605,15 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
     <div class="fg"><span class="lab">Phân khúc</span><div class="seg" id="fSeg"></div></div>
     <div class="brk"></div>
     <div class="fg sel"><label for="fCust">Khách hàng</label><select id="fCust"></select></div>
-    <div class="fg sel"><label for="fCat">Ngành hàng</label><select id="fCat"></select></div>
+    <div class="fg sel" id="gCat"><span class="lab" id="lCat">Ngành hàng</span>
+      <div class="ms" id="fCatMs">
+        <button type="button" class="ms-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lCat cmsTxt"><span id="cmsTxt">Tất cả</span></button>
+        <div class="ms-pop" hidden>
+          <div class="ms-head"><span id="cmsCount"></span><button type="button" data-a="none">Bỏ chọn (xem tất cả)</button></div>
+          <div class="ms-list" role="listbox" aria-multiselectable="true"></div>
+        </div>
+      </div>
+    </div>
     <div class="fg sel"><label for="fBrand">Nhãn hàng</label><select id="fBrand"></select></div>
     <div class="fg sel" id="gPseg"><span class="lab" id="lPseg">Segment</span>
       <div class="ms" id="fPseg">
@@ -691,7 +699,7 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
 
   <section class="panel" id="tetPanel">
     <div class="ph"><div><h2 id="tTet">Target Tết theo tuần</h2><p id="hTet"></p></div>
-      <div class="keys"><span><i style="background:var(--line)"></i>Target tuần</span><span><i style="background:var(--ok)"></i>Thực tế</span><span><i style="background:var(--near)"></i>Tuần đang chạy</span></div></div>
+      <div class="keys"><span><i style="background:color-mix(in srgb,var(--act) 22%,transparent);outline:1px dashed color-mix(in srgb,var(--act) 45%,transparent)"></i>Dự báo</span><span><i style="background:var(--act)"></i>Thực tế</span><span><i style="background:var(--ok)"></i>Đạt target</span><span><i style="background:var(--near)"></i>Tuần đang chạy</span><span><i class="tick" style="background:var(--ink)"></i>Target tuần</span></div></div>
     <div id="cTet"></div>
     <div class="fc-note" id="nTet"></div>
   </section>
@@ -802,11 +810,13 @@ const SEG_COLOR = ['var(--s1)','var(--s2)','var(--s3)'];   // phân khúc thứ 
 const segColor = i => D.dims.segment[i]==='Khác' ? 'var(--unk)' : (SEG_COLOR[SEG_ORDER.indexOf(i)] || 'var(--unk)');
 let SEG_ORDER = [];
 /* Lọc Nhãn hàng + Segment cho dòng bán (r) và dòng target (t: cột 9 = Segment, cột 10 = Nhãn hàng, -1 = không ghép được) */
+const cOK = c => !S.cats.size || S.cats.has(c);   // bộ lọc Ngành hàng (chọn nhiều)
+const catLbl = () => !S.cats.size ? '' : S.cats.size===1 ? D.dims.category[[...S.cats][0]] : `${S.cats.size} ngành hàng`;
 const rBP = r => (S.brand<0 || r[5]===S.brand) && (!S.psegs.size || S.psegs.has(r[10]));
 const tBP = t => (S.brand<0 || t[10]===S.brand) && (!S.psegs.size || S.psegs.has(t[9]));
 const MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12];
 let D, R, CMP = {cur:[], note:''}, firstDraw = true, showAll = {cat:false, cust:false, brand:false};
-let S = {bu:'', year:null, metric:'rev', cust:-1, cat:-1, brand:-1, seg:-1, psegs:new Set(), mxDim:'category', mxMode:'value', szM:'ton'};
+let S = {bu:'', year:null, metric:'rev', cust:-1, cats:new Set(), brand:-1, seg:-1, psegs:new Set(), mxDim:'category', mxMode:'value', szM:'ton'};
 let PSEG_ORDER = [], HAS_X = false, PSEG_CATS = new Map();   // data có cột Segment/Packsize; Segment -> các ngành có Segment đó
 const $ = id => document.getElementById(id);
 
@@ -845,7 +855,7 @@ function group(rows, i){ const m=new Map(); rows.forEach(r=>m.set(r[i],(m.get(r[
 function pass(r, skip){
   return (!S.bu || r[0]===S.bu) &&
     (skip==='cust' || S.cust<0 || r[3]===S.cust) &&
-    (skip==='cat'  || S.cat<0  || r[4]===S.cat) &&
+    (skip==='cat'  || cOK(r[4])) &&
     (skip==='brand'|| S.brand<0|| r[5]===S.brand) &&
     (skip==='seg'  || S.seg<0  || r[6]===S.seg) &&
     (skip==='pseg' || !S.psegs.size || S.psegs.has(r[10]));
@@ -939,7 +949,7 @@ $('csv').onclick = () => {
   let r_;
   const lines = [head.join(',')].concat(rows.map(r => { r_ = r; return [r[0], r[1], r[2], dm.customer[r[3]], dm.category[r[4]], X(10,'pseg'), dm.brand[r[5]], dm.segment[r[6]], X(11,'size'), dm.store[r[7]],
     Math.round(r[8]), (r[8]/1e9).toFixed(4), (+r[9]).toFixed(3), HAS_X ? r[12] : '', HAS_X ? r[13] : ''].map(q).join(','); }));
-  const tag = [S.bu || 'NTW', S.cust>=0 ? dm.customer[S.cust] : '', S.cat>=0 ? dm.category[S.cat] : '', S.brand>=0 ? dm.brand[S.brand] : '', S.psegs.size===1 ? dm.pseg[[...S.psegs][0]] : S.psegs.size ? S.psegs.size + '-segment' : '', S.seg>=0 ? dm.segment[S.seg] : '']
+  const tag = [S.bu || 'NTW', S.cust>=0 ? dm.customer[S.cust] : '', catLbl(), S.brand>=0 ? dm.brand[S.brand] : '', S.psegs.size===1 ? dm.pseg[[...S.psegs][0]] : S.psegs.size ? S.psegs.size + '-segment' : '', S.seg>=0 ? dm.segment[S.seg] : '']
     .filter(Boolean).join('_').replace(/[^\w\-]+/g,'-');
   const blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -960,7 +970,7 @@ function init(data){
   $('fCust').innerHTML = `<option value="-1">Tất cả</option>` + custs.map(i=>`<option value="${i}">${esc(D.dims.customer[i])}</option>`).join('');
   const catIdx = D.categoryOrder.map(c=>D.dims.category.indexOf(c)).filter(i=>i>=0);
   D.dims.category.forEach((c,i)=>{ if(!catIdx.includes(i)) catIdx.push(i); });
-  $('fCat').innerHTML = `<option value="-1">Tất cả</option>` + catIdx.map(i=>`<option value="${i}">${esc(D.dims.category[i])}</option>`).join('');
+  CAT_ORDER = catIdx;
   const bT = tot(5), brands = [...bT.keys()].sort((a,b)=>bT.get(b)-bT.get(a));
   $('fBrand').innerHTML = `<option value="-1">Tất cả</option>` + brands.map(i=>`<option value="${i}">${esc(D.dims.brand[i])}</option>`).join('');
   const sT = tot(6); SEG_ORDER = [...sT.keys()].filter(i=>D.dims.segment[i]!=='Khác').sort((a,b)=>sT.get(b)-sT.get(a));
@@ -982,19 +992,18 @@ function init(data){
 /* =================== ĐIỀU KHIỂN =================== */
 const SEGS = [['fSzM','szM',v=>v],['fBu','bu',v=>v],['fYear','year',Number],['fSeg','seg',Number],['fMetric','metric',v=>v],['fMxDim','mxDim',v=>v],['fMxMode','mxMode',v=>v]];
 function syncControls(){
-  $('fCust').value = S.cust; $('fCat').value = S.cat; $('fBrand').value = S.brand;
+  $('fCust').value = S.cust; $('fBrand').value = S.brand;
   SEGS.forEach(([id,k]) => $(id).querySelectorAll('button').forEach(b => { const on = String(b.dataset.v)===String(S[k]); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }));
 }
 SEGS.forEach(([id,k,cast]) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; S[k] = cast(b.dataset.v); syncControls(); render(); }));
 $('fCust').onchange = e => { S.cust = +e.target.value; render(); };
-$('fCat').onchange = e => { S.cat = +e.target.value; render(); };
 /* Ô Segment: chọn nhiều, chỉ liệt kê Segment có bán theo Khách hàng + Ngành hàng + Nhãn hàng đang chọn */
-const MS = {key:null, list:[]};
+const MS = {key:null, list:[]}; let CAT_ORDER = [];
 function psegOptions(){
-  const k = [S.cust, S.cat, S.brand].join('|');
+  const k = [S.cust, [...S.cats].join(','), S.brand].join('|');
   if (MS.key === k) return MS.list;
   const t = new Map();
-  R.forEach(r => { if ((S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.brand<0 || r[5]===S.brand)) t.set(r[10], (t.get(r[10])||0) + r[9]); });
+  R.forEach(r => { if ((S.cust<0 || r[3]===S.cust) && (cOK(r[4])) && (S.brand<0 || r[5]===S.brand)) t.set(r[10], (t.get(r[10])||0) + r[9]); });
   MS.key = k; MS.list = [...t.keys()].sort((a,b) => t.get(b)-t.get(a)); return MS.list;
 }
 function prunePseg(){ if (!HAS_X || !S.psegs.size) return; const ok = new Set(psegOptions()); [...S.psegs].forEach(i => { if (!ok.has(i)) S.psegs.delete(i); }); }
@@ -1004,9 +1013,9 @@ function fillPseg(){
   const item = i => `<label><input type="checkbox" value="${i}" ${S.psegs.has(i)?'checked':''}><span>${esc(nm[i])}</span></label>`;
   let h = '';
   if (!list.length) h = '<div class="empty">Không có Segment nào với bộ lọc hiện tại.</div>';
-  else if (S.cat>=0) h = list.map(item).join('');
+  else if (S.cats.size===1) h = list.map(item).join('');
   else { const byCat = new Map(); list.forEach(i => { const c = [...(PSEG_CATS.get(i)||[])][0]; if (!byCat.has(c)) byCat.set(c, []); byCat.get(c).push(i); });
-    [...$('fCat').options].slice(1).forEach(o => { const l = byCat.get(+o.value); if (l) h += `<div class="grp">${esc(D.dims.category[+o.value])}</div>` + l.map(item).join(''); }); }
+    CAT_ORDER.forEach(c => { const l = byCat.get(c); if (l) h += `<div class="grp">${esc(D.dims.category[c])}</div>` + l.map(item).join(''); }); }
   box.innerHTML = h;
   const n = S.psegs.size;
   $('msTxt').textContent = !n ? 'Tất cả' : n===1 ? nm[[...S.psegs][0]] : `${nm[[...S.psegs][0]]} +${n-1}`;
@@ -1023,15 +1032,33 @@ function fillPseg(){
   document.addEventListener('click', e => { if (!pop.hidden && !ms.contains(e.target)) open(false); });
   ms.addEventListener('keydown', e => { if (e.key==='Escape' && !pop.hidden) { open(false); btn.focus(); } });
 })();
+/* Ô Ngành hàng: chọn nhiều ngành cùng lúc (giống ô Segment) */
+function fillCat(){
+  const nm = D.dims.category, box = $('fCatMs').querySelector('.ms-list'), n = S.cats.size;
+  box.innerHTML = CAT_ORDER.map(i => `<label><input type="checkbox" value="${i}" ${S.cats.has(i)?'checked':''}><span>${esc(nm[i])}</span></label>`).join('');
+  $('cmsTxt').textContent = !n ? 'Tất cả' : n===1 ? nm[[...S.cats][0]] : `${nm[[...S.cats][0]]} +${n-1}`;
+  $('fCatMs').querySelector('.ms-btn').title = n ? [...S.cats].map(i=>nm[i]).join(', ') : '';
+  $('cmsCount').textContent = n ? `Đã chọn ${n}/${CAT_ORDER.length}` : `${CAT_ORDER.length} ngành hàng`;
+}
+(() => {
+  const ms = $('fCatMs'), btn = ms.querySelector('.ms-btn'), pop = ms.querySelector('.ms-pop');
+  const open = v => { pop.hidden = !v; btn.setAttribute('aria-expanded', v); if (v) fillCat(); };
+  btn.onclick = () => open(pop.hidden);
+  pop.addEventListener('change', e => { const i = +e.target.value; e.target.checked ? S.cats.add(i) : S.cats.delete(i); if (S.cats.size===CAT_ORDER.length) S.cats.clear(); render(); });
+  pop.querySelector('.ms-head').onclick = e => { if (!e.target.dataset.a) return; S.cats = new Set(); render(); fillCat(); };
+  document.addEventListener('click', e => { if (!pop.hidden && !ms.contains(e.target)) open(false); });
+  ms.addEventListener('keydown', e => { if (e.key==='Escape' && !pop.hidden) { open(false); btn.focus(); } });
+})();
 $('fBrand').onchange = e => { S.brand = +e.target.value; render(); };
-$('reset').onclick = () => { Object.assign(S,{bu:'',cust:-1,cat:-1,brand:-1,seg:-1,psegs:new Set()}); syncControls(); render(); };
+$('reset').onclick = () => { Object.assign(S,{bu:'',cust:-1,cats:new Set(),brand:-1,seg:-1,psegs:new Set()}); syncControls(); render(); };
 /* Đánh dấu bộ lọc đang bật + nút "Xóa lọc (n)" */
 function updFilters(){
-  fillPseg();
-  [['fCust','cust'],['fCat','cat'],['fBrand','brand']].forEach(([id,k]) => { $(id).value = S[k]; $(id).closest('.fg').classList.toggle('act', S[k]>=0); });
+  fillPseg(); fillCat();
+  $('gCat').classList.toggle('act', S.cats.size>0);
+  [['fCust','cust'],['fBrand','brand']].forEach(([id,k]) => { $(id).value = S[k]; $(id).closest('.fg').classList.toggle('act', S[k]>=0); });
   $('gPseg').classList.toggle('act', S.psegs.size>0);
   $('fSeg').classList.toggle('act', S.seg>=0); $('fBu').classList.toggle('act', !!S.bu);
-  const n = [S.bu, S.cust>=0, S.cat>=0, S.brand>=0, S.seg>=0, S.psegs.size>0].filter(Boolean).length;
+  const n = [S.bu, S.cust>=0, S.cats.size>0, S.brand>=0, S.seg>=0, S.psegs.size>0].filter(Boolean).length;
   $('reset').hidden = !n; $('reset').textContent = `Xóa lọc (${n})`;
   // ẩn mục menu nếu phần đó đang ẩn (vd năm chưa có target)
   document.querySelectorAll('#nav a').forEach(a => { const el = $(a.dataset.sec); a.hidden = !el || el.style.display==='none'; });
@@ -1049,7 +1076,7 @@ function spy(){
   document.querySelectorAll('#nav a').forEach(a => { a.classList.toggle('on', a===cur); a.classList.toggle('par', !!cur && cur.dataset.parent===a.dataset.sec); });
 }
 addEventListener('scroll', () => requestAnimationFrame(spy), {passive:true});
-function toggle(k, i){ S[k] = S[k]===i ? -1 : i; syncControls(); render(); }
+function toggle(k, i){ if (k==='cat') S.cats = S.cats.size===1 && S.cats.has(i) ? new Set() : new Set([i]); else S[k] = S[k]===i ? -1 : i; syncControls(); render(); }
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 120); });
 
 /* =================== VẼ TOÀN TRANG =================== */
@@ -1243,8 +1270,8 @@ function drawTarget(Y, partial, ud){
   ['trkPanel','mapPanel','trkMxPanel','trkRank'].forEach(id => $(id).style.display = show ? '' : 'none');
   if (!show) return;
   const tCats = new Set(T.map(t=>t[4]));
-  const passT = (t, skip) => (!S.bu || t[0]===S.bu) && (skip==='cust' || S.cust<0 || t[3]===S.cust) && (skip==='cat' || S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg) && tBP(t);
-  const A = R.filter(r => r[1]===Y && tCats.has(r[4]) && (!S.bu || r[0]===S.bu) && (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg) && rBP(r));
+  const passT = (t, skip) => (!S.bu || t[0]===S.bu) && (skip==='cust' || S.cust<0 || t[3]===S.cust) && (skip==='cat' || cOK(t[4])) && (S.seg<0 || t[6]===S.seg) && tBP(t);
+  const A = R.filter(r => r[1]===Y && tCats.has(r[4]) && (!S.bu || r[0]===S.bu) && (S.cust<0 || r[3]===S.cust) && (cOK(r[4])) && (S.seg<0 || r[6]===S.seg) && rBP(r));
   const Tf = T.filter(t => passT(t));
   const L = R.reduce((x,r)=>r[1]===Y && r[2]>x?r[2]:x, 0);
   const act = (rows, f=()=>true) => rows.reduce((s,r)=> f(r) ? s+r[9] : s, 0);
@@ -1381,7 +1408,7 @@ function drawTodo(Y, L){
   const ndL = new Date(uy, um, 0).getDate(), done = ud >= ndL;
   const ty = done ? (um===12 ? uy+1 : uy) : uy, tm = done ? (um===12 ? 1 : um+1) : um;
   const nd = new Date(ty, tm, 0).getDate(), el = done ? 0 : ud, rem = nd - el;
-  const tOK = t => (!S.bu || t[0]===S.bu) && (S.cust<0 || t[3]===S.cust) && (S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg) && tBP(t);
+  const tOK = t => (!S.bu || t[0]===S.bu) && (S.cust<0 || t[3]===S.cust) && (cOK(t[4])) && (S.seg<0 || t[6]===S.seg) && tBP(t);
   const C = new Map(), g = k => { let o = C.get(k); if (!o) C.set(k, o = {t:0, a:0, p:0}); return o; };
   (D.target||[]).forEach(t => { if (t[1]===ty && t[2]===tm && tOK(t)) g(t[4]).t += t[5]; });
   R.forEach(r => { if (!pass(r)) return;
@@ -1395,7 +1422,7 @@ function drawTodo(Y, L){
   // Store quá hạn
   const out = [];
   (D.ord||[]).forEach(([bu, cu, st, cat, ag, tn_]) => {
-    if ((S.bu && bu!==S.bu) || (S.cust>=0 && cu!==S.cust) || (S.cat>=0 && cat!==S.cat)) return;
+    if ((S.bu && bu!==S.bu) || (S.cust>=0 && cu!==S.cust) || (!cOK(cat))) return;
     const gaps = []; for (let i = 0; i < ag.length-1; i++) gaps.push(ag[i+1]-ag[i]);
     gaps.sort((a,b)=>a-b); const m = gaps.length, cyc = m%2 ? gaps[(m-1)/2] : (gaps[m/2-1]+gaps[m/2])/2;
     const last = ag[0] + (done ? 0 : 0), over = last - cyc;
@@ -1462,65 +1489,94 @@ function drawAcc(ser, Lc, Y){
   $('nAcc').innerHTML = `<b>Cách đọc:</b> mỗi tháng, cột nhạt là con số mô hình đã dự báo từ cuối tháng trước (chỉ dùng số liệu có đến lúc đó), cột đậm là thực tế. Chỉ liệt kê ngành chiếm từ 1% sản lượng. Chấm xanh: sai số dưới 10%, cam: 10–20%, đỏ: trên 20%. ▲ là dự báo thường cao hơn thực tế, ▼ là thấp hơn. Ngành sai số cao thường do target tháng đặt lệch nhiều so với sức bán.`;
 }
 
-/* =================== TARGET TẾT THEO TUẦN ===================
-   Tuần tính theo khoảng cách đến mùng 1 Tết (T-8 … T+3, mỗi tuần 7 ngày, T+0 bắt đầu từ mùng 1).
-   Target tháng được chia xuống từng ngày theo nhịp bán Tết năm trước (khớp theo ngày âm lịch: lùi đúng khoảng cách 2 ngày Tết),
-   rồi cộng lại theo tuần. Tháng chưa có target: ước tính = cùng kỳ × tăng trưởng lũy kế năm (giới hạn 70%–150%). */
+/* =================== DỰ BÁO THEO TUẦN – MÙA TẾT ===================
+   Từ tuần chứa ngày 1/11 đến T+3 (tuần thứ 3 sau mùng 1 Tết). Tuần tính theo khoảng cách đến mùng 1 Tết, mỗi tuần 7 ngày.
+   - Thực tế: số bán theo ngày (theo bộ lọc Khu vực, Khách hàng, Ngành hàng).
+   - Dự báo tháng của năm hiện tại = mô hình dự báo v2 (target × tỷ lệ đạt dự kiến, đã gồm số bán tháng đang chạy);
+     tháng năm sau có target: target × tỷ lệ đạt 3 tháng gần nhất; chưa có target: cùng kỳ × tăng trưởng 3 tháng gần nhất.
+   - Dự báo tháng được chia xuống ngày theo nhịp bán năm trước: T11 lùi 364 ngày (trùng thứ), T12–T3 lùi theo khoảng cách 2 ngày Tết.
+   - Biểu đồ hiện tối thiểu 16 tuần đầu, tự thêm tuần khi thời gian trôi qua cho tới T+3. */
 function drawTet(){
   const dKey = x => x.getFullYear()*10000 + (x.getMonth()+1)*100 + x.getDate();
-  const up = new Date(D.updated+'T00:00:00');
-  const ty = Object.keys(TET_DAY).map(Number).find(y => { const t = new Date(TET_DAY[y]+'T00:00:00'); return (t-up)/864e5 >= -28 && (t-up)/864e5 <= 110; });
-  const show = ty && TET_DAY[ty-1] && (D.daily||[]).length;
+  const add = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+  const up = new Date(D.updated+'T00:00:00'), [uy, um, ud] = D.updated.split('-').map(Number);
+  const ty = Object.keys(TET_DAY).map(Number).find(y => { const t = new Date(TET_DAY[y]+'T00:00:00'), s0 = new Date(y-1, 10, 1); return up >= add(s0, -10) && up <= add(t, 28); });
+  const latest = R.reduce((x,r)=>r[1]>x?r[1]:x, 0);
+  const show = ty && TET_DAY[ty-1] && (D.daily||[]).length && S.year===latest;
   $('tetPanel').style.display = show ? '' : 'none';
   TET_INFO = null;
   if (!show) return;
-  const T0 = new Date(TET_DAY[ty]+'T00:00:00'), off = Math.round((T0 - new Date(TET_DAY[ty-1]+'T00:00:00'))/864e5);
+  const T0 = new Date(TET_DAY[ty]+'T00:00:00'), offT = Math.round((T0 - new Date(TET_DAY[ty-1]+'T00:00:00'))/864e5);
+  const K0 = Math.floor((new Date(ty-1, 10, 1) - T0)/864e5/7), K1 = 3;
   const day = new Map();
-  D.daily.forEach(x => { if ((S.bu && x[0]!==S.bu) || (S.cust>=0 && x[7]!==S.cust) || (S.cat>=0 && x[4]!==S.cat)) return;
+  D.daily.forEach(x => { if ((S.bu && x[0]!==S.bu) || (S.cust>=0 && x[7]!==S.cust) || !cOK(x[4])) return;
     const k = x[1]*10000 + x[2]*100 + x[3]; day.set(k, (day.get(k)||0) + x[6]); });
-  const add = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
-  const W0 = add(T0, -56), W1 = add(T0, 28);
-  // target tháng (có thể ước tính)
-  const tOK = t => (!S.bu || t[0]===S.bu) && (S.cust<0 || t[3]===S.cust) && (S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg) && tBP(t);
-  const uy = up.getFullYear(), um = up.getMonth()+1;
-  let ytd = 0, ytdLy = 0; R.forEach(r => { if (!pass(r)) return; if (r[1]===uy && r[2]<=um) ytd += r[9]; if (r[1]===uy-1 && r[2]<=um) ytdLy += r[9]; });
-  const gr = ytdLy ? clamp(ytd/ytdLy, .7, 1.5) : 1, TM = new Map(), est = [];
-  for (let d = new Date(W0.getFullYear(), W0.getMonth(), 1); d < W1; d = new Date(d.getFullYear(), d.getMonth()+1, 1)) {
-    const y = d.getFullYear(), m = d.getMonth()+1; let t = 0;
-    (D.target||[]).forEach(x => { if (x[1]===y && x[2]===m && tOK(x)) t += x[5]; });
-    if (!t) { R.forEach(r => { if (r[1]===y-1 && r[2]===m && pass(r)) t += r[9]; }); t *= gr; if (t) est.push(`${m}/${y}`); }
-    // chia xuống ngày theo nhịp cùng kỳ (khớp Tết)
-    const nd = new Date(y, m, 0).getDate(), w = []; let sw = 0;
-    for (let i = 1; i <= nd; i++) { const v = day.get(dKey(add(new Date(y, m-1, i), -off))) || 0; w.push(v); sw += v; }
-    TM.set(y*100+m, w.map(v => sw ? t*v/sw : t/nd));
+  const back = d => (d.getMonth()+1 >= 12 || d.getMonth()+1 <= 3) ? offT : 364;          // ngày cùng kỳ tương ứng
+  const tOK = t => (!S.bu || t[0]===S.bu) && (S.cust<0 || t[3]===S.cust) && cOK(t[4]) && (S.seg<0 || t[6]===S.seg) && tBP(t);
+  // số liệu tháng để tính tăng trưởng và tỷ lệ đạt gần đây
+  const MA = new Map(), MT = new Map(), inc = (m,k,v) => m.set(k, (m.get(k)||0)+v);
+  R.forEach(r => { if (pass(r)) inc(MA, r[1]*100+r[2], r[9]); });
+  (D.target||[]).forEach(t => { if (tOK(t)) inc(MT, t[1]*100+t[2], t[5]); });
+  const doneM = ud >= new Date(uy, um, 0).getDate(), Lc = doneM ? um : um-1;
+  let a3 = 0, l3 = 0, t3 = 0, at3 = 0; for (let i = 0; i < 3; i++) { const m = Lc-i; if (m < 1) break; const a = MA.get(uy*100+m)||0, l = MA.get((uy-1)*100+m)||0, t = MT.get(uy*100+m)||0; a3 += a; l3 += l; if (t) { t3 += t; at3 += a; } }
+  const gr = l3 ? clamp(a3/l3, .7, 1.5) : 1, ach = t3 ? clamp(at3/t3, .7, 1.3) : 1;
+  let fcY = null; try { fcY = fcCompute(uy, !doneM, ud); } catch(e) {}
+  const fcMonth = (y, m) => {
+    if (y===uy && fcY) { let v = 0, ok = false; fcY.ser.forEach(o => { if ((!S.bu || o.bu===S.bu) && o.f[m]!=null) { v += o.f[m]; ok = true; } }); if (ok) return v; }
+    const t = MT.get(y*100+m); if (t) return t*ach;
+    return null; };                                                                     // null: dùng cùng kỳ × tăng trưởng theo ngày
+  // dự báo + target theo ngày
+  const FD = new Map(), TD = new Map(), est = [];
+  const mStart = new Date(add(T0, 7*K0).getFullYear(), add(T0, 7*K0).getMonth(), 1), mEnd = add(T0, 7*K1+7);
+  for (let d0 = mStart; d0 < mEnd; d0 = new Date(d0.getFullYear(), d0.getMonth()+1, 1)) {
+    const y = d0.getFullYear(), m = d0.getMonth()+1, nd = new Date(y, m, 0).getDate();
+    const w = []; let sw = 0; for (let i = 1; i <= nd; i++) { const d = new Date(y, m-1, i), v = day.get(dKey(add(d, -back(d)))) || 0; w.push(v); sw += v; }
+    const fm = fcMonth(y, m), tm = MT.get(y*100+m) || 0;
+    if (!tm) est.push(`${m}/${y}`);
+    for (let i = 1; i <= nd; i++) { const k = dKey(new Date(y, m-1, i));
+      FD.set(k, fm!=null ? (sw ? fm*w[i-1]/sw : fm/nd) : w[i-1]*gr);
+      if (tm) TD.set(k, sw ? tm*w[i-1]/sw : tm/nd); }
+    // tháng đang chạy: dự báo phần còn lại = dự báo tháng − đã bán, chia theo nhịp các ngày còn lại
+    if (y===uy && m===um && !doneM && fm!=null) { let sold = 0, wr = 0; for (let i = 1; i <= nd; i++) { if (i <= ud) sold += day.get(dKey(new Date(y, m-1, i)))||0; else wr += w[i-1]; }
+      for (let i = ud+1; i <= nd; i++) FD.set(dKey(new Date(y, m-1, i)), wr ? Math.max(0, fm-sold)*w[i-1]/wr : Math.max(0, fm-sold)/(nd-ud)); }
   }
   const wk = [];
-  for (let k = -8; k <= 3; k++) { let t = 0, a = 0, n = 0; const s0 = add(T0, 7*k);
-    for (let i = 0; i < 7; i++) { const d = add(s0, i); const arr = TM.get(d.getFullYear()*100 + d.getMonth()+1); if (arr) t += arr[d.getDate()-1];
-      if (d <= up) { a += day.get(dKey(d)) || 0; n++; } }
-    wk.push({k, s0, t, a, n}); }
-  const cur = wk.find(o => o.n > 0 && o.n < 7), lab = k => k<0 ? `T${k}` : k===0 ? 'T+0' : `T+${k}`;
+  for (let k = K0; k <= K1; k++) { let t = 0, tFull = true, a = 0, f = 0, n = 0; const s0 = add(T0, 7*k);
+    for (let i = 0; i < 7; i++) { const d = add(s0, i), key = dKey(d);
+      if (TD.has(key)) t += TD.get(key); else tFull = false;
+      if (d <= up) { a += day.get(key) || 0; n++; } else f += FD.get(key) || 0; }
+    wk.push({k, s0, t: tFull ? t : null, a, n, f: a + f}); }
+  const ci = wk.findIndex(o => o.n > 0 && o.n < 7), lastDone = wk.reduce((x,o,i) => o.n===7 ? i : x, -1);
+  const cur = ci >= 0 ? wk[ci] : null, pos = ci >= 0 ? ci : lastDone + 1;
+  const nShow = Math.min(wk.length, Math.max(16, pos + 3)), vis = wk.slice(0, nShow);
+  const lab = k => k<0 ? `T${k}` : k===0 ? 'T+0' : `T+${k}`;
   const ds = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-  TET_INFO = {ty, T0, cur, wk, firstIn: (up - W0)/864e5, lab, ds, est};
-  $('tTet').textContent = `Target Tết ${ty} theo tuần`;
-  const firstIn = (up - W0)/864e5;
-  $('hTet').textContent = cur ? `Tuần này (${lab(cur.k)}): cần ${tn(cur.t)} t · đã đạt ${tn(cur.a)} t (${nf(cur.t? cur.a/cur.t*100 : 0,0)}%) · còn ${7-cur.n} ngày. Mùng 1 Tết: ${ds(T0)}/${ty}.`
-    : firstIn < 0 ? `Còn ${Math.ceil(-firstIn)} ngày đến tuần T-8 (bắt đầu ${ds(W0)}). Tổng target 12 tuần quanh Tết: ${tn(wk.reduce((x,o)=>x+o.t,0))} t. Mùng 1 Tết: ${ds(T0)}/${ty}.`
-    : `Mùng 1 Tết: ${ds(T0)}/${ty}. Tổng target 12 tuần: ${tn(wk.reduce((x,o)=>x+o.t,0))} t, đã đạt ${tn(wk.reduce((x,o)=>x+o.a,0))} t.`;
-  const Wd = 900, H = 250, pl = 46, pb = 40, pt = 22, mx = Math.max(1e-9, ...wk.map(o=>Math.max(o.t,o.a))) * 1.08, bw = (Wd-pl-8)/wk.length, y = v => pt + (H-pt-pb)*(1-v/mx);
-  let svg = `<svg viewBox="0 0 ${Wd} ${H}" width="100%" role="img" aria-label="Target và thực tế theo tuần quanh Tết">`;
+  const fT = wk.reduce((x,o)=>x+o.f,0), tT = wk.every(o => o.t!=null) ? wk.reduce((x,o)=>x+o.t,0) : null;
+  TET_INFO = {ty, T0, cur, wk, firstIn: (up - add(T0, 7*K0))/864e5, lab, ds, est, fT, tT};
+  $('tTet').textContent = `Dự báo theo tuần – mùa Tết ${ty}`;
+  $('hTet').textContent = (cur ? `Tuần này ${lab(cur.k)} (${ds(cur.s0)}–${ds(add(cur.s0,6))}): đã bán ${tn(cur.a)} t sau ${cur.n}/7 ngày, dự báo cả tuần ${tn(cur.f)} t${cur.t!=null ? `, target ${tn(cur.t)} t` : ''}. ` : '') +
+    `Cả mùa ${lab(K0)} đến T+3: dự báo ${tn(fT)} t${tT!=null ? ` so với target ${tn(tT)} t (${nf(fT/tT*100,0)}%)` : ''}. Mùng 1 Tết: ${ds(T0)}/${ty}.`;
+  const Wd = 980, H = 260, pl = 54, pb = 40, pt = 24;
+  const mx = Math.max(1e-9, ...vis.map(o => Math.max(o.f, o.a, o.t||0))) * 1.08, bw = (Wd-pl-8)/vis.length, y = v => pt + (H-pt-pb)*(1-v/mx);
+  let svg = `<svg viewBox="0 0 ${Wd} ${H}" width="100%" role="img" aria-label="Dự báo, thực tế và target theo tuần mùa Tết">`;
   [0,.5,1].forEach(k => { const v = mx/1.08*k; svg += `<line x1="${pl}" x2="${Wd-4}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end">${tn(v)}</text>`; });
-  wk.forEach((o,i) => { const x = pl + i*bw, w = bw*.62, x0 = x + (bw-w)/2, ac = o===cur ? 'var(--near)' : o.t && o.a >= o.t ? 'var(--ok)' : 'var(--act)';
-    const tip = `<div class="t">${lab(o.k)} · ${ds(o.s0)}–${ds(add(o.s0,6))}</div>${trow('Target tuần', tn(o.t)+' t','var(--tgt)')}${o.n ? trow('Thực tế', tn(o.a)+' t', ac) + trow('% đạt', o.t ? nf(o.a/o.t*100,0)+'%' : '–','') : ''}`;
-    svg += `<g class="hv" data-tip="${esc(tip)}"><rect x="${x}" y="${pt}" width="${bw}" height="${H-pt-pb}" fill="transparent"/><rect x="${x0}" y="${y(o.t)}" width="${w}" height="${y(0)-y(o.t)}" rx="4" fill="var(--line)"/>` +
-      (o.n ? `<rect x="${x0+w*.2}" y="${y(o.a)}" width="${w*.6}" height="${y(0)-y(o.a)}" rx="4" fill="${ac}"/>` : '') + `</g>` +
-      `<text x="${x+bw/2}" y="${H-22}" text-anchor="middle" style="font-weight:600;fill:var(--ink-2)">${lab(o.k)}</text><text x="${x+bw/2}" y="${H-7}" text-anchor="middle" style="font-size:10.5px">${ds(o.s0)}</text>`; });
-  const xT = pl + 8*bw;
-  svg += `<line x1="${xT}" x2="${xT}" y1="${pt-14}" y2="${H-pb}" stroke="var(--miss)" stroke-dasharray="4 3"/><text x="${xT+5}" y="${pt-4}" style="fill:var(--miss)">Mùng 1 (${ds(T0)})</text>`;
+  vis.forEach((o,i) => { const x = pl + i*bw, w = bw*.62, x0 = x + (bw-w)/2, past = o.n===7, isCur = o===cur;
+    const ac = isCur ? 'var(--near)' : o.t!=null && o.a >= o.t ? 'var(--ok)' : 'var(--act)';
+    const tip = `<div class="t">${lab(o.k)} · ${ds(o.s0)}–${ds(add(o.s0,6))}</div>` + (o.n ? trow('Thực tế', tn(o.a)+' t', ac) : '') + (!past ? trow(isCur ? 'Dự báo cả tuần' : 'Dự báo', tn(o.f)+' t', 'color-mix(in srgb,var(--act) 28%,transparent)') : '') +
+      (o.t!=null ? trow('Target tuần', tn(o.t)+' t', 'var(--ink)') + trow('% so target', nf((past ? o.a : o.f)/o.t*100,0)+'%', '') : trow('Target tuần', 'chưa có', ''));
+    svg += `<g class="hv" data-tip="${esc(tip)}"><rect x="${x}" y="${pt}" width="${bw}" height="${H-pt-pb}" fill="transparent"/>`;
+    if (!past) svg += `<rect x="${x0}" y="${y(o.f)}" width="${w}" height="${y(0)-y(o.f)}" rx="4" fill="color-mix(in srgb,var(--act) 22%,transparent)" stroke="color-mix(in srgb,var(--act) 45%,transparent)" stroke-dasharray="3 3"/>`;
+    if (o.n) svg += `<rect x="${x0}" y="${y(o.a)}" width="${w}" height="${y(0)-y(o.a)}" rx="4" fill="${ac}"/>`;
+    if (o.t!=null) svg += `<line x1="${x0-3}" x2="${x0+w+3}" y1="${y(o.t)}" y2="${y(o.t)}" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `</g><text x="${x+bw/2}" y="${H-22}" text-anchor="middle" style="font-weight:600;fill:var(--ink-2);font-size:11.5px">${lab(o.k)}</text><text x="${x+bw/2}" y="${H-7}" text-anchor="middle" style="font-size:10.5px">${ds(o.s0)}</text>`; });
+  const iT = vis.findIndex(o => o.k===0);
+  if (iT >= 0) { const xT = pl + iT*bw; svg += `<line x1="${xT}" x2="${xT}" y1="${pt-16}" y2="${H-pb}" stroke="var(--miss)" stroke-dasharray="4 3"/><text x="${xT+5}" y="${pt-6}" style="fill:var(--miss)">Mùng 1 (${ds(T0)})</text>`; }
   $('cTet').innerHTML = svg + '</svg>';
   $('cTet').querySelectorAll('.hv').forEach(g => { g.onmousemove = e => showTip(g.dataset.tip, e); g.onmouseleave = hideTip; });
-  $('nTet').innerHTML = `<b>Cách chia:</b> target từng tháng được chia xuống ngày theo nhịp bán quanh Tết ${ty-1} (khớp theo ngày âm lịch, lùi ${off} ngày), rồi cộng thành tuần, nên các tuần cao điểm trước Tết nhận target lớn hơn. Theo bộ lọc Khu vực, Khách hàng, Ngành hàng.` +
-    (est.length ? ` Tháng ${est.join(', ')} chưa có target, đang dùng <b>ước tính</b> = cùng kỳ × tăng trưởng lũy kế năm (${fmtPct(gr-1)}); sẽ tự thay bằng target thật khi có file.` : '');
+  $('nTet').innerHTML = `<b>Cách tính:</b> tuần đã qua là số bán thực tế; tuần đang chạy là số đã bán + dự báo các ngày còn lại; tuần tới là dự báo. Dự báo tháng ${uy} lấy từ mô hình dự báo (target × tỷ lệ đạt dự kiến), ` +
+    `tháng năm ${ty} có target thì lấy target × tỷ lệ đạt 3 tháng gần nhất (${nf(ach*100,0)}%), chưa có target thì lấy cùng kỳ × tăng trưởng 3 tháng gần nhất (${fmtPct(gr-1)}). ` +
+    `Số tháng được chia xuống ngày theo nhịp bán năm trước (T11 khớp thứ trong tuần, T12–T3 khớp ngày Tết âm lịch, lùi ${offT} ngày). Vạch đen là target tuần. ` +
+    `Biểu đồ hiện ${nShow}/${wk.length} tuần, tự thêm tuần khi thời gian trôi qua.` + (est.length ? ` Tháng ${est.join(', ')} chưa có target nên chưa có vạch target.` : '');
 }
 
 
@@ -1537,7 +1593,7 @@ function drawNews(Y, partial, udArg){
   if (Y!==latest) return;
   const dm = D.dims, [uy,um,ud] = D.updated.split('-').map(Number), nd = new Date(uy, um, 0).getDate();
   const done = ud >= nd, Lc = done ? um : um-1, one = S.cust >= 0;
-  const scope = [one ? dm.customer[S.cust] : 'toàn kênh MT', S.bu ? BU_LABEL[S.bu] : '', S.cat>=0 ? dm.category[S.cat] : ''].filter(Boolean).join(' · ');
+  const scope = [one ? dm.customer[S.cust] : 'toàn kênh MT', S.bu ? BU_LABEL[S.bu] : '', catLbl()].filter(Boolean).join(' · ');
   const pc = (a,b) => b ? nf(a/b*100,0)+'%' : '–', sg = v => (v>0?'+':'') + nf(v*100,0) + '%';
   const N = []; const add = (lvl, tag, html, go, w=0) => N.push({lvl, tag, html, go, w});
   // ---- gom số (tấn) ----
@@ -1550,7 +1606,7 @@ function drawNews(Y, partial, udArg){
     inc(BR, `${y}|${m}|${r[4]}|${r[5]}`, t);
     if (y===Y) { const k = r[3]+'|'+r[7]; let o = BUs.get(k); if (!o) BUs.set(k, o = {}); o[r[0]] = (o[r[0]]||0) + t; } });
   const T = new Map();
-  (D.target||[]).forEach(t => { if ((S.bu && t[0]!==S.bu) || (S.cust>=0 && t[3]!==S.cust) || (S.cat>=0 && t[4]!==S.cat) || (S.seg>=0 && t[6]!==S.seg) || !tBP(t)) return;
+  (D.target||[]).forEach(t => { if ((S.bu && t[0]!==S.bu) || (S.cust>=0 && t[3]!==S.cust) || (!cOK(t[4])) || (S.seg>=0 && t[6]!==S.seg) || !tBP(t)) return;
     inc(T, `${t[1]}|${t[2]}`, t[5]); inc(T, `${t[1]}|${t[2]}|${t[4]}`, t[5]); inc(T, `${t[1]}|${t[2]}|c${t[3]}`, t[5]); });
   const g = (m, k) => m.get(k) || 0;
   const cats = [...new Set([...A.keys()].map(k => k.split('|')).filter(k => k.length===3).map(k => +k[2]))];
@@ -1629,9 +1685,9 @@ function drawNews(Y, partial, udArg){
   if (!done && [3,6,9,12].includes(um) && ud >= 10) { const q0 = um-2; let a = 0, t = 0; for (let m = q0; m <= um; m++) { a += g(A, `${Y}|${m}`); t += g(T, `${Y}|${m}`); }
     if (t > 0) add(a/t >= (ud/nd*1/3+2/3) ? 'ok' : 'near', 'Cuối quý', `Quý ${um/3} (T${q0}–T${um}) đến nay đạt <b>${tn(a)}/${tn(t)} tấn (${pc(a,t)})</b>, còn ${nd-ud} ngày để chốt quý.`, 'trkPanel', 700); }
   // 10) Mùa Tết
-  if (TET_INFO) { const ti = TET_INFO, ttot = ti.wk.reduce((x,o)=>x+o.t,0);
-    if (ti.cur) add(ti.cur.a >= ti.cur.t*ti.cur.n/7 ? 'ok' : 'near', 'Tết ' + ti.ty, `Tuần ${ti.lab(ti.cur.k)}: đạt <b>${tn(ti.cur.a)}/${tn(ti.cur.t)} tấn (${pc(ti.cur.a, ti.cur.t)})</b> sau ${ti.cur.n}/7 ngày. Mùng 1 Tết: ${ti.ds(ti.T0)}.`, 'tetPanel', 800);
-    else if (ti.firstIn < 0) add('info', 'Tết ' + ti.ty, `Còn <b>${Math.ceil(-ti.firstIn)} ngày</b> đến tuần T-8. Target 12 tuần quanh Tết khoảng <b>${tn(ttot)} tấn</b>${ti.est.length ? ` (tháng ${ti.est.join(', ')} đang ước tính vì chưa có target)` : ''}.`, 'tetPanel', 90); }
+  if (TET_INFO) { const ti = TET_INFO;
+    if (ti.cur) add(ti.cur.t==null ? 'info' : ti.cur.f >= ti.cur.t ? 'ok' : 'near', 'Tết ' + ti.ty, `Tuần ${ti.lab(ti.cur.k)}: đã bán <b>${tn(ti.cur.a)} tấn</b> sau ${ti.cur.n}/7 ngày, dự báo cả tuần <b>${tn(ti.cur.f)} tấn</b>${ti.cur.t!=null ? ` (${pc(ti.cur.f, ti.cur.t)} target tuần)` : ''}. Cả mùa Tết dự báo ${tn(ti.fT)} tấn${ti.tT!=null ? `, ${pc(ti.fT, ti.tT)} target` : ''}. Mùng 1 Tết: ${ti.ds(ti.T0)}.`, 'tetPanel', 800);
+    else if (ti.firstIn < 0) add('info', 'Tết ' + ti.ty, `Còn <b>${Math.ceil(-ti.firstIn)} ngày</b> đến tuần đầu mùa Tết. Dự báo cả mùa (đến T+3) khoảng <b>${tn(ti.fT)} tấn</b>.`, 'tetPanel', 90); }
   // 11) Dữ liệu cần rà soát: store bị ghi lẫn 2 miền
   if (!S.bu) { let n = 0, v = 0; BUs.forEach(o => { const xs = Object.values(o); if (xs.length > 1) { n++; v += xs.reduce((a,b)=>a+b,0) - Math.max(...xs); } });
     if (n && v >= 1) add('info', 'Dữ liệu', `<b>${n} store</b> có số liệu ghi ở cả NBU và SBU (khoảng ${tn(v)} tấn nằm ở miền phụ). Nên kiểm tra cột Region trong file nguồn để số theo miền chính xác.`, 'mapPanel', 60); }
@@ -1686,14 +1742,14 @@ function priceAt(o, origin){ let r = 0, t = 0; for (let i = Math.max(1, origin-2
 function adjFactor(Y, m, bu, cat){ let p = 0; (D.adjust||[]).forEach(x => { if (x[0]===Y && x[1]===m && (x[2]==='*' || x[2]===bu) && (x[3]===-1 || x[3]===cat)) p += x[4]; }); return 1 + p/100; }
 
 function fcCompute(Y, partial, ud){
-  const fF = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg) && rBP(r);
+  const fF = r => (S.cust<0 || r[3]===S.cust) && (cOK(r[4])) && (S.seg<0 || r[6]===S.seg) && rBP(r);
   const ser = new Map();
   const get = (bu, cat) => { const k = bu+'|'+cat; let o = ser.get(k);
     if (!o) { o = {bu, cat, a:Array(13).fill(0), ly:Array(13).fill(0), lyRev:Array(13).fill(0), t:Array(13).fill(0), rev:Array(13).fill(0), f:Array(13).fill(null), fRev:Array(13).fill(null), xp:Array(13).fill(null)}; ser.set(k, o); } return o; };
   R.forEach(r => { if (!fF(r)) return;
     if (r[1]===Y) { const o = get(r[0], r[4]); o.a[r[2]] += r[9]; o.rev[r[2]] += r[8]/1e9; }
     else if (r[1]===Y-1) { const o = get(r[0], r[4]); o.ly[r[2]] += r[9]; o.lyRev[r[2]] += r[8]/1e9; } });
-  (D.target||[]).forEach(t => { if (t[1]===Y && (S.cust<0 || t[3]===S.cust) && (S.cat<0 || t[4]===S.cat) && (S.seg<0 || t[6]===S.seg) && tBP(t)) get(t[0], t[4]).t[t[2]] += t[5]; });
+  (D.target||[]).forEach(t => { if (t[1]===Y && (S.cust<0 || t[3]===S.cust) && (cOK(t[4])) && (S.seg<0 || t[6]===S.seg) && tBP(t)) get(t[0], t[4]).t[t[2]] += t[5]; });
   const L = R.reduce((x,r)=>r[1]===Y && r[2]>x?r[2]:x, 0);
   const Lc = partial ? L-1 : L;                        // tháng đầy đủ gần nhất
   // tiến độ cùng kỳ của tháng đang chạy (theo ngày), cấp khu vực × ngành
@@ -1853,7 +1909,7 @@ function smoothPath(P, t=0.5){
   return d + 'Z';
 }
 function drawMap(Y, L, T, tCats){
-  const fBase = r => (S.cust<0 || r[3]===S.cust) && (S.cat<0 || r[4]===S.cat) && (S.seg<0 || r[6]===S.seg);   // cột 6 = phân khúc ở cả data và target
+  const fBase = r => (S.cust<0 || r[3]===S.cust) && (cOK(r[4])) && (S.seg<0 || r[6]===S.seg);   // cột 6 = phân khúc ở cả data và target
   const fOther = r => fBase(r) && rBP(r), fAll = fOther, fTg = t => fBase(t) && tBP(t);
   const calc = bus => {
     let a=0, aLY=0, rev=0, revLY=0;
@@ -1969,7 +2025,7 @@ function drawTrend(cur, ly, Y, hasLy){
 /* --- Danh sách xếp hạng (ngành hàng / khách hàng) --- */
 function rankList(el, key, items, names, idx){
   items = items.filter(d=>d[1]>0).sort((a,b)=>b[1]-a[1]);
-  const total = items.reduce((s,d)=>s+d[1],0), mx = items.length ? items[0][1] : 1, sel = S[key];
+  const total = items.reduce((s,d)=>s+d[1],0), mx = items.length ? items[0][1] : 1, sel = key==='cat' ? (S.cats.size===1 ? [...S.cats][0] : -1) : S[key];
   const limit = 8, list = showAll[key] ? items : items.slice(0, limit);
   if (sel>=0 && !list.some(d=>d[0]===sel)) { const f = items.find(d=>d[0]===sel); if (f) list.push(f); }
   const bus = S.bu ? [S.bu] : ['NBU','SBU'];
@@ -2088,7 +2144,7 @@ function drawSize(cur, ly, L, Y){
   const shareCY = k => shr ? A.tot.get(k)||0 : G ? (A.tot.get(k)||0)/G*100 : 0;
   const GLt = keys.reduce((s,k)=>s+(B.tot.get(k)||0),0), shareLY = k => shr ? (B.tot.get(k)||0) : GLt ? (B.tot.get(k)||0)/GLt*100 : 0;
   const pp = (a,b) => { const d = a-b; if (Math.abs(d) < .05) return '<span>0,0 điểm</span>'; return `<span class="${d>=0?'up':'down'}">${d>=0?'▲':'▼'} ${nf(Math.abs(d),1)} điểm</span>`; };
-  const ctx = [S.brand>=0 ? D.dims.brand[S.brand] : '', S.psegs.size ? [...S.psegs].map(i=>D.dims.pseg[i]).join(', ') : '', S.cat>=0 ? D.dims.category[S.cat] : ''].filter(Boolean).join(' · ');
+  const ctx = [S.brand>=0 ? D.dims.brand[S.brand] : '', S.psegs.size ? [...S.psegs].map(i=>D.dims.pseg[i]).join(', ') : '', catLbl()].filter(Boolean).join(' · ');
   $('hSize').textContent = `${mLbl} theo packsize, năm ${Y}${ctx ? ', ' + ctx : ''}. ` + (shr ? 'Mỗi ô là phần trăm của size đó trong tổng sản lượng tháng; cột ± tỷ trọng so với cùng kỳ, tính bằng điểm %. ' : '') + (S.brand<0 && !S.psegs.size ? 'Chọn Nhãn hàng hoặc Segment ở thanh lọc để xem các size của một sản phẩm.' : '');
   if (!keys.length) { $('cSize').innerHTML = ''; $('lgSize').innerHTML = ''; $('tSize').innerHTML = '<p style="color:var(--muted);padding:12px">Không có số liệu với bộ lọc hiện tại.</p>'; return; }
   /* đường */
@@ -2284,7 +2340,7 @@ function drawStores(Y, L){
   const tgtOK = true;   // target phân bổ chạy theo mọi bộ lọc (kể cả nhãn hàng, Segment)
   const Tall = (D.target||[]).filter(t => t[1]===Y);
   const tg = new Map();
-  Tall.forEach(t => { if (inM(t[2]) && (!S.bu||t[0]===S.bu) && (S.cust<0||t[3]===S.cust) && (S.cat<0||t[4]===S.cat) && (S.seg<0||t[6]===S.seg) && tBP(t)) {
+  Tall.forEach(t => { if (inM(t[2]) && (!S.bu||t[0]===S.bu) && (S.cust<0||t[3]===S.cust) && (cOK(t[4])) && (S.seg<0||t[6]===S.seg) && tBP(t)) {
     const g = t[0]+'|'+t[3]+'|'+t[4]; tg.set(g,(tg.get(g)||0)+t[5]); } });
   const base = new Map(), sh = new Map(), st = new Map();
   const get = k => { let o = st.get(k); if (!o) { o = {k, c:new Map(), b:new Map(), ton:0, rev:0, tonLY:0, revLY:0, tgt:0}; st.set(k,o); } return o; };
@@ -2296,7 +2352,7 @@ function drawStores(Y, L){
   });
   // Ưu tiên target store từ file Target_Store (do team tự chia); không có file thì phân bổ ước tính
   const STg = (D.storeTarget||[]).filter(t => t[1]===Y), useFile = STg.length > 0;
-  const stOK = useFile ? (S.brand<0 && !S.psegs.size && S.cat<0 && S.seg<0) : tgtOK;
+  const stOK = useFile ? (S.brand<0 && !S.psegs.size && !S.cats.size && S.seg<0) : tgtOK;
   if (stOK && useFile) STg.forEach(t => { if (inM(t[2]) && (!S.bu||t[0]===S.bu) && (S.cust<0||t[3]===S.cust)) {
     const o = get(t[4]); o.tgt += t[5]; if (!o.c.size) o.c.set(t[3],0); if (!o.b.size) o.b.set(t[0],0); } });
   else if (stOK) for (const [s,v] of sh) { const i = s.lastIndexOf('|'), g = s.slice(0,i), t = tg.get(g), b = base.get(g);
