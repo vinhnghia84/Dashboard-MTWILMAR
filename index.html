@@ -114,6 +114,9 @@ select:hover{border-color:var(--line-2)}
 .ms-head button{border:0;background:none;color:var(--nbu);font:inherit;font-weight:600;cursor:pointer;padding:3px 4px;border-radius:6px}
 .ms-head button:hover{background:var(--panel-2)}
 .ms-list{max-height:300px;overflow-y:auto}
+.ms-pop.ms-wide{min-width:320px;max-width:420px}
+.ms-q{width:100%;box-sizing:border-box;margin:0 0 6px;padding:7px 10px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel-2);color:inherit;font:inherit;font-size:13px}
+.ms-q:focus{outline:2px solid var(--nbu);outline-offset:-1px}
 .ms-list .grp{font-size:11px;font-weight:600;color:var(--muted);padding:8px 8px 3px}
 .ms-list label{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:8px;font-size:13px;cursor:pointer}
 .ms-list label:hover{background:var(--panel-2)}
@@ -615,6 +618,16 @@ footer{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:110ch}
       </div>
     </div>
     <div class="fg sel"><label for="fBrand">Nhãn hàng</label><select id="fBrand"></select></div>
+    <div class="fg sel" id="gProd"><span class="lab" id="lProd">Sản phẩm</span>
+      <div class="ms" id="fProd">
+        <button type="button" class="ms-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lProd pmsTxt"><span id="pmsTxt">Tất cả</span></button>
+        <div class="ms-pop ms-wide" hidden>
+          <div class="ms-head"><span id="pmsCount"></span><button type="button" data-a="none">Bỏ chọn</button></div>
+          <input type="search" class="ms-q" id="pmsQ" placeholder="Tìm tên sản phẩm…" aria-label="Tìm tên sản phẩm">
+          <div class="ms-list" role="listbox" aria-multiselectable="true"></div>
+        </div>
+      </div>
+    </div>
     <div class="fg sel" id="gPseg"><span class="lab" id="lPseg">Segment</span>
       <div class="ms" id="fPseg">
         <button type="button" class="ms-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lPseg msTxt"><span id="msTxt">Tất cả</span></button>
@@ -812,12 +825,13 @@ let SEG_ORDER = [];
 /* Lọc Nhãn hàng + Segment cho dòng bán (r) và dòng target (t: cột 9 = Segment, cột 10 = Nhãn hàng, -1 = không ghép được) */
 const cOK = c => !S.cats.size || S.cats.has(c);   // bộ lọc Ngành hàng (chọn nhiều)
 const catLbl = () => !S.cats.size ? '' : S.cats.size===1 ? D.dims.category[[...S.cats][0]] : `${S.cats.size} ngành hàng`;
-const rBP = r => (S.brand<0 || r[5]===S.brand) && (!S.psegs.size || S.psegs.has(r[10]));
-const tBP = t => (S.brand<0 || t[10]===S.brand) && (!S.psegs.size || S.psegs.has(t[9]));
+const pOK = r => !S.prods.size || S.prods.has(r[16]);   // bộ lọc Sản phẩm (cột 16 = tên sản phẩm)
+const rBP = r => (S.brand<0 || r[5]===S.brand) && (!S.psegs.size || S.psegs.has(r[10])) && pOK(r);
+const tBP = t => !S.prods.size && (S.brand<0 || t[10]===S.brand) && (!S.psegs.size || S.psegs.has(t[9]));   // target không chia theo sản phẩm
 const MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12];
 let D, R, CMP = {cur:[], note:''}, firstDraw = true, showAll = {cat:false, cust:false, brand:false};
-let S = {bu:'', year:null, metric:'rev', cust:-1, cats:new Set(), brand:-1, seg:-1, psegs:new Set(), mxDim:'category', mxMode:'value', szM:'ton'};
-let PSEG_ORDER = [], HAS_X = false, PSEG_CATS = new Map();   // data có cột Segment/Packsize; Segment -> các ngành có Segment đó
+let S = {bu:'', year:null, metric:'rev', cust:-1, cats:new Set(), brand:-1, seg:-1, psegs:new Set(), prods:new Set(), mxDim:'category', mxMode:'value', szM:'ton'};
+let PSEG_ORDER = [], HAS_X = false, HAS_P = false, PSEG_CATS = new Map();   // data có cột Segment/Packsize; Segment -> các ngành có Segment đó
 const $ = id => document.getElementById(id);
 
 /* =================== GIAO DIỆN SÁNG / TỐI =================== */
@@ -858,7 +872,8 @@ function pass(r, skip){
     (skip==='cat'  || cOK(r[4])) &&
     (skip==='brand'|| S.brand<0|| r[5]===S.brand) &&
     (skip==='seg'  || S.seg<0  || r[6]===S.seg) &&
-    (skip==='pseg' || !S.psegs.size || S.psegs.has(r[10]));
+    (skip==='pseg' || !S.psegs.size || S.psegs.has(r[10])) &&
+    (skip==='prod' || pOK(r));
 }
 const rTop = (x,y,w,h,r) => { r=Math.min(r,h,w/2); return `M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`; };
 
@@ -944,12 +959,12 @@ $('csv').onclick = () => {
   if (!D) return;
   const Y = S.year, dm = D.dims, q = v => { v = String(v ?? ''); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; };
   const rows = R.filter(r => r[1]===Y && pass(r)).sort((a,b) => a[2]-b[2] || a[0].localeCompare(b[0]) || b[8]-a[8]);
-  const head = ['Khu vực','Năm','Tháng','Khách hàng','Ngành hàng','Segment','Nhãn hàng','Phân khúc','Packsize','Store','Doanh số trước thuế (đồng)','Doanh số (tỷ đồng)','Sản lượng (tấn)','Số thùng','Số đơn'];
+  const head = ['Khu vực','Năm','Tháng','Khách hàng','Ngành hàng','Segment','Nhãn hàng','Sản phẩm','Phân khúc','Packsize','Store','Doanh số trước thuế (đồng)','Doanh số (tỷ đồng)','Sản lượng (tấn)','Số thùng','Số đơn'];
   const X = (i, k) => HAS_X ? dm[k][r_[i]] : '';
   let r_;
-  const lines = [head.join(',')].concat(rows.map(r => { r_ = r; return [r[0], r[1], r[2], dm.customer[r[3]], dm.category[r[4]], X(10,'pseg'), dm.brand[r[5]], dm.segment[r[6]], X(11,'size'), dm.store[r[7]],
+  const lines = [head.join(',')].concat(rows.map(r => { r_ = r; return [r[0], r[1], r[2], dm.customer[r[3]], dm.category[r[4]], X(10,'pseg'), dm.brand[r[5]], HAS_P ? dm.product[r[16]] : '', dm.segment[r[6]], X(11,'size'), dm.store[r[7]],
     Math.round(r[8]), (r[8]/1e9).toFixed(4), (+r[9]).toFixed(3), HAS_X ? r[12] : '', HAS_X ? r[13] : ''].map(q).join(','); }));
-  const tag = [S.bu || 'NTW', S.cust>=0 ? dm.customer[S.cust] : '', catLbl(), S.brand>=0 ? dm.brand[S.brand] : '', S.psegs.size===1 ? dm.pseg[[...S.psegs][0]] : S.psegs.size ? S.psegs.size + '-segment' : '', S.seg>=0 ? dm.segment[S.seg] : '']
+  const tag = [S.bu || 'NTW', S.cust>=0 ? dm.customer[S.cust] : '', catLbl(), S.brand>=0 ? dm.brand[S.brand] : '', S.psegs.size===1 ? dm.pseg[[...S.psegs][0]] : S.psegs.size ? S.psegs.size + '-segment' : '', S.seg>=0 ? dm.segment[S.seg] : '', S.prods.size===1 ? dm.product[[...S.prods][0]] : S.prods.size ? S.prods.size + '-san-pham' : '']
     .filter(Boolean).join('_').replace(/[^\w\-]+/g,'-');
   const blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -981,6 +996,7 @@ function init(data){
   if (HAS_X) R.forEach(r => { if (!PSEG_CATS.has(r[10])) PSEG_CATS.set(r[10], new Set()); PSEG_CATS.get(r[10]).add(r[4]); pT.set(r[10],(pT.get(r[10])||0)+r[9]); });
   PSEG_ORDER = [...pT.keys()].sort((a,b)=>pT.get(b)-pT.get(a));
   $('gPseg').style.display = HAS_X ? '' : 'none';
+  HAS_P = R.length>0 && R[0].length>16 && !!(D.dims.product||[]).length; $('gProd').style.display = HAS_P ? '' : 'none';
   $('sec-size').style.display = HAS_X ? '' : 'none';
   const [y,m,d] = D.updated.split('-');
   $('upd').title = `Số liệu đến ngày ${d}/${m}/${y}`; $('csv').disabled = false;
@@ -1032,6 +1048,41 @@ function fillPseg(){
   document.addEventListener('click', e => { if (!pop.hidden && !ms.contains(e.target)) open(false); });
   ms.addEventListener('keydown', e => { if (e.key==='Escape' && !pop.hidden) { open(false); btn.focus(); } });
 })();
+/* Ô Sản phẩm: chọn nhiều, có ô tìm; chỉ liệt kê sản phẩm có bán theo Khách hàng + Ngành hàng + Nhãn hàng + Segment đang chọn */
+const MP = {key:null, list:[]};
+function prodOptions(){
+  const k = [S.bu, S.cust, [...S.cats].join(','), S.brand, [...S.psegs].join(','), S.seg].join('|');
+  if (MP.key === k) return MP.list;
+  const t = new Map();
+  R.forEach(r => { if ((!S.bu || r[0]===S.bu) && (S.cust<0 || r[3]===S.cust) && cOK(r[4]) && (S.brand<0 || r[5]===S.brand) && (S.seg<0 || r[6]===S.seg) && (!S.psegs.size || S.psegs.has(r[10]))) t.set(r[16], (t.get(r[16])||0) + r[9]); });
+  MP.key = k; MP.list = [...t.keys()].sort((a,b) => t.get(b)-t.get(a)); return MP.list;
+}
+function pruneProd(){ if (!HAS_P || !S.prods.size) return; const ok = new Set(prodOptions()); [...S.prods].forEach(i => { if (!ok.has(i)) S.prods.delete(i); }); }
+function fillProd(){
+  if (!HAS_P) return;
+  const nm = D.dims.product, all = prodOptions(), q = $('pmsQ').value.trim().toLowerCase(), box = $('fProd').querySelector('.ms-list');
+  const sel = all.filter(i => S.prods.has(i)), rest = all.filter(i => !S.prods.has(i) && (!q || nm[i].toLowerCase().includes(q)));
+  const item = i => `<label><input type="checkbox" value="${i}" ${S.prods.has(i)?'checked':''}><span>${esc(nm[i])}</span></label>`;
+  const shown = rest.slice(0, 300);
+  box.innerHTML = !all.length ? '<div class="empty">Không có sản phẩm nào với bộ lọc hiện tại.</div>'
+    : (sel.length ? '<div class="grp">Đang chọn</div>' + sel.map(item).join('') + (shown.length ? '<div class="grp">Sản phẩm khác</div>' : '') : '') + shown.map(item).join('')
+      + (!shown.length && q ? '<div class="empty">Không tìm thấy sản phẩm khớp.</div>' : '')
+      + (rest.length > shown.length ? `<div class="empty">Còn ${rest.length - shown.length} sản phẩm, gõ để tìm.</div>` : '');
+  const n = S.prods.size;
+  $('pmsTxt').textContent = !n ? 'Tất cả' : n===1 ? nm[[...S.prods][0]] : `${nm[[...S.prods][0]]} +${n-1}`;
+  $('fProd').querySelector('.ms-btn').title = n ? [...S.prods].map(i=>nm[i]).join(', ') : '';
+  $('pmsCount').textContent = n ? `Đã chọn ${n}/${all.length}` : `${all.length} sản phẩm (xếp theo sản lượng)`;
+}
+(() => {
+  const ms = $('fProd'), btn = ms.querySelector('.ms-btn'), pop = ms.querySelector('.ms-pop');
+  const open = v => { pop.hidden = !v; btn.setAttribute('aria-expanded', v); if (v) { $('pmsQ').value = ''; fillProd(); $('pmsQ').focus(); } };
+  btn.onclick = () => open(pop.hidden);
+  $('pmsQ').addEventListener('input', fillProd);
+  pop.addEventListener('change', e => { if (e.target.type!=='checkbox') return; const i = +e.target.value; e.target.checked ? S.prods.add(i) : S.prods.delete(i); render(); });
+  pop.querySelector('.ms-head').onclick = e => { if (!e.target.dataset.a) return; S.prods = new Set(); render(); };
+  document.addEventListener('click', e => { if (!pop.hidden && !ms.contains(e.target)) open(false); });
+  document.addEventListener('keydown', e => { if (e.key==='Escape' && !pop.hidden) { open(false); btn.focus(); } });   // danh sách vẽ lại sau mỗi lần chọn nên bắt Esc ở cấp trang
+})();
 /* Ô Ngành hàng: chọn nhiều ngành cùng lúc (giống ô Segment) */
 function fillCat(){
   const nm = D.dims.category, box = $('fCatMs').querySelector('.ms-list'), n = S.cats.size;
@@ -1050,15 +1101,15 @@ function fillCat(){
   ms.addEventListener('keydown', e => { if (e.key==='Escape' && !pop.hidden) { open(false); btn.focus(); } });
 })();
 $('fBrand').onchange = e => { S.brand = +e.target.value; render(); };
-$('reset').onclick = () => { Object.assign(S,{bu:'',cust:-1,cats:new Set(),brand:-1,seg:-1,psegs:new Set()}); syncControls(); render(); };
+$('reset').onclick = () => { Object.assign(S,{bu:'',cust:-1,cats:new Set(),brand:-1,seg:-1,psegs:new Set(),prods:new Set()}); syncControls(); render(); };
 /* Đánh dấu bộ lọc đang bật + nút "Xóa lọc (n)" */
 function updFilters(){
-  fillPseg(); fillCat();
+  fillPseg(); fillCat(); fillProd();
   $('gCat').classList.toggle('act', S.cats.size>0);
   [['fCust','cust'],['fBrand','brand']].forEach(([id,k]) => { $(id).value = S[k]; $(id).closest('.fg').classList.toggle('act', S[k]>=0); });
-  $('gPseg').classList.toggle('act', S.psegs.size>0);
+  $('gPseg').classList.toggle('act', S.psegs.size>0); $('gProd').classList.toggle('act', S.prods.size>0);
   $('fSeg').classList.toggle('act', S.seg>=0); $('fBu').classList.toggle('act', !!S.bu);
-  const n = [S.bu, S.cust>=0, S.cats.size>0, S.brand>=0, S.seg>=0, S.psegs.size>0].filter(Boolean).length;
+  const n = [S.bu, S.cust>=0, S.cats.size>0, S.brand>=0, S.seg>=0, S.psegs.size>0, S.prods.size>0].filter(Boolean).length;
   $('reset').hidden = !n; $('reset').textContent = `Xóa lọc (${n})`;
   // ẩn mục menu nếu phần đó đang ẩn (vd năm chưa có target)
   document.querySelectorAll('#nav a').forEach(a => { const el = $(a.dataset.sec); a.hidden = !el || el.style.display==='none'; });
@@ -1082,7 +1133,7 @@ let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(ren
 /* =================== VẼ TOÀN TRANG =================== */
 function render(){
   if (!D) return;
-  prunePseg();
+  prunePseg(); pruneProd();
   const Y = S.year;
   const cur = R.filter(r => r[1]===Y && pass(r));
   const ly  = R.filter(r => r[1]===Y-1 && pass(r));
@@ -1279,6 +1330,7 @@ function drawTarget(Y, partial, ud){
   const pr = (a,t) => t>0 ? a/t : null;
 
   const note = [];
+  if (S.prods.size) note.push('Target không chia theo tên sản phẩm, nên khi lọc Sản phẩm phần target để trống; số bán vẫn lọc đúng theo sản phẩm.');
   if (S.brand>=0 || S.psegs.size) note.push('Target theo nhãn hàng / Segment được ghép từ từng dòng trong file target. Hàng Big Pack, hàng nhãn riêng và gạo OEM không gắn với một nhãn hàng nên không có target khi lọc theo nhãn hàng.');
   if (S.metric==='rev') note.push('Target của Wilmar đặt theo sản lượng, nên phần này luôn tính bằng tấn.');
   if (partial) note.push(`Tháng ${L} mới có số liệu đến ngày ${ud}, % đạt của tháng này chưa phản ánh đủ tháng.`);
@@ -2144,8 +2196,8 @@ function drawSize(cur, ly, L, Y){
   const shareCY = k => shr ? A.tot.get(k)||0 : G ? (A.tot.get(k)||0)/G*100 : 0;
   const GLt = keys.reduce((s,k)=>s+(B.tot.get(k)||0),0), shareLY = k => shr ? (B.tot.get(k)||0) : GLt ? (B.tot.get(k)||0)/GLt*100 : 0;
   const pp = (a,b) => { const d = a-b; if (Math.abs(d) < .05) return '<span>0,0 điểm</span>'; return `<span class="${d>=0?'up':'down'}">${d>=0?'▲':'▼'} ${nf(Math.abs(d),1)} điểm</span>`; };
-  const ctx = [S.brand>=0 ? D.dims.brand[S.brand] : '', S.psegs.size ? [...S.psegs].map(i=>D.dims.pseg[i]).join(', ') : '', catLbl()].filter(Boolean).join(' · ');
-  $('hSize').textContent = `${mLbl} theo packsize, năm ${Y}${ctx ? ', ' + ctx : ''}. ` + (shr ? 'Mỗi ô là phần trăm của size đó trong tổng sản lượng tháng; cột ± tỷ trọng so với cùng kỳ, tính bằng điểm %. ' : '') + (S.brand<0 && !S.psegs.size ? 'Chọn Nhãn hàng hoặc Segment ở thanh lọc để xem các size của một sản phẩm.' : '');
+  const ctx = [S.brand>=0 ? D.dims.brand[S.brand] : '', S.prods.size===1 ? D.dims.product[[...S.prods][0]] : S.prods.size ? S.prods.size + ' sản phẩm' : '', S.psegs.size ? [...S.psegs].map(i=>D.dims.pseg[i]).join(', ') : '', catLbl()].filter(Boolean).join(' · ');
+  $('hSize').textContent = `${mLbl} theo packsize, năm ${Y}${ctx ? ', ' + ctx : ''}. ` + (shr ? 'Mỗi ô là phần trăm của size đó trong tổng sản lượng tháng; cột ± tỷ trọng so với cùng kỳ, tính bằng điểm %. ' : '') + (S.brand<0 && !S.psegs.size && !S.prods.size ? 'Chọn Nhãn hàng hoặc Segment ở thanh lọc để xem các size của một sản phẩm.' : '');
   if (!keys.length) { $('cSize').innerHTML = ''; $('lgSize').innerHTML = ''; $('tSize').innerHTML = '<p style="color:var(--muted);padding:12px">Không có số liệu với bộ lọc hiện tại.</p>'; return; }
   /* đường */
   const top = keys.slice(0, 5), el = $('cSize'), W = el.clientWidth || 900, H = 280, P = {l:58, r:64, t:14, b:30};
@@ -2352,7 +2404,7 @@ function drawStores(Y, L){
   });
   // Ưu tiên target store từ file Target_Store (do team tự chia); không có file thì phân bổ ước tính
   const STg = (D.storeTarget||[]).filter(t => t[1]===Y), useFile = STg.length > 0;
-  const stOK = useFile ? (S.brand<0 && !S.psegs.size && !S.cats.size && S.seg<0) : tgtOK;
+  const stOK = useFile ? (S.brand<0 && !S.psegs.size && !S.prods.size && !S.cats.size && S.seg<0) : tgtOK;
   if (stOK && useFile) STg.forEach(t => { if (inM(t[2]) && (!S.bu||t[0]===S.bu) && (S.cust<0||t[3]===S.cust)) {
     const o = get(t[4]); o.tgt += t[5]; if (!o.c.size) o.c.set(t[3],0); if (!o.b.size) o.b.set(t[0],0); } });
   else if (stOK) for (const [s,v] of sh) { const i = s.lastIndexOf('|'), g = s.slice(0,i), t = tg.get(g), b = base.get(g);
